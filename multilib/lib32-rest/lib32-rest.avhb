@@ -1,0 +1,39 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=lib32-rest
+_realname=librest
+pkgver=0.8.1
+pkgrel=1
+pkgdesc="A helper library for RESTful services."
+arch=('x86_64')
+groups=('multilib')
+repo=('extra')
+url="http://www.gtk.org/"
+license=(GPL2)
+depends=(glib2 libxml2 'libsoup>=2.42.0')
+makedepends=(gobject-introspection)
+source=(http://download.gnome.org/sources/$pkgname/${pkgver%.*}/$pkgname-${pkgver}.tar.xz)
+
+build() {
+	cd "${srcdir}/${_realname}-${pkgver}"
+
+	export CC="gcc -m32"
+	export CXX="g++ -m32"
+	export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+
+	./autogen.sh
+	./configure --prefix=/usr \
+	--sysconfdir=/etc --libdir=/usr/lib32 \
+	--disable-static
+	make ${MAKEFLAGS}
+}
+
+package() {
+	cd "${srcdir}/${_realname}-${pkgver}"
+	make DESTDIR="${pkgdir}" install
+	rm -rf "${pkgdir}"/usr/{bin,include,share}
+}
+

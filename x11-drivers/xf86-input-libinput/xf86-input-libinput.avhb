@@ -1,0 +1,35 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=xf86-input-libinput
+pkgver=1.2.0
+pkgrel=1
+pkgdesc="libinput-based X driver"
+arch=('x86_64')
+groups=('x11-drivers')
+license=('custom')
+url="http://xorg.freedesktop.org/"
+depends=('glibc')
+makedepends=('xorg-server-devel' 'X-ABI-XINPUT_VERSION=24.0' 'resourceproto' 'scrnsaverproto')
+source=(${url}/releases/individual/driver/${pkgname}-${pkgver}.tar.bz2)
+
+build() {
+	cd ${srcdir}/${pkgname}-${pkgver}
+	./configure --prefix=/usr --disable-static
+	make ${MAKEFLGS}
+}
+
+check() {
+	cd ${srcdir}/${pkgname}-${pkgver}
+	make ${MAKEFLGS} check
+}
+
+package() {
+	cd ${srcdir}/${pkgname}-${pkgver}
+	make DESTDIR="${pkgdir}" install
+	# license
+	install -Dm644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/COPYING"
+}
+

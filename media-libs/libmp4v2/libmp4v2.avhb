@@ -1,0 +1,30 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libmp4v2
+_realname=mp4v2-Release-ThirdParty-MP4v2
+pkgver=4.1.6
+pkgrel=1
+pkgdesc="An API to create and modify mp4 files as defined by ISO-IEC:14496-1:2001 MPEG-4 Systems"
+arch=('x86_64')
+groups=('media-libs')
+license=('MPL')
+url="https://github.com/TechSmith/mp4v2"
+depends=('gcc-libs')
+source=("https://github.com/TechSmith/mp4v2/archive/Release-ThirdParty-MP4v2-$pkgver.tar.gz"
+        libmp4v2-c++11.patch)
+
+build() {
+  cd $_realname-$pkgver
+  # https://github.com/TechSmith/mp4v2/issues/48
+  CXXFLAGS="$CXXFLAGS -Wno-narrowing" ./configure --prefix=/usr
+  make ${MAKEFLAGS}
+}
+
+package() {
+  cd $_realname-$pkgver
+  make DESTDIR="$pkgdir" install
+  make DESTDIR="$pkgdir" install-man
+}

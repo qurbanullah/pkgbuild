@@ -1,0 +1,11 @@
+--- mingw-w64-crt/intrincs/rdtsc.c	2020-09-17 02:20:15.000000000 +0000
++++ ../rdtsc.c	2021-05-10 19:59:11.579676605 +0000
+@@ -12,7 +12,7 @@
+ #endif
+ 
+ #if !__has_builtin(__rdtsc)
+-unsigned __int64 __rdtsc(void)
++unsigned __int64 __rdtsc(void);
+ {
+ #ifdef _WIN64
+       unsigned __int64 val1, val2;

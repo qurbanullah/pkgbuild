@@ -1,0 +1,30 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=tevent
+pkgver=0.11.0
+pkgrel=1
+pkgdesc="An event system based on the talloc memory management library"
+arch=('x86_64')
+groups=('sys-libs')
+url="https://tevent.samba.org/"
+license=('GPL3')
+depends=('talloc')
+makedepends=('python3')
+optdepends=('python3: for python3 bindings')
+source=("https://samba.org/ftp/tevent/${pkgname}-${pkgver}.tar.gz")
+
+build() {
+	cd ${srcdir}/${pkgname}-${pkgver}
+	./configure --prefix=/usr \
+		--bundled-libraries=NONE \
+		--builtin-libraries=replace
+	make ${MAKEFLAGS}
+}
+
+package() {
+	cd ${srcdir}/${pkgname}-${pkgver}
+	make DESTDIR=${pkgdir}/ install
+}

@@ -1,0 +1,41 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=krita
+pkgver=5.0.0
+pkgrel=1
+pkgdesc="Edit and paint images"
+arch=('x86_64')
+groups=('kde-apps')
+url="https://krita.org"
+license=(GPL3)
+depends=(kitemviews kitemmodels ki18n kcompletion kguiaddons kcrash qt5-svg qt5-multimedia quazip
+         gsl libraw exiv2 openexr fftw boost-libs giflib openjpeg2 hicolor-icon-theme)
+makedepends=(extra-cmake-modules kdoctools boost eigen vc poppler-qt5 opencolorio python-pyqt5 libheif
+             qt5-tools sip5 kseexpr)
+optdepends=('poppler-qt5: PDF filter' 'ffmpeg: to save animations' 'opencolorio: for the LUT docker'
+            "krita-plugin-gmic: G'MIC plugin" 'python-pyqt5: for the Python plugins' 'libheif: HEIF filter'
+            'kseexpr: SeExpr generator layer' 'kimageformats: PSD support')
+source=("https://download.kde.org/stable/krita/$pkgver/$pkgname-$pkgver.tar.gz"{,.sig})
+validpgpkeys=('05D00A8B73A686789E0A156858B9596C722EA3BD') # Boudewijn Rempt <foundation@krita.org>
+
+# prepare() {
+#   patch -d $pkgname-$_pkgver -p1 < krita-openexr3.patch # Fix build with OpenEXR 3
+#   patch -d $pkgname-$_pkgver -p1 < 86dc361a.patch # Fix OCIO include dir detection
+#   patch -d $pkgname-$_pkgver -p1 < krita-opencolorio1.patch # Fix build with renamed OCIO library
+# }
+
+build() {
+  cmake -S $pkgname-$pkgver -B build -G Ninja \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DLIB_INSTALL_DIR=lib \
+    -DBUILD_KRITA_QT_DESIGNER_PLUGINS=ON \
+    -DBUILD_TESTING=OFF
+  ninja -C build
+}
+
+package() {
+  DESTDIR="$pkgdir" ninja -C build install
+}

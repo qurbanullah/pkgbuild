@@ -1,0 +1,39 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=lib32-libxcb
+_realname=libxcb
+pkgver=1.14
+pkgrel=1
+pkgdesc="X11 client-side library (32-bit)"
+arch=('x86_64')
+groups=('multilib')
+repo=('extra')
+url="http://xcb.freedesktop.org/"
+depends=('lib32-libxdmcp' 'lib32-libxau' $_pkgbasename)
+makedepends=('pkgconfig' 'libxslt' 'python' 'xorg-util-macros' 'gcc-multilib'
+             'autoconf')
+license=('custom')
+source=(${url}/dist/${_pkgbasename}-${pkgver}.tar.bz2)
+
+build() {
+    cd "${srcdir}/${_realname}-${pkgver}"
+
+    export CC="gcc -m32"
+    export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+    ./autogen.sh --prefix=/usr \
+        --enable-xinput \
+        --enable-xkb \
+        --libdir=/usr/lib32 \
+        --disable-static
+    make ${MAKEFLAGS}
+}
+
+package() {
+    cd "${srcdir}/${_realname}-${pkgver}"
+    make DESTDIR="${pkgdir}" install
+    rm -rf "${pkgdir}"/usr/{include,share}
+}
+

@@ -1,0 +1,38 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libfreeaptx
+pkgver=0.1.1
+pkgrel=1
+pkgdesc="Open Source aptX codec library"
+url="https://github.com/iamthehorker/libfreeaptx"
+arch=(x86_64)
+license=(LGPL)
+depends=(glibc)
+makedepends=(git)
+provides=(libfreeaptx.so)
+source=("https://github.com/iamthehorker/libfreeaptx/archive/refs/tags/0.1.1.tar.gz")
+sha256sums=('SKIP')
+
+# pkgver() {
+#   cd $pkgname
+#   git describe --tags | sed 's/-/+/g'
+# }
+
+# prepare() {
+#   cd $pkgname
+# }
+
+build() {
+  cd $pkgname-$pkgver
+  make CPPFLAGS="$CPPFLAGS" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" \
+    PREFIX=/usr
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make CPPFLAGS="$CPPFLAGS" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" PREFIX=/usr \
+    DESTDIR="$pkgdir" install
+}

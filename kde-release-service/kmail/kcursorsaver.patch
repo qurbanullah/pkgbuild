@@ -1,0 +1,119 @@
+--- src/kmmainwidget.cpp	2021-02-24 23:31:19.000000000 +0000
++++ ../kmmainwidget.cpp	2021-03-21 20:39:31.566646973 +0000
+@@ -506,7 +506,7 @@
+     }
+ 
+     mGoToFirstUnreadMessageInSelectedFolder = false;
+-    KCursorSaver saver(Qt::WaitCursor);
++    KPIM::KCursorSaver saver(Qt::WaitCursor);
+ 
+     if (mMsgView) {
+         mMsgView->clear(true);
+@@ -1465,7 +1465,7 @@
+         != KMessageBox::Continue) {
+         return;
+     }
+-    KCursorSaver saver(Qt::WaitCursor);
++    KPIM::KCursorSaver saver(Qt::WaitCursor);
+     slotSelectAllMessages();
+     if (isTrash) {
+         /* Don't ask for confirmation again when deleting, the user has already
+@@ -2229,20 +2229,20 @@
+ 
+ void KMMainWidget::applyFilters(const Akonadi::Item::List &selectedMessages)
+ {
+-    KCursorSaver saver(Qt::WaitCursor);
++    KPIM::KCursorSaver saver(Qt::WaitCursor);
+ 
+     MailCommon::FilterManager::instance()->filter(selectedMessages);
+ }
+ 
+ void KMMainWidget::applyFilters(const Akonadi::Collection::List &selectedCols)
+ {
+-    KCursorSaver saver(Qt::WaitCursor);
++    KPIM::KCursorSaver saver(Qt::WaitCursor);
+     MailCommon::FilterManager::instance()->filter(selectedCols);
+ }
+ 
+ void KMMainWidget::applyFilter(const Akonadi::Collection::List &selectedCols, const QString &filter)
+ {
+-    KCursorSaver saver(Qt::WaitCursor);
++    KPIM::KCursorSaver saver(Qt::WaitCursor);
+     MailCommon::FilterManager::instance()->filter(selectedCols, { filter });
+ }
+ 
+@@ -3643,13 +3643,13 @@
+ void KMMainWidget::slotExpandAllThreads()
+ {
+     // TODO: Make this asynchronous ? (if there is enough demand)
+-    KCursorSaver saver(Qt::WaitCursor);
++    KPIM::KCursorSaver saver(Qt::WaitCursor);
+     mMessagePane->setAllThreadsExpanded(true);
+ }
+ 
+ void KMMainWidget::slotCollapseAllThreads()
+ {
+-    KCursorSaver saver(Qt::WaitCursor);
++    KPIM::KCursorSaver saver(Qt::WaitCursor);
+     mMessagePane->setAllThreadsExpanded(false);
+ }
+ 
+--- src/kmcommands.cpp	2021-02-24 23:31:19.000000000 +0000
++++ ../kmcommands.cpp	2021-03-21 20:43:20.883327523 +0000
+@@ -830,7 +830,7 @@
+ 
+ KMCommand::Result KMReplyCommand::execute()
+ {
+-    KCursorSaver saver(Qt::WaitCursor);
++    KPIM::KCursorSaver saver(Qt::WaitCursor);
+     Akonadi::Item item = retrievedMessage();
+     KMime::Message::Ptr msg = MessageComposer::Util::message(item);
+     if (!msg) {
+@@ -890,7 +890,7 @@
+     if (!msg) {
+         return Failed;
+     }
+-    KCursorSaver saver(Qt::WaitCursor);
++    KPIM::KCursorSaver saver(Qt::WaitCursor);
+ 
+     CreateForwardMessageJobSettings settings;
+     settings.item = item;
+@@ -1303,7 +1303,7 @@
+ 
+ KMCommand::Result KMFilterActionCommand::execute()
+ {
+-    KCursorSaver saver(Qt::WaitCursor);
++    KPIM::KCursorSaver saver(Qt::WaitCursor);
+     int msgCount = 0;
+     const int msgCountToFilter = mMsgListId.count();
+     ProgressItem *progressItem
+@@ -1490,7 +1490,7 @@
+ 
+ KMCommand::Result KMMoveCommand::execute()
+ {
+-    KCursorSaver saver(Qt::WaitCursor);
++    KPIM::KCursorSaver saver(Qt::WaitCursor);
+     setEmitsCompletedItself(true);
+     setDeletesItself(true);
+     Akonadi::Item::List retrievedList = retrievedMsgs();
+@@ -1616,7 +1616,7 @@
+ 
+ KMCommand::Result KMTrashMsgCommand::execute()
+ {
+-    KCursorSaver saver(Qt::WaitCursor);
++    KPIM::KCursorSaver saver(Qt::WaitCursor);
+     setEmitsCompletedItself(true);
+     setDeletesItself(true);
+     for (auto trashIt = mTrashFolders.begin(), end = mTrashFolders.end(); trashIt != end; ++trashIt) {
+
+--- src/editor/kmcomposerwin.cpp	2021-02-24 23:31:19.000000000 +0000
++++ ../kmcomposerwin.cpp	2021-03-21 20:50:35.453353882 +0000
+@@ -2769,7 +2769,7 @@
+ 
+ void KMComposerWin::doDelayedSend(MessageComposer::MessageSender::SendMethod method, MessageComposer::MessageSender::SaveIn saveIn)
+ {
+-    KCursorSaver saver(Qt::WaitCursor);
++    KPIM::KCursorSaver saver(Qt::WaitCursor);
+     applyComposerSetting(mComposerBase);
+     if (mForceDisableHtml) {
+         disableHtml(MessageComposer::ComposerViewBase::NoConfirmationNeeded);

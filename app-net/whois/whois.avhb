@@ -1,0 +1,32 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=whois
+pkgver=5.5.7
+pkgrel=1
+pkgdesc="Intelligent WHOIS client"
+arch=('x86_64')
+groups=('app-net')
+url="https://github.com/rfc1036/whois"
+license=('GPL')
+depends=('libidn2')
+makedepends=('perl')
+backup=('etc/whois.conf')
+source=("https://github.com/rfc1036/whois/archive/v$pkgvertar.gz")
+validpgpkeys=('6791403B68AE2690517C42EAE6FFF1E38DC968B0') # Marco d'Itri <md@linux.it>
+
+build() {
+  cd "$pkgname-$pkgver"
+  make \
+    CONFIG_FILE=/etc/whois.conf \
+    CFLAGS="$CFLAGS $CPPFLAGS" \
+    HAVE_ICONV=1
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+  make prefix=/usr BASEDIR="$pkgdir" install-whois
+  install -Dm644 whois.conf -t "$pkgdir/etc"
+}

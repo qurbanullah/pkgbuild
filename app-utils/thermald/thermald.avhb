@@ -1,0 +1,36 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=thermald
+_realname=thermal_daemon
+pkgver=2.3
+pkgrel=1
+pkgdesc='The Linux Thermal Daemon program from 01.org'
+arch=('x86_64')
+groups=('app-utils')
+url='https://01.org/linux-thermal-daemon'
+license=('GPL2')
+depends=('dbus-glib' 'libxml2' 'libevdev' 'upower')
+makedepends=('autoconf-archive' 'python' 'gtk-doc')
+source=("https://github.com/intel/thermal_daemon/archive/v${pkgver}/${_pkgname}-${pkgver}.tar.gz"
+        'modules-load-thermald.conf')
+
+build() {
+  cd ${_realname}-${pkgver}
+  ./autogen.sh
+  ./configure \
+    --prefix=/usr \
+    --sysconfdir=/etc \
+    --with-dbus-sys-dir=/usr/share/dbus-1/system.d \
+    --localstatedir=/var \
+    --sbindir=/usr/bin
+  make
+}
+
+package() {
+  cd ${_realname}-${pkgver}
+  DESTDIR="${pkgdir}" make install
+  install -Dm644 "${srcdir}"/modules-load-thermald.conf "${pkgdir}"/usr/lib/modules-load.d/thermald.conf
+}

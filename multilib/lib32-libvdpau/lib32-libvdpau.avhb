@@ -1,0 +1,33 @@
+# $Id$
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=lib32-libvdpau
+pkgbase=libvdpau
+pkgver=1.4
+pkgrel=1
+pkgdesc='Nvidia VDPAU library'
+arch=('x86_64')
+groups=('multilib')
+repo=('extra')
+url='https://gitlab.freedesktop.org/vdpau/libvdpau.git'
+license=('custom')
+depends=('lib32-gcc-libs' 'lib32-libxext' "${pkgname#*-}")
+makedepends=('dri2proto')
+source=("https://gitlab.freedesktop.org/vdpau/$pkgbase/-/archive/$pkgver/$pkgbase-$pkgver.tar.bz2")
+
+build() {
+  export CC='gcc -m32'
+  export CXX='g++ -m32'
+  export PKG_CONFIG_PATH=/usr/lib32/pkgconfig
+
+  avouch-meson libvdpau-$pkgver build \
+    --libdir=/usr/lib32
+  ninja -C build
+}
+
+package() {
+  DESTDIR="${pkgdir}" ninja -C build install
+  rm -rf "${pkgdir}"/{etc,usr/include}
+}
+

@@ -1,0 +1,37 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=exo
+pkgver=4.16.1
+pkgrel=1
+pkgdesc="Extensions to Xfce by os-cillation"
+arch=('x86_64')
+groups=('xfce4')
+url="https://www.xfce.org/"
+license=('GPL2' 'LGPL')
+groups=('xfce4')
+depends=('libxfce4ui' 'hicolor-icon-theme')
+makedepends=('intltool')
+source=(https://archive.xfce.org/src/xfce/$pkgname/${pkgver%.*}/$pkgname-$pkgver.tar.bz2)
+sha256sums=('528dac256315ffc2a4a53b3b421979327962121989886e3cf920aeff9912b53b')
+
+prepare() {
+  cd "$srcdir/$pkgname-$pkgver"
+}
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+
+  ./configure \
+    --prefix=/usr \
+    --sysconfdir=/etc \
+    --disable-debug
+  make ${MAKEFLAGS}
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgver"
+  make DESTDIR="$pkgdir" install
+}

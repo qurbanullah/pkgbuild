@@ -1,0 +1,23 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=surfshark
+pkgver=1.0.5-547
+_realname=${pkgname}_${pkgver}
+pkgrel=1
+pkgdesc="Keep your online activity and personal information secure. Put your privacy-conscious mind at rest and enjoy unrestricted internet."
+arch=('x86_64')
+groups=('app-net')
+url="https://surfshark.com"
+license=()
+depends=()
+optdepends=()
+source=("https://ocean.surfshark.com/debian/pool/main/s/surfshark/surfshark_1.0.5-547_amd64.deb")
+
+package() {
+	echo "Extracting the data.tar.xz..."
+	bsdtar -xf data.tar.xz -C "$pkgdir/"
+}
+

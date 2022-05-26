@@ -1,0 +1,43 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=lib32-pam
+_realname=Linux-PAM
+pkgver=1.4.0
+pkgrel=1
+pkgdesc='Pluggable Authentication Modules'
+arch=('x86_64')
+groups=('multilib')
+repo=('extra')
+url='http://linux-pam.org'
+license=('GPL2')
+depends=('lib32-cracklib' 'lib32-libnsl' 'lib32-libtirpc' 'pam')
+makedepends=('docbook-xml' 'docbook-xsl' 'git' 'lib32-flex' 'w3m')
+source=("git+https://github.com/linux-pam/linux-pam.git#tag=v${pkgver}")
+sha256sums=('SKIP')
+options=('!emptydirs')
+
+build() {
+  cd $_realname-$pkgver
+
+  export CC='gcc -m32'
+  export CXX='g++ -m32'
+  export PKG_CONFIG_PATH='/usr/lib32/pkgconfig'
+
+  ./autogen.sh
+  ./configure \
+    --prefix='/usr' \
+    --libdir='/usr/lib32' \
+    --sbindir='/usr/bin' \
+    --disable-db
+  make ${MAKEFLAGS}
+}
+
+package() {
+  cd $_realname-$pkgver
+
+  make DESTDIR="${pkgdir}" SCONFIGDIR='/etc/security' install
+  rm -rf "${pkgdir}"/{etc,var,usr/{lib,include,share,bin}}
+}

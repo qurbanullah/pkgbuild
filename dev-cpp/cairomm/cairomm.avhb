@@ -1,0 +1,50 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgbase=cairomm
+pkgname=(cairomm cairomm-docs)
+# 1.16.0 is not caromm-1 version 1.12.2 is
+pkgver=1.12.2
+pkgrel=1
+pkgdesc="C++ bindings to Cairo vector graphics library"
+arch=('x86_64')
+groups=('dev-cpp')
+repo=('core')
+url="http://www.cairographics.org"
+license=('LGPL' 'MPL')
+depends=('cairo' 'libsigc++')
+makedepends=('pkgconfig')
+source=(http://www.cairographics.org/releases/${pkgname}-${pkgver}.tar.gz)
+options=('!emptydirs')
+
+# build() {
+#   avouch-meson $pkgname-$pkgver build
+#   meson compile -C build
+# }
+
+# package() {
+#   DESTDIR="$pkgdir" ninja -C build install  
+# }
+
+build() {
+  cd $pkgbase-$pkgver
+  ./configure --prefix=/usr --enable-maintainer-mode
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+  make ${MAEFLAGS}
+}
+
+package_cairomm() {
+  cd $pkgbase-$pkgver
+  sed -i -e 's/^doc_subdirs/#doc_subdirs/' Makefile
+  make DESTDIR="$pkgdir" install
+}
+
+package_cairomm-docs() {
+  pkgdesc+=" (documentation)"
+  depends=()
+
+  cd $pkgbase-$pkgver
+  make -C docs DESTDIR="$pkgdir" install
+}

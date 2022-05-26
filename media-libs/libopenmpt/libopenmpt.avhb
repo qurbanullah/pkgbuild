@@ -1,0 +1,52 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libopenmpt
+pkgver=0.6.2
+pkgrel=1
+pkgdesc="A library to render tracker music to a PCM audio stream"
+arch=(x86_64)
+groups=('media-libs')
+url="https://lib.openmpt.org/libopenmpt/"
+license=(BSD)
+depends=(
+  flac libFLAC.so
+  gcc-libs
+  glibc
+  libogg libogg.so
+  libpulse libpulse.so libpulse-simple.so
+  libsndfile libsndfile.so
+  libvorbis libvorbis.so libvorbisfile.so
+  mpg123 libmpg123.so
+  portaudio libportaudio.so
+)
+makedepends=(autoconf-archive doxygen help2man)
+options=(debug)
+source=($pkgname-$pkgver.tar.gz::https://lib.openmpt.org/files/libopenmpt/src/$pkgname-$pkgver+release.autotools.tar.gz)
+sha512sums=('a4bbf804d4be72d11216173371ab81703877071cf15e2daaaf59b0eb892d5948072af00bd1ec8c097c23bb3f77bc2c0be6cf853dcf3c7c24aa6109a9f74d0948')
+b2sums=('38e8d24352cce92b38ddf8e1f33af7fb72571b88b8f4cbddff626affe2f00bdb73635872d502417e37c68aa0f2254338088bb493b47c688a22d342b3ba54f725')
+
+prepare() {
+  cd $pkgname-$pkgver+release.autotools
+  autoreconf -fiv
+}
+
+build() {
+  cd $pkgname-$pkgver+release.autotools
+  ./configure --prefix=/usr
+  # prevent excessive overlinking due to libtool
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+  make
+}
+
+check() {
+  make -k check -C $pkgname-$pkgver+release.autotools
+}
+
+package() {
+  cd $pkgname-$pkgver+release.autotools
+  make DESTDIR="$pkgdir/" install
+  install -vDm 644 LICENSE -t "$pkgdir/usr/share/licenses/$pkgname/"
+}

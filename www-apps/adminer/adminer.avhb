@@ -1,0 +1,27 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=adminer
+pkgver=4.8.1
+pkgrel=1
+pkgdesc='Compact database management'
+arch=('any')
+url='https://www.adminer.org/'
+license=('GPL2')
+depends=('mariadb-clients' 'php')
+backup=(etc/webapps/phpmyadmin/config.inc.php)
+source=(https://files.phpmyadmin.net/phpMyAdmin/$pkgver/phpMyAdmin-$pkgver-all-languages.tar.xz)
+sha256sums=('f94ed0fc5df38e049746e40852135bf55b9af0fd9fcee07f175919c463ad58a5')
+
+package() {
+	_instdir="$pkgdir"/usr/share/webapps/adminer
+	mkdir -p "$_instdir"
+	cd "$_instdir"
+
+	cp "$srcdir"/adminer-$pkgver.php adminer-$pkgver.php
+	ln -sf adminer-$pkgver.php index.php
+
+	install -D -m644 ${srcdir}/apache.conf ${pkgdir}/etc/httpd/conf/extra/$pkgname.conf
+}

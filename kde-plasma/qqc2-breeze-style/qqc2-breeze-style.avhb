@@ -1,0 +1,33 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=qqc2-breeze-style
+pkgver=5.24.4
+pkgrel=1
+pkgdesc="Breeze inspired QQC2 Style"
+arch=(x86_64)
+groups=('kde-plasma')
+url="https://invent.kde.org/plasma/qqc2-breeze-style"
+license=('GPL3')
+depends=('qt5-base' 'qt5-declarative' 'qt5-quickcontrols2' 'kirigami2')
+makedepends=('git' 'extra-cmake-modules' 'qt5-tools')
+provides=('qqc2-breeze-style')
+conflicts=('qqc2-breeze-style')
+source=("git+${url}.git")
+md5sums=('SKIP')
+
+build() {
+  cmake -S $pkgname-$pkgver -B build -G Ninja \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DLIB_INSTALL_DIR=lib \
+    -DBUILD_TESTS=OFF \
+    -DQCA_INSTALL_IN_QT_PREFIX=ON \
+    -DQCA_MAN_INSTALL_DIR=/usr/share/man
+  ninja -C build
+}
+
+package() {
+  DESTDIR="$pkgdir" ninja -C build install
+}

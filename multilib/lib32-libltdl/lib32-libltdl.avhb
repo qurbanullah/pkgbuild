@@ -1,0 +1,64 @@
+# $Id$
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+# NOTE: requires rebuilt with each new gcc version
+
+pkgname=lib32-libltdl
+pkgbase=libtool
+pkgver=2.4.6
+_gccver=11.2.0
+pkgrel=1
+pkgdesc="A system independent dlopen wrapper for GNU libtool (32-bit)"
+arch=('x86_64')
+groups=('multilib')
+repo=('extra')
+url="http://www.gnu.org/software/libtool"
+license=('GPL')
+depends=(lib32-glibc libltdl)
+makedepends=("gcc-multilib=${_gccver}")
+provides=("lib32-libtool=$pkgver-$pkgrel")
+source=(ftp://ftp.gnu.org/pub/gnu/libtool/libtool-${pkgver}.tar.xz{,.sig})
+md5sums=('2ec8997e0c07249eb4cbd072417d70fe'
+         '1e6ba57420c82c663c85e745d11c7eed')
+
+pkgver() {
+	cd libtool
+	git describe --tags | sed 's/-/+/g;s/^v//'
+}
+
+prepare() {
+	bsdtar -xf $srcarchivedir/gnulib-git20200319.tar.xz
+	bsdtar -xf $srcarchivedir/gnulib-bootstrap-git20200319.tar.xz
+  	cd libtool
+
+	patch -Np1 -i ${srcdir}/no_hostname.patch
+
+	git submodule init
+	git config --local submodule.gnulib.url "$srcdir/gnulib"
+	git config --local submodule.gl-mod/bootstrap.url "$srcdir/gnulib-bootstrap"
+	git submodule update
+
+	./bootstrap
+}
+
+build() {
+	cd ${srcdir}/${pkgbase}
+
+	export CC="gcc -m32"
+	export CXX="g++ -m32"
+
+	./configure --prefix=/usr --libdir=/usr/lib32
+	make ${MAKEFLAGS}
+}
+
+check() {
+	cd ${srcdir}/${pkgbase}
+	# make ${MAKEFLAGS} -k check
+}
+
+package() {
+	cd ${srcdir}/${pkgbase}
+	make DESTDIR=${pkgdir} install-libLTLIBRARIES
+}
+

@@ -1,0 +1,43 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=xf86-video-vesa
+pkgver=2.5.0
+pkgrel=1
+pkgdesc="X.org vesa video driver"
+arch=('x86_64')
+groups=('x11-drivers')
+license=('custom')
+url="http://xorg.freedesktop.org/"
+depends=('glibc')
+makedepends=('xorg-server-devel' 'X-ABI-VIDEODRV_VERSION=24.0')
+source=(${url}/releases/individual/driver/${pkgname}-${pkgver}.tar.bz2)
+
+prepare() {
+  cd ${pkgname}-${pkgver}
+  patch -Np1 -R -i "${srcdir}/revert-kernelcheck.patch"
+}
+
+build() {
+  cd ${pkgname}-${pkgver}
+
+    # Since hardened flags are now enabled in ee.conf
+  # With them, module fail to load with undefined symbol.
+  # filter out the hardend flags
+
+  export CFLAGS=${CFLAGS/-fno-plt}
+  export CXXFLAGS=${CXXFLAGS/-fno-plt}
+  export LDFLAGS=${LDFLAGS/-z now}
+
+  ./configure --prefix=/usr
+  make
+}
+
+package() {
+  cd ${pkgname}-${pkgver}
+  make DESTDIR="${pkgdir}" install
+  install -d -m755 "${pkgdir}/usr/share/licenses/${pkgname}"
+  install -m644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/"
+}

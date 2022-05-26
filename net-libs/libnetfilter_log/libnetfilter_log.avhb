@@ -1,0 +1,28 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libnetfilter_log
+pkgver=1.0.2
+pkgrel=1
+pkgdesc='Library providing API to packets that have been logged by netfilter'
+arch=('x86_64')
+groups=('net-libs')
+url='https://www.netfilter.org/projects/libnetfilter_log/'
+license=('GPL')
+depends=('libnfnetlink' 'libmnl')
+validpgpkeys=('37D964ACC04981C75500FB9BD55D978A8A1420E4') # Netfilter Core Team
+source=("https://www.netfilter.org/projects/$pkgname/files/$pkgname-$pkgver.tar.bz2"{,.sig})
+sha256sums=('e3f408575614d849e4726b45e90c7ebb0e6744b04859555a9ce6ec40744ffeea'
+            'SKIP')
+
+build() {
+  cd $pkgname-$pkgver
+  ./configure --prefix=/usr
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make DESTDIR="$pkgdir" install
+}

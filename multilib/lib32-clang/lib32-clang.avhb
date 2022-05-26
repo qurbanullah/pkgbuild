@@ -1,0 +1,68 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=lib32-clang
+_realname=clang
+pkgver=13.0.0
+pkgrel=1
+pkgdesc="C language family frontend for LLVM"
+arch=('x86_64')
+groups=('multilib')
+repo=('extra')
+url="https://clang.llvm.org/"
+license=('custom:University of Illinois/NCSA Open Source License')
+depends=('lib32-llvm-libs' 'gcc-multilib')
+makedepends=('lib32-llvm' 'cmake' 'ninja' 'python')
+source=(https://releases.llvm.org/$pkgver/cfe-$pkgver.src.tar.xz{,.sig}
+        https://releases.llvm.org/$pkgver/llvm-$pkgver.src.tar.xz{,.sig}
+        enable-SSP-and-PIE-by-default.patch)
+validpgpkeys+=('B6C8F98282B944E3B0D5C2530FC3042E345AD05D') # Hans Wennborg <hans@chromium.org>
+validpgpkeys+=('11E521D646982372EB577A1F8F0871F202119294') # Tom Stellard <tom@stellard.net>
+
+
+prepare() {
+    tar -Jxf ${srcarchivedir}/llvm-${pkgver}.src.tar.xz
+    tar -Jxf ${srcarchivedir}/clang-tools-extra-${pkgver}.src.tar.xz
+    
+    cd "$srcdir/$_realname-$pkgver.src"    
+    mv "$srcdir/clang-tools-extra-$pkgver.src" tools/extra
+
+    # fix for directory path from Gentoo
+    sed -e "/set(model_compiler/s:\${CMAKE_SOURCE_DIR}/\.\./clang-tools-extra/:\${CMAKE_SOURCE_DIR}/tools/extra/:" -i tools/extra/clangd/quality/CompletionModel.cmake
+
+    patch -Np2 -i ../enable-SSP-and-PIE-by-default.patch
+
+    patch -Np2 -i ../fix-scan-build-py-executable-lookup-path.patch
+
+    # Attempt to convert script to Python 3
+    2to3 -wn --no-diffs \
+      tools/extra/clang-include-fixer/find-all-symbols/tool/run-find-all-symbols.py
+}
+
+build() {
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+  
+  cmake -S "$_realname-$pkgver.src" -B "build" -G "Ninja" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DPYTHON_EXECUTABLE=/usr/bin/python3 \
+    -DLLVM_LIBDIR_SUFFIX=32 \
+    -DCMAKE_C_FLAGS:STRING=-m32 \
+    -DCMAKE_CXX_FLAGS:STRING=-m32 \
+    -DLLVM_CONFIG="/usr/bin/llvm-config32" \
+    -DBUILD_SHARED_LIBS=ON \
+    -DLLVM_LINK_LLVM_DYLIB=ON \
+    -DLLVM_ENABLE_RTTI=ON \
+    -DLLVM_BUILD_TESTS=ON \
+    -DLLVM_INCLUDE_DOCS=OFF \
+    -DLLVM_MAIN_SRC_DIR="$srcdir/llvm-$pkgver.src"    
+  ninja -C build
+}
+
+package() {
+  DESTDIR="$pkgdir" ninja -C build install
+
+  rm -rf "$pkgdir"/usr/{bin,include,libexec,share}
+}

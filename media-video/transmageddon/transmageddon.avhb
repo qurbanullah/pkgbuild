@@ -1,0 +1,45 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=transmageddon
+pkgver=1.5
+pkgrel=1
+pkgdesc="Simple python application for transcoding video into formats supported by GStreamer"
+arch=('any')
+groups=('media-video')
+url="http://www.linuxrising.org/"
+license=('LGPL')
+depends=('python-gobject' 'libnotify' 'gtk3' 'gst-plugins-base')
+makedepends=('intltool')
+optdepends=('gst-plugins-good: Extra media codecs'
+            'gst-plugins-bad: Extra media codecs'
+            'gst-plugins-ugly: Extra media codecs'            
+            'gst-libav: Extra media codecs')
+source=(http://www.linuxrising.org/files/$pkgname-$pkgver.tar.xz)
+
+prepare() {
+  cd $pkgname-$pkgver
+
+  # Fix run with Python 3.9
+  patch -Np1 -i ../0001-Remove-the-usage-of-deprecated-xml.etree.ElementTree.patch
+
+  # Fix run when GTK 4 is installed
+  patch -Np1 -i ../0001-Specify-required-versions-of-GI-components.patch
+
+  # Fix AppStream metadata validation
+  patch -Np1 -i ../0001-Fix-AppStream-metadata-validation.patch  
+}
+
+build() {
+  cd $pkgname-$pkgver
+  ./configure --prefix=/usr
+  make
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make DESTDIR="$pkgdir" install
+  mv ${pkgdir}/usr/share//appdata ${pkgdir}/usr/share/metainfo
+}

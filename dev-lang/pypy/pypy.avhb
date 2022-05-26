@@ -1,0 +1,57 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=python3-pypy
+_realname=pypy2.7
+pkgver=7.3.8
+pkgrel=1
+pkgdesc="A Python implementation written in Python, JIT enabled"
+url="https://pypy.org"
+depends=('expat' 'bzip2' 'gdbm' 'openssl' 'libffi' 'zlib' 'ncurses')
+makedepends=('pypy' 'tk' 'sqlite' 'mercurial')
+optdepends=('sqlite: sqlite module'
+            'tk: tk module')
+options=(!buildflags)
+license=('MIT')
+source=("https://downloads.python.org/pypy/pypy2.7-v${pkgver}-src.zip")
+sha512sums=('23c1ae40d2269d02b0c473874ecdbd474a2b620ccd394f4314548d0c77c355f2b0791772af397b72e16266c27dfca33dd62e3b30d1e5838a707a72aad9bb373f')
+
+build() {
+  cd pypy2.7-v${pkgver}-src/pypy/goal
+
+  # For some reason, PyPy wants to use their vendored dependencies when detecting linux.
+  # Weird, we'll patch it out.
+  sed -i "s/, 'linux', 'linux2'//" targetpypystandalone.py
+  pypy ../../rpython/bin/rpython -Ojit --shared targetpypystandalone
+
+  # Compile binary modules
+  PYTHONPATH=../.. ./pypy-c ../../lib_pypy/pypy_tools/build_cffi_imports.py
+}
+
+package() {
+  cd pypy2.7-v${pkgver}-src
+
+  # Prepare installation
+  pypy pypy/tool/release/package.py --archive-name pypy --targetdir .
+  mkdir unpacked
+  tar xf pypy.tar.bz2 -C unpacked
+
+  # Install pypy
+  cd unpacked
+  install -Dm755 pypy/bin/pypy "${pkgdir}"/opt/pypy/bin/pypy
+  install -Dm755 pypy/bin/libpypy-c.so "${pkgdir}"/opt/pypy/bin/libpypy-c.so
+  cp -r pypy/include pypy/lib_pypy pypy/lib-python pypy/site-packages "${pkgdir}"/opt/pypy/
+  cd ..
+
+  # Install symlink
+  mkdir -p "${pkgdir}"/usr/bin "${pkgdir}"/usr/lib
+  ln -s /opt/pypy/bin/pypy "${pkgdir}"/usr/bin/pypy
+  ln -s /opt/pypy/bin/libpypy-c.so "${pkgdir}"/usr/lib/libpypy-c.so
+
+  # Install misc stuff
+  install -Dm644 README.rst "${pkgdir}"/opt/pypy/README.rst
+  install -Dm644 LICENSE "${pkgdir}"/opt/pypy/LICENSE
+  install -Dm644 LICENSE "${pkgdir}"/usr/share/licenses/pypy/LICENSE
+}

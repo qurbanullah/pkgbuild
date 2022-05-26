@@ -1,0 +1,32 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=jbig2dec
+pkgver=0.19
+_gsver=gs954
+pkgrel=1
+pkgdesc='Decoder implementation of the JBIG2 image compression format'
+url='https://jbig2dec.com/'
+arch=('x86_64')
+groups=('media-grafix')
+license=('GPL3')
+depends=('libpng')
+source=("https://github.com/ArtifexSoftware/$pkgname/archive/refs/tags/$pkgver.tar.gz")
+
+prepare() {
+	cd "${srcdir}/${pkgname}-${pkgver}"
+	./autogen.sh
+}
+
+build() {
+	cd "${srcdir}/${pkgname}-${pkgver}"
+	./configure --prefix=/usr
+	make ${MAKEFLAGS}
+}
+
+package() {
+	cd "${srcdir}/${pkgname}-${pkgver}"
+	make DESTDIR="${pkgdir}" install
+}

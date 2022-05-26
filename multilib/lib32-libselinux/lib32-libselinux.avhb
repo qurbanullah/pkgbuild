@@ -1,0 +1,45 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=lib32-libselinux
+pkgbase=libselinux
+pkgver=3.2
+pkgrel=1
+pkgdesc='Enhanced seccomp library'
+arch=('x86_64')
+groups=('multilib')
+url='http://userspace.selinuxproject.org'
+license=('custom')
+makedepends=('python2' 'python' 'ruby' 'xz' 'swig')
+depends=('libsepol' 'pcre')
+optdepends=('python2: python2 bindings'
+            'python: python bindings'
+            'ruby: ruby bindings')
+source=("https://github.com/SELinuxProject/selinux/releases/download/20190315/${pkgname}-${pkgver}.tar.gz"
+        "libselinux.tmpfiles.d")
+
+build() {
+	cd "${srcdir}/${pkgbase}-${pkgver}"
+
+	export CC="gcc -m32"
+	export CXX="g++ -m32"
+	export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+
+	# Do not build deprecated rpm_execcon() interface. It is useless on Arch Linux anyway.
+    export DISABLE_RPM="y"
+    export USE_PCRE2="y"
+
+    make LIBDIR="/usr/lib32" SHLIBDIR="/usr/lib32" CFLAGS="$CFLAGS -Wno-strict-overflow" swigify
+    make LIBDIR="/usr/lib32" SHLIBDIR="/usr/lib32"  CFLAGS="$CFLAGS -Wno-strict-overflow" all
+}
+
+package() {
+	cd "${srcdir}/${pkgbase}-${pkgver}"
+	export DISABLE_RPM=y
+
+  	make DESTDIR="${pkgdir}" SBINDIR=/usr/bin LIBDIR=/usr/lib32  SHLIBDIR=/usr/lib32 install
+	rm -rf "${pkgdir}"/usr/{bin,include,share}
+}
+

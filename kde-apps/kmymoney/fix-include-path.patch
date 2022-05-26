@@ -1,0 +1,15 @@
+--- kmymoney/mymoney/mymoneycontact.cpp	2022-01-12 22:05:56.118792092 +0000
++++ ../mymoneycontact.cpp	2022-01-12 21:58:02.318771000 +0000
+@@ -10,9 +10,9 @@
+ #ifdef ENABLE_ADDRESSBOOK
+ #include <KIdentityManagement/IdentityManager>
+ #include <KIdentityManagement/Identity>
+-#include <AkonadiCore/RecursiveItemFetchJob>
+-#include <AkonadiCore/ItemFetchScope>
+-#include <AkonadiCore/Collection>
++#include <AkonadiCore/Akonadi/RecursiveItemFetchJob>
++#include <AkonadiCore/Akonadi/ItemFetchScope>
++#include <AkonadiCore/Akonadi/Collection>
+ #include <KContacts/Addressee>
+ #include <QRegularExpression>
+ #endif

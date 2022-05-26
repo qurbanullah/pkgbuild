@@ -1,0 +1,11 @@
+--- src/plugins/vdo.c	2021-01-11 11:01:25.000000000 +0000
++++ ../vdo.c	2021-03-30 17:32:23.011856688 +0000
+@@ -81,7 +81,7 @@
+ }
+ 
+ BDVDOStats* bd_vdo_stats_copy (BDVDOStats *stats) {
+-    return g_memdup (stats, sizeof (BDVDOStats));
++    return g_memdup2 (stats, sizeof (BDVDOStats));
+ }
+ 
+ 

@@ -1,0 +1,33 @@
+# $Id$
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+_realname=popt
+pkgname=lib32-${_realname}
+pkgver=1.18
+pkgrel=1
+pkgdesc="Commandline option parser (32 bit)"
+arch=('x86_64')
+groups=('multilib')
+repo=('extra')
+url="http://rpm5.org"
+license=('custom')
+depends=('lib32-glibc' "${_realname}")
+source=(https://ftp.osuosl.org/pub/rpm/popt/releases/popt-1.x/popt-${pkgver}.tar.gz)
+
+build() {
+  export CC="gcc -m32"
+
+  cd ${_realname}-${pkgver}
+  ./configure --prefix=/usr --libdir=/usr/lib32 --disable-nls
+  make ${MAKEFLAGS}
+}
+
+package() {
+  cd ${_realname}-${pkgver}
+  make DESTDIR="${pkgdir}" pkgconfigdir='/usr/lib32/pkgconfig' install
+
+  rm -rf "${pkgdir}"/usr/{include,share}
+  install -dm755 "${pkgdir}"/usr/share/licenses
+  ln -s ${_pkgbase} "${pkgdir}"/usr/share/licenses/${pkgname}
+}

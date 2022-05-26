@@ -1,0 +1,29 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=gnome-network-displays
+pkgver=0.90.5
+pkgrel=1
+pkgdesc="An experimental implementation of Wi-Fi Display (aka Miracast)"
+url="https://wiki.gnome.org/Apps/gnome-network-displays"
+arch=('x86_64')
+groups=('gnome-extra')
+license=(GPL)
+depends=(x264 faac networkmanager)
+makedepends=(meson)
+source=("https://gitlab.gnome.org/GNOME/$pkgname/-/archive/$pkgver/$pkgname-$pkgver.tar.bz2")
+
+build() {
+	avouch-meson ${pkgname}-${pkgver} build
+	ninja -C build
+}
+
+check() {
+	meson test -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install -C build
+}

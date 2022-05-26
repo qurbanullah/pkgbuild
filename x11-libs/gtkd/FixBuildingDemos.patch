@@ -1,0 +1,62 @@
+From 323ff96c648882eaca2faee170bd9e90c6e1e9c3 Mon Sep 17 00:00:00 2001
+From: Dan Printzell <github@vild.io>
+Date: Mon, 3 May 2021 01:57:34 +0200
+Subject: [PATCH] Fix building demos with dmd v2.096.0 (#332)
+
+Fixes the `import '...' is used as a type` error, that in the demos,
+by replacing the problematic imports with selective imports.
+
+Signed-off-by: Dan Printzell <xwildn00bx@gmail.com>
+---
+ demos/gtkD/TestWindow/TestAspectFrame.d |  2 +-
+ demos/gtkD/TestWindow/TestWindow.d      | 24 ++++++++++++------------
+ 2 files changed, 13 insertions(+), 13 deletions(-)
+
+diff --git a/demos/gtkD/TestWindow/TestAspectFrame.d b/demos/gtkD/TestWindow/TestAspectFrame.d
+index 6d9f26b94..26b9c5ae8 100644
+--- a/demos/gtkD/TestWindow/TestAspectFrame.d
++++ b/demos/gtkD/TestWindow/TestAspectFrame.d
+@@ -20,7 +20,7 @@ module TestAspectFrame;
+ 
+ private import gtk.AspectFrame;
+ 
+-private import TestDrawingArea;
++private import TestDrawingArea : TestDrawingArea;
+ 
+ /**
+  * This tests the DUI aspect frame
+diff --git a/demos/gtkD/TestWindow/TestWindow.d b/demos/gtkD/TestWindow/TestWindow.d
+index 52323bb44..dc194bac5 100644
+--- a/demos/gtkD/TestWindow/TestWindow.d
++++ b/demos/gtkD/TestWindow/TestWindow.d
+@@ -40,18 +40,18 @@ import gtk.ApplicationWindow;
+ import gtk.Adjustment;
+ import gtk.AccelGroup;
+ 
+-import TestEntries;
+-
+-import TestStock;
+-import TestDrawingArea;
+-import TestScales;
+-import TestText;
+-import TestTreeView;
+-import TestImage;
+-import TestThemes;
+-import TestAspectFrame;
+-import TestIdle;
+-import TTextView;
++import TestEntries : TestEntries;
++
++import TestStock : TestStock;
++import TestDrawingArea : TestDrawingArea;
++import TestScales : TestScales;
++import TestText : TestText;
++import TestTreeView : TestTreeView;
++import TestImage : TestImage;
++import TestThemes : TestThemes;
++import TestAspectFrame : TestAspectFrame;
++import TestIdle : TestIdle;
++import TTextView : TTextView;
+ 
+ import gtk.MenuItem;
+ import gtk.Widget;

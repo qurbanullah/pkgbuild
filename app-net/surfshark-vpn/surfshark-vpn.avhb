@@ -1,0 +1,22 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=surfshark-vpn
+pkgver=1.1.0
+pkgrel=1
+pkgdesc="Helps shark to connect to OpenVPN server"
+arch=('x86_64')
+groups=('app-net')
+url="https://surfshark.com"
+license=()
+depends=()
+optdepends=()
+source=("https://ocean.surfshark.com/debian/pool/main/s/surfshark-vpn/surfshark-vpn_1.1.0_amd64.deb")
+
+package() {
+	echo "Extracting the data.tar.xz..."
+	bsdtar -xf data.tar.xz -C "$pkgdir/"
+}
+

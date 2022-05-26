@@ -1,0 +1,41 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=acpi_call-dkms
+_realname=acpi_call
+pkgver=1.1.0
+pkgrel=1
+pkgdesc='A linux kernel module that enables calls to ACPI methods through /proc/acpi/call - module sources'
+url='https://github.com/mkottman/acpi_call'
+arch=('x86_64')
+groups=('sys-drivers')
+license=('GPL')
+depends=('dkms')
+makedepends=('linux-headers')
+provides=("acpi_call=$pkgver-$pkgrel")
+conflicts=('acpi_call')
+source=("acpi_call-${pkgver}.tar.gz::https://github.com/mkottman/acpi_call/archive/v${pkgver}.tar.gz"
+        '0001-linux-5.6.patch'
+        'dkms.conf')
+
+prepare() {
+  cd acpi_call-$pkgver
+
+  # Fix build with Linux >= 5.6
+  patch -Np1 < ../0001-linux-5.6.patch
+}
+
+package() {
+  cd acpi_call-$pkgver
+
+  install -Dt "$pkgdir/usr/src/acpi_call-$pkgver" -m0644 Makefile acpi_call.c ../dkms.conf
+
+  echo acpi_call | install -Dm0644 /dev/stdin "$pkgdir/usr/lib/modules-load.d/acpi_call.conf"
+
+  mkdir -p "$pkgdir/usr/share/acpi_call"
+  cp -t "$pkgdir/usr/share/acpi_call" -dr --no-preserve=ownership examples support
+}
+
+# vim:set ts=2 sw=2 et:

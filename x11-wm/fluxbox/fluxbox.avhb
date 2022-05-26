@@ -1,0 +1,52 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=fluxbox
+pkgver=1.3.7+205+g1d19662c
+pkgrel=1
+pkgdesc="A lightweight and highly-configurable window manager"
+arch=('x86_64')
+groups=('x11-wm')
+url="http://www.fluxbox.org"
+license=('MIT')
+depends=('libxft' 'libxpm' 'libxinerama' 'libxrandr' 'imlib2' 'fribidi')
+optdepends=('xorg-xmessage: for using the fbsetbg and fluxbox-generate_menu utilities')
+options=('!makeflags')
+source=(https://github.com/fluxbox/fluxbox.git
+        fluxbox.desktop)
+
+# getsrc(){
+#   git clone https://github.com/fluxbox/fluxbox.git
+# }
+
+pkgver() {
+  cd "${pkgname}"
+
+  git describe --tags | sed 's/Release-//;s/_/./g;s/-/+/g'
+}
+
+prepare() {
+  cd "${pkgname}"
+
+  autoreconf -fi
+}
+
+build() {
+  cd "${pkgname}"
+  ./configure \
+    --prefix=/usr \
+    --enable-imlib2 \
+    --enable-nls \
+    --enable-xft \
+    --enable-xinerama
+  make ${MAKEFLAGS}
+}
+
+package() {
+  cd "${pkgname}"
+  make DESTDIR="${pkgdir}" install
+  install -D -m644 "${srcdir}/fluxbox.desktop" "${pkgdir}/usr/share/xsessions/fluxbox.desktop"
+  install -D -m644 COPYING "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}

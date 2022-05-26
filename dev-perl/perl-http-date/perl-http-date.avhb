@@ -1,0 +1,38 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=perl-http-date
+_realname=HTTP-Date
+pkgver=6.05
+pkgrel=1
+pkgdesc="Date conversion routines"
+arch=(any)
+license=(PerlArtistic GPL)
+options=('!emptydirs')
+depends=('perl>=5.8.8')
+conflicts=('perl-libwww<6')
+url=http://search.cpan.org/dist/HTTP-Date
+source=(http://search.cpan.org/CPAN/authors/id/G/GA/GAAS/HTTP-Date-$pkgver.tar.gz)
+
+build() {
+	cd "${srcdir}/${_realname}-${pkgver}"
+	# install module in vendor directories.
+	PERL_MM_USE_DEFAULT=1 perl Makefile.PL INSTALLDIRS=vendor
+	make
+}
+
+check() {
+	cd "${srcdir}/${_realname}-${pkgver}"
+	make test
+}
+
+package() {
+	cd "${srcdir}/${_realname}-${pkgver}"
+	make install DESTDIR=${pkgdir}
+
+	find $pkgdir -name '.packlist' -delete
+	find $pkgdir -name '*.pod' -delete
+}
+

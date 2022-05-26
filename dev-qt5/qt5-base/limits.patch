@@ -1,0 +1,39 @@
+--- src/corelib/global/qfloat16.h	2021-03-16 00:56:03.892196669 +0000
++++ ../qfloat16.h	2021-03-16 00:55:09.295526000 +0000
+@@ -41,6 +41,10 @@
+ #ifndef QFLOAT16_H
+ #define QFLOAT16_H
+ 
++#include <stdexcept>
++#include <limits>
++
++
+ #include <QtCore/qglobal.h>
+ #include <QtCore/qmetatype.h>
+ #include <string.h>
+
+--- src/corelib/global/qendian.h	2021-03-16 00:56:00.828863148 +0000
++++ ../qendian.h	2021-03-16 00:54:41.545524000 +0000
+@@ -48,6 +48,9 @@
+ #include <stdlib.h>
+ #include <string.h>
+ 
++#include <stdexcept>
++#include <limits>
++
+ #ifdef min // MSVC
+ #undef min
+ #undef max
+
+--- src/corelib/text/qbytearray.h	2020-10-27 08:02:11.000000000 +0000
++++ ../qbytearray.h	2021-03-16 01:02:54.125554995 +0000
+@@ -45,6 +45,9 @@
+ #include <QtCore/qnamespace.h>
+ #include <QtCore/qarraydata.h>
+ 
++#include <stdexcept>
++#include <limits>
++
+ #include <stdlib.h>
+ #include <string.h>
+ #include <stdarg.h>

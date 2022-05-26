@@ -1,0 +1,45 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgbase=gtkmm3
+pkgname=(gtkmm3 gtkmm3-docs)
+_realname=gtkmm
+pkgver=3.24.5
+pkgrel=1
+pkgdesc="C++ bindings for GTK+ 3"
+url="http://www.gtkmm.org/"
+arch=('x86_64')
+groups=('dev-cpp')
+license=(LGPL)
+depends=(gtk3 pangomm atkmm)
+makedepends=(git mm-common glibmm-docs cairomm-docs pangomm-docs atkmm-docs meson)
+checkdepends=(xorg-server-xvfb)
+options=(!emptydirs)
+source=("https://gitlab.gnome.org/GNOME/$pkgname/-/archive/$pkgver/$pkgname-$pkgver.tar.bz2")
+
+build() {
+  avouch-meson $_realname-$pkgver build -D maintainer-mode=true
+  meson compile -C build
+}
+
+check() {
+  xvfb-run -s '-nolisten local' \
+    meson test -C build --print-errorlogs
+}
+
+package_gtkmm3() {
+  DESTDIR="$pkgdir" meson install -C build
+
+  mkdir -p docs/usr/share
+  mv "$pkgdir"/usr/share/{devhelp,doc} docs/usr/share
+}
+
+package_gtkmm3-docs() {
+  pkgdesc+=" (documentation)"
+  depends=()
+  options=(!strip)
+
+  mv docs/* "$pkgdir"
+}

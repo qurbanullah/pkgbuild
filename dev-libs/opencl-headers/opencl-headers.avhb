@@ -1,0 +1,33 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=opencl-headers
+pkgver=2021.04.29
+pkgrel=1
+epoch=2
+pkgdesc='OpenCL (Open Computing Language) header files'
+arch=('any')
+groups=('dev-libs')
+arch=('any')
+url='https://www.khronos.org/registry/cl/'
+license=('custom')
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/KhronosGroup/OpenCL-Headers/archive/v${pkgver}.tar.gz")
+sha256sums=('5dad6d436c0d7646ef62a39ef6cd1f3eba0a98fc9157808dfc1d808f3705ebc2')
+optdepends=('opencl-clhpp: C++ support')
+
+package() {
+  cd "${srcdir}"/OpenCL-Headers*/CL
+
+  install -dm755 "${pkgdir}"/usr/include/CL
+
+  for h in *.h; do
+    install -m 644 ${h} "${pkgdir}"/usr/include/CL/
+  done
+
+  # remove useless headers
+  rm "${pkgdir}"/usr/include/CL/{cl_d3d,cl_dx9}*.h
+
+  install -D -m644 ../LICENSE "${pkgdir}"/usr/share/licenses/${pkgname}/LICENSE
+}

@@ -1,0 +1,62 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgbase=nvidia-settings-460xx
+pkgname=('nvidia-settings-460xx' 'libxnvctrl-460xx')
+_realname=nvidia-settings
+pkgver=460.27.04
+pkgrel=1
+pkgdesc="Tool for configuring the NVIDIA graphics driver"
+url='https://github.com/NVIDIA/nvidia-settings'
+arch=('x86_64')
+groups=('sys-drivers')
+license=('GPL2')
+makedepends=('git' 'inetutils' 'gtk2' 'jansson' 'gtk3' 'libxv' 'libvdpau' 'nvidia-utils' 'libxext')
+options=('staticlibs')
+source=(${_realname}-${pkgver}.tar.gz::https://github.com/NVIDIA/nvidia-settings/archive/${pkgver}.tar.gz
+        libxnvctrl_so.patch)
+
+prepare() {
+  export PREFIX=/usr
+  export NV_USE_BUNDLED_LIBJANSSON=0
+  export OUTPUTDIR=out
+  cd ${_realname}-${pkgver}
+  patch -p0 < "${srcdir}/libxnvctrl_so.patch"
+}
+
+build() {
+  cd ${_realname}-${pkgver}
+  export CFLAGS+=' -fcommon' # https://wiki.gentoo.org/wiki/Gcc_10_porting_notes/fno_common
+  make ${MAKEFLAGS}
+  make -C src/libXNVCtrl
+}
+
+package_nvidia-settings-460xx() {
+  depends=('jansson' 'gtk3' 'libxv' 'libvdpau' 'nvidia-utils' 'libxnvctrl')
+
+  cd ${_realname}-${pkgver}
+  make -j1 DESTDIR="${pkgdir}" install
+
+  install -D -m644 doc/nvidia-settings.desktop "${pkgdir}/usr/share/applications/nvidia-settings.desktop"
+  install -D -m644 doc/nvidia-settings.png "${pkgdir}/usr/share/pixmaps/nvidia-settings.png"
+  sed -e 's:__UTILS_PATH__:/usr/bin:' -e 's:__PIXMAP_PATH__:/usr/share/pixmaps:' -i "${pkgdir}/usr/share/applications/nvidia-settings.desktop"
+
+  # rm "$pkgdir/usr/lib/libnvidia-gtk2.so.$pkgver"
+}
+
+package_libxnvctrl-460xx() {
+  depends=('libxext')
+  pkgdesc='NVIDIA NV-CONTROL X extension'
+  provides=('libXNVCtrl.so')
+
+  cd ${_realname}-${pkgver}
+  install -Dm 644 doc/{NV-CONTROL-API.txt,FRAMELOCK.txt} -t "${pkgdir}/usr/share/doc/${pkgname}"
+  install -Dm 644 samples/{Makefile,README,*.c,*.h,*.mk} -t "${pkgdir}/usr/share/doc/${pkgname}/samples"
+
+  cd src/libXNVCtrl
+  install -Dm 644 ./*.h -t "${pkgdir}/usr/include/NVCtrl"
+  install -d "${pkgdir}/usr/lib"
+  cp -Pr out/libXNVCtrl.* -t "${pkgdir}/usr/lib"
+}

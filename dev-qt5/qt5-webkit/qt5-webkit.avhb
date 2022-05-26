@@ -1,0 +1,45 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=qt5-webkit
+_tarname="qtwebkit"
+_pkgver=5.212.0-alpha4
+pkgver=${_pkgver/-/}
+pkgrel=1
+pkgdesc='Classes for a WebKit2 based implementation and a new QML API'
+arch=('x86_64')
+groups=('dev-qt')
+url='https://www.qt.io'
+license=(GPL3 LGPL3 FDL custom)
+depends=(qt5-location qt5-sensors qt5-webchannel libwebp libxslt libxcomposite gst-plugins-base hyphen woff2)
+makedepends=(cmake ruby gperf python2 qt5-doc qt5-tools)
+optdepends=('gst-plugins-good: Webm codec support')
+source=("https://github.com/qtwebkit/qtwebkit/releases/download/qtwebkit-$_pkgver/qtwebkit-$_pkgver.tar.xz")
+
+
+prepare() {
+  cd qtwebkit-$_pkgver
+  patch -p0 -i ../icu68.patch # Fix build with ICU 68.x
+  patch -p1 -i ../glib-2.68.patch # https://github.com/qtwebkit/qtwebkit/issues/1057
+  patch -p1 -i ../qt5-webkit-python-3.9.patch # Fix build with python 3.9
+  patch -p1 -i ../qt5-webkit-bison-3.7.patch # Fix build with bison 3.7
+}
+
+build() {
+cmake -B build -S qtwebkit-$_pkgver \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_CXX_FLAGS="${CXXFLAGS} -DNDEBUG" \
+    -DPORT=Qt \
+    -DENABLE_TOOLS=OFF \
+    -DPYTHON_EXECUTABLE=/usr/bin/python3
+  cmake --build build --parallel ${MAKEFLAGS}
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+
+  install -d "$pkgdir"/usr/share/licenses
+  ln -sf /usr/share/licenses/qt5-base "$pkgdir"/usr/share/licenses/${pkgname}
+}

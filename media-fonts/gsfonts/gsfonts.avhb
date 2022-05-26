@@ -1,0 +1,29 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=gsfonts
+_realname=urw-base35-fonts-master
+pkgver=20200910
+pkgrel=1
+pkgdesc='(URW)++ Core Font Set [Level 2]'
+url='https://github.com/ArtifexSoftware/urw-base35-fonts'
+arch=('any')
+groups=('media-fonts')
+license=('AGPL3')
+makedepends=('git')
+source=("https://github.com/ArtifexSoftware/urw-base35-fonts/archive/refs/tags/$pkgver.tar.gz")
+
+package() {
+	cd urw-base35-fonts-master
+	install -Dt "${pkgdir}/usr/share/fonts/${pkgname}" -m644 fonts/*.otf
+	install -Dt "${pkgdir}/usr/share/metainfo" -m644 appstream/*.xml
+
+	install -d "${pkgdir}"/etc/fonts/conf.{avail,d}
+	for _f in fontconfig/*.conf; do
+		_fn="${pkgdir}/etc/fonts/conf.avail/69-${_f##*/}"
+		install -m644 ${_f} "${_fn}"
+		ln -srt "${pkgdir}/etc/fonts/conf.d" "${_fn}"
+	done
+}

@@ -1,0 +1,145 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=mingw-w64-gcc
+_realname=gcc
+pkgver=11.2.0
+_pkgver=11
+_islver=0.21
+pkgrel=1
+#_snapshot=20210328
+pkgdesc="Cross GCC for the MinGW-w64 cross-compiler"
+arch=('x86_64')
+url="https://gcc.gnu.org"
+license=('GPL' 'LGPL' 'FDL' 'custom')
+groups=('dev-mingw-w64')
+depends=('zlib' 'libmpc' 'mingw-w64-crt' 'mingw-w64-binutils' 'mingw-w64-winpthreads' 'mingw-w64-headers')
+makedepends=("gcc-ada>=${pkgver:0:2}")
+options=('!strip' 'staticlibs' '!emptydirs' '!buildflags')
+source=(https://ftp.gnu.org/gnu/gcc/gcc-$pkgver/gcc-$pkgver.tar.xz{,.sig}
+       "http://isl.gforge.inria.fr/isl-${_islver}.tar.bz2")
+validpgpkeys=(33C235A34C46AA3FFB293709A328C3A2C3C45C06  # Jakub Jelinek <jakub@redhat.com>
+              13975A70E63C361C73AE69EF6EEB81F8981C74C7)  # richard.guenther@gmail.com
+
+if [ -n "${_snapshot}" ]; then	
+	#_basedir=${pkgbase}-${_majorver}-${_snapshot}
+  _basedir=${_realname}-${_pkgver}-${_snapshot}
+	else
+	_basedir=${_realname}-${pkgver}
+fi
+
+_architectures="i686-w64-mingw32 x86_64-w64-mingw32"
+
+prepare() {
+  bsdtar -xf ${srcarchivedir}/isl-$_islver.tar.xz
+  ln -sf ${_basedir} gcc
+  cd gcc
+
+  # sed -i 's/-fno-stack-protector/-fstack-protector/g' libgcc/Makefile.in
+  # sed -i 's/-fno-stack-protector/-fno-stack-protector -lssp/g' libgcc/Makefile.in
+
+  # link isl for in-tree builds
+  ln -sf ../isl-${_islver} isl
+
+  # https://sourceforge.net/p/mingw-w64/bugs/853/
+  patch -p1 -i "$srcdir/gdc_phobos_path.patch"
+
+    # Reproducible gcc-ada
+  patch -Np0 < "$srcdir/gcc-ada-repro.patch"
+
+  # configure.ac: When adding -Wno-format, also add -Wno-format-security
+  patch -Np0 < "$srcdir/gcc11-Wno-format-security.patch"
+
+  # mmapio.c:69:14: error: implicit declaration of function ‘getpagesize’
+  sed -i 's|\-Werror||g' libbacktrace/configure
+
+  # Do not run fixincludes
+	sed -i 's@\./fixinc\.sh@-c true@' gcc/Makefile.in
+
+	# hack! - some configure tests for header files using "$CPP $CPPFLAGS"
+	sed -i "/ac_cpp=/s/\$CPPFLAGS/\$CPPFLAGS -O2/" {libiberty,gcc}/configure
+}
+
+build() {
+  # using -pipe causes spurious test-suite failures
+	# http://gcc.gnu.org/bugzilla/show_bug.cgi?id=48565
+
+  # export CFLAGS="$CFLAGS -fstack-protector-all"
+  # export CXXFLAGS="$CXXFLAGS -fstack-protector-all"
+  # export LDFLAGS="$LDFLAGS -fstack-protector"
+  # export LIBGCC2_CFLAGS="$LIBGCC2_CFLAGS  -fstack-protector"
+
+  
+
+  # export LDFLAGS="-lssp"
+
+  # export CFLAGS="$CFLAGS -fno-stack-protector"
+  # export CXXFLAGS="$CXXFLAGS -fno-stack-protector"
+  # export LDFLAGS="$LDFLAGS -fno-stack-protector"
+	
+  # remove fortify for building libraries
+  # CFLAGS=${CFLAGS/-D_FORTIFY_SOURCE=2/}
+
+  # export CFLAGS=${CFLAGS/-fstack-protector-strong/}
+  # export CFLAGS="$CFLAGS -fno-stack-protector"
+  # export LDFLAGS="$LDFLAGS -fno-stack-protector"
+
+  # CXXFLAGS=${CXXFLAGS/-D_FORTIFY_SOURCE=2/}
+  # CXXFLAGS=${CXXFLAGS/-fstack-protector-strong/}
+  # CPPFLAGS=${CPPFLAGS/-D_FORTIFY_SOURCE=2/}
+  # CPPFLAGS=${CPPFLAGS/-fstack-protector-strong/}
+
+  # #
+  # CFLAGS=${CFLAGS/-fno-plt/}
+  # CXXFLAGS=${CXXFLAGS/-fno-plt/}
+  # LDFLAGS=${LDFLAGS/-z now/}
+
+	# We build using the native system compilers.
+	export GCC=gcc
+	export GXX=g++
+
+  for _arch in ${_architectures}; do
+    mkdir -p "$srcdir"/build-${_arch} && cd "$srcdir"/build-${_arch}
+    "$srcdir"/${_basedir}/configure --prefix=/usr --libexecdir=/usr/lib \
+        --target=${_arch} \
+        --with-bugurl=https://bugs.avouch.org/ \
+        --enable-languages=c,lto,c++,ada,objc,obj-c++,fortran \
+        --enable-shared \
+        --enable-static \
+        --enable-threads=posix \
+        --enable-fully-dynamic-string \
+        --enable-libstdcxx-time=yes \
+        --enable-libstdcxx-filesystem-ts=yes \
+        --with-system-zlib \
+        --enable-cloog-backend=isl \
+        --enable-lto \
+        --enable-libgomp \
+        --disable-multilib \
+        --enable-checking=release \
+        --disable-sjlj-exceptions \
+        --with-dwarf2 \
+        --enable-default-pie \
+        --enable-default-ssp
+    make ${MAKEFLAGS}
+  done
+}
+
+package() {
+  for _arch in ${_architectures}; do
+    cd "$srcdir"/build-${_arch}
+    make DESTDIR="$pkgdir" install
+    ${_arch}-strip "$pkgdir"/usr/${_arch}/lib/*.dll
+    strip "$pkgdir"/usr/bin/${_arch}-*
+    strip "$pkgdir"/usr/lib/gcc/${_arch}/${pkgver}/{cc1*,collect2,gnat1,f951,lto*}
+    ln -s ${_arch}-gcc "$pkgdir"/usr/bin/${_arch}-cc
+    # mv dlls
+    mkdir -p "$pkgdir"/usr/${_arch}/bin/
+    mv "$pkgdir"/usr/${_arch}/lib/*.dll "$pkgdir"/usr/${_arch}/bin/
+  done
+  strip "$pkgdir"/usr/bin/*
+  # remove unnecessary files
+  rm -r "$pkgdir"/usr/share
+  rm "$pkgdir"/usr/lib/libcc1.*
+}

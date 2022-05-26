@@ -1,0 +1,29 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=zanshin
+pkgver=22.04.0
+pkgrel=1
+pkgdesc="To-do management application based on Akonadi"
+arch=('x86_64')
+groups=('kde-release-service')
+url="https://zanshin.kde.org"
+license=(GPL)
+depends=(kdepim-runtime kontactinterface)
+makedepends=(extra-cmake-modules kdoctools boost krunner kdesignerplugin)
+source=("https://download.kde.org/stable/$pkgname/$pkgname-$pkgver.tar.xz"{,.sig})
+validpgpkeys=(17166A5275C5FA6F1A48FD78074BBBCB8DECC9E2) # Kevin Ottens <ervin+bluesystems@kde.org>
+
+build() {
+  cmake -B build -S $pkgname-$pkgver \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DLIB_INSTALL_DIR=lib \
+    -DBUILD_TESTING=OFF
+  cmake --build build
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+}

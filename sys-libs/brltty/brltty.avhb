@@ -1,0 +1,67 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=brltty
+pkgver=6.2
+pkgrel=1
+pkgdesc="Braille display driver for Linux/Unix"
+arch=('x86_64')
+groups=('sys-libs')
+url="http://mielke.cc/brltty"
+license=(GPL LGPL)
+depends=('bluez-libs' 'expat' 'gcc-libs' 'glibc' 'liblouis' 'libspeechd' 'pcre'
+'polkit' 'tcl')
+makedepends=('alsa-lib' 'at-spi2-atk' 'at-spi2-core' 'atk' 'cython' 'dbus'
+'espeak-ng' 'festival' 'glib2' 'gpm' 'icu' 'java-environment' 'libxaw' 'ncurses'
+'ocaml-ctypes' 'ocaml-findlib' 'speech-dispatcher' 'systemd-libs')
+optdepends=('at-spi2-core: X11/GNOME Apps accessibility'
+            'atk: ATK bridge for X11/GNOME accessibility'
+            'espeak-ng: espeak-ng driver'
+            'java-runtime: Java support'
+            'libxaw: X11 support'
+            'libxt: X11 support'
+            'libx11: for xbrlapi'
+            'libxfixes: for xbrlapi'
+            'libxtst: for xbrlapi'
+            'ocaml: OCaml support'
+            'python: Python support'
+            'speech-dispatcher: speech-dispatcher driver')
+backup=(etc/brltty.conf)
+install=brltty.install
+source=(http://mielke.cc/brltty/archive/brltty-$pkgver.tar.xz
+        brltty.service brltty.sysusers)
+
+prepare() {
+  cd "${pkgname}-${pkgver}"
+  sed -i 's/libexec/lib/g' Autostart/Systemd/Makefile.in
+  ./autogen
+}
+
+build() {
+  cd $pkgname-$pkgver
+  ./configure --prefix=/usr \
+              --sysconfdir=/etc \
+              --libexecdir=/usr/lib \
+              --localstatedir=/var \
+              --mandir=/usr/share/man \
+              --with-tables-directory=/usr/share/brltty \
+              --with-writable-directory=/run/brltty \
+              --enable-gpm \
+              --disable-stripping
+
+  make ${MAKEFLAGS}
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make INSTALL_ROOT="${pkgdir}" install
+  make INSTALL_ROOT="${pkgdir}" install -C Autostart/Systemd
+  make INSTALL_ROOT="${pkgdir}" install -C Autostart/Udev
+  install -vDm 644 "Documents/${pkgname}.conf" -t "${pkgdir}/etc/"
+  install -vDm 644 "../${pkgname}.sysusers" \
+    "${pkgdir}/usr/lib/sysusers.d/${pkgname}.conf"
+  install -vDm 644 "../${pkgname}.tmpfiles" \
+    "${pkgdir}/usr/lib/tmpfiles.d/${pkgname}.conf"
+}

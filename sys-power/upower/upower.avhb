@@ -1,0 +1,35 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=upower
+pkgver=0.99.17
+_pkgver=${pkgver//./_}
+pkgrel=1
+pkgdesc="Abstraction for enumerating power devices, listening to device events and querying history and statistics"
+arch=('x86_64')
+groups=('sys-power')
+url="http://upower.freedesktop.org"
+license=('GPL')
+depends=(systemd libimobiledevice libgudev)
+makedepends=(docbook-xsl gobject-introspection python git gtk-doc meson)
+checkdepends=(python-{dbus,dbusmock,gobject} umockdev)
+backup=('etc/UPower/UPower.conf')
+source=(https://gitlab.freedesktop.org/upower/upower/-/archive/UPOWER_0_99_11/upower-UPOWER_${pkgver//./_}.tar.bz2)
+
+build() {
+  avouch-meson upower-v$pkgver build
+  meson compile -C build
+}
+
+check() {
+  meson test -C build --print-errorlogs
+}
+
+package() {
+  depends+=(libg{lib,object,io}-2.0.so)
+  provides+=(libupower-glib.so)
+
+  meson install -C build --destdir "$pkgdir"
+}

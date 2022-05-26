@@ -1,0 +1,26 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libnice
+pkgver=0.1.18
+pkgrel=1
+pkgdesc="An implementation of the IETF's draft ICE (for p2p UDP data streams)"
+arch=('x86_64')
+groups=('media-libs')
+url="https://nice.freedesktop.org"
+license=('LGPL')
+depends=('glib2')
+makedepends=('gstreamer' 'gtk-doc' 'meson')
+optdepends=('gstreamer')
+source=("https://libnice.freedesktop.org/releases/$pkgname-$pkgver.tar.gz")
+
+build() {
+	avouch-meson $pkgname-$pkgver build
+	meson compile -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install -C build
+}

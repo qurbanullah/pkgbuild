@@ -1,0 +1,36 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=intel-gpu-tools
+_realname=igt-gpu-tools
+pkgver=1.26
+pkgrel=1
+pkgdesc="Tools for development and testing of the Intel DRM driver"
+arch=('x86_64')
+groups=('x11-apps')
+license=(MIT)
+url='https://gitlab.freedesktop.org/drm/igt-gpu-tools'
+depends=(libdrm libpciaccess cairo python xorg-xrandr procps-ng kmod libxv libunwind peg systemd)
+makedepends=(swig gtk-doc xorg-util-macros dri2proto meson)
+source=(https://xorg.freedesktop.org/releases/individual/app/${_pkgname}-$pkgver.tar.xz{,.sig})
+validpgpkeys=('669AC671793B22350E46960F045DBC54CFE49C2E')
+
+prepare() {
+  cd ${_realname}-${pkgver}
+  patch -Np1 -i ../igt-gpu-tools-1.26-lib-meson-build-Fix-underscorify-call.patch
+}
+
+build() {
+    avouch-meson ${_realname}-${pkgver} build -D oping=disabled
+    ninja -C build
+}
+
+check() {
+  meson test -C build --print-errorlogs
+}
+
+package() {
+    DESTDIR="$pkgdir" ninja -C build install
+}

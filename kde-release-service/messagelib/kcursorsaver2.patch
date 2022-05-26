@@ -1,0 +1,11 @@
+--- messagecomposer/src/helper/messagefactoryng.cpp	2021-02-12 09:14:20.000000000 +0000
++++ ../messagefactoryng.cpp	2021-03-21 13:45:51.602006902 +0000
+@@ -383,7 +383,7 @@
+     }
+ 
+     MessageHelper::setAutomaticFields(msg, true);
+-    KCursorSaver saver(Qt::WaitCursor);
++    KPIM::KCursorSaver saver(Qt::WaitCursor);
+     if (numberOfItems == 0) {
+         attachments << createForwardAttachmentMessage(mOrigMsg);
+         MessageComposer::Util::addLinkInformation(msg, mId, Akonadi::MessageStatus::statusForwarded());

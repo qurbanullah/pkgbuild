@@ -1,0 +1,28 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=ifuse
+pkgver=1.1.4
+pkgrel=1
+pkgdesc="A fuse filesystem implementation to access the contents of iOS devices."
+arch=('x86_64')
+groups=('app-mobile')
+url='https://libimobiledevice.org/'
+arch=('x86_64')
+license=('LGPL2.1')
+depends=('fuse2' 'libimobiledevice' 'libplist')
+source=("https://github.com/libimobiledevice/$pkgname/archive/refs/tags/$pkgver.tar.gz")
+
+build() {
+	cd "${pkgname}-${pkgver}"
+	./autogen.sh --prefix=/usr
+	make
+}
+
+package() {
+	cd "${pkgname}-${pkgver}"
+	make DESTDIR="$pkgdir" install
+}
+

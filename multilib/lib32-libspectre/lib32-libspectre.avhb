@@ -1,0 +1,35 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=lib32-libspectre
+pkgbase=libspectre
+pkgver=0.2.8
+pkgrel=1
+pkgdesc="Small library for rendering Postscript documents"
+arch=('x86_64')
+groups=('multilib')
+license=('GPL2')
+url="http://www.freedesktop.org/wiki/Software/libspectre"
+depends=('ghostscript')
+source=(http://libspectre.freedesktop.org/releases/${pkgname}-${pkgver}.tar.gz)
+sha1sums=('a7efd97b82b84ff1bb7a0d88c7e35ad10cc84ea8')
+
+build() {
+	cd "${srcdir}/${pkgbase}-${pkgver}"
+
+	export CC="gcc -m32"
+	export CXX="g++ -m32"
+	export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+
+	./configure --prefix=/usr --disable-static \
+	--libdir=/usr/lib32
+	make ${MAKEFLAGS}
+}
+
+package() {
+	cd "${srcdir}/${pkgbase}-${pkgver}"
+	make DESTDIR="${pkgdir}" install
+	rm -rf "${pkgdir}"/usr/{include,share}
+}

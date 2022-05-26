@@ -1,0 +1,39 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=telepathy-gabble
+pkgver=0.18.4
+pkgrel=1
+pkgdesc="A Jabber/XMPP connection manager for Telepathy"
+arch=('x86_64')
+groups=('net-im')
+url="http://telepathy.freedesktop.org"
+groups=('telepathy')
+license=('LGPL2.1')
+depends=('telepathy-glib' 'libsoup' 'libnice' 'sqlite')
+makedepends=('libxslt' 'python3')
+options=('!emptydirs')
+source=(http://telepathy.freedesktop.org/releases/$pkgname/$pkgname-$pkgver.tar.gz)
+install=telepathy-gabble.install
+
+prepare() {
+  cd $pkgname-$pkgver
+  # port to python3, patch taken from Fedora
+  patch -Np1 -i ../telepathy-gabble-0.18.4-python3.patch
+}
+
+build() {
+  cd $pkgname-$pkgver
+  ./configure --prefix=/usr \
+    --libexecdir=/usr/lib/telepathy \
+    --disable-Werror --enable-gtk-doc
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+  make
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make DESTDIR="$pkgdir" install
+}

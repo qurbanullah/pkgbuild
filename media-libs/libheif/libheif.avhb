@@ -1,0 +1,28 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libheif
+pkgver=1.12.0
+pkgrel=1
+pkgdesc="HEIF file format decoder and encoder"
+arch=('x86_64')
+groups=('media-libs')
+url="https://github.com/strukturag/libheif"
+license=(GPL3)
+makedepends=(libjpeg libpng gdk-pixbuf2)
+depends=(libde265 x265 aom)
+optdepends=('libjpeg: for heif-convert and heif-enc' 'libpng: for heif-convert and heif-enc')
+source=(https://github.com/strukturag/libheif/releases/download/v$pkgver/libheif-$pkgver.tar.gz)
+
+build() {
+  cd $pkgname-$pkgver
+  ./configure --prefix=/usr --enable-static=no --disable-go
+  make ${MAKEFLAGS}
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make DESTDIR="$pkgdir" install
+}

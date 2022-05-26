@@ -1,0 +1,21 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=hwdetect
+pkgver=2016.01
+pkgrel=1
+pkgdesc="Hardware detection script with loading modules and mkinitcpio.conf / rc.conf support"
+arch=(any)
+license=('GPL')
+depends=('sh' 'awk' 'grep' 'coreutils' 'sed' 'e2fsprogs')
+optdepends=('cryptsetup: for encrypt mkinitcpio config support'
+            'dmraid:     for dmraid mkinitcpio config support'
+            'lvm2:       for lvm2 mkinitcpio config support'
+            'mdadm:      for raid mkinitcpio config support')
+source=(hwdetect)
+
+package() {
+  install -D -m 755 "${srcdir}/hwdetect" "${pkgdir}/usr/bin/hwdetect"
+}

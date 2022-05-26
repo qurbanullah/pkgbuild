@@ -1,0 +1,38 @@
+# Maintainer: Felix Yan <felixonmars@archlinux.org>
+# Contributor: Daniel Peukert <daniel@peukert.cc>
+
+pkgname="ocaml-stdlib-shims"
+_realname='stdlib-shims'
+pkgver=0.3.0
+pkgrel=1
+pkgdesc='Shim to substitute `Pervasives` with `Stdlib` before 4.08'
+arch=('x86_64')
+url="https://github.com/ocaml/$_realname"
+license=('custom:LGPL2.1 with linking exception')
+depends=('ocaml>=4.13.1')
+makedepends=('dune')
+options=('!strip')
+source=("$pkgname-$pkgver-$pkgrel.tar.gz::$url/archive/$pkgver.tar.gz")
+sha256sums=('6d0386313a021146300011549180fcd4e94f7ac3c3bf021ff165f6558608f0c2')
+
+build() {
+	cd "$_realname-$pkgver"
+	dune build -p "$_realname" --verbose
+}
+
+check() {
+	cd "$_realname-$pkgver"
+	dune runtest -p "$_realname" --verbose
+}
+
+package() {
+	cd "$_realname-$pkgver"
+	DESTDIR="$pkgdir" dune install --prefix '/usr' --libdir 'lib/ocaml'
+
+	install -dm755 "$pkgdir/usr/share/doc/$pkgname"
+	mv "$pkgdir/usr/doc/$_realname/"* "$pkgdir/usr/share/doc/$pkgname/"
+	rm -r "$pkgdir/usr/doc/"
+
+	install -dm755 "$pkgdir/usr/share/licenses/$pkgname"
+	ln -sf "/usr/share/doc/$pkgname/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}

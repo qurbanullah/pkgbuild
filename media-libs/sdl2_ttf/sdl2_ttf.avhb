@@ -1,0 +1,38 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=sdl2_ttf
+_realname=SDL2_ttf
+pkgver=2.0.15
+pkgrel=2
+pkgdesc="A library that allows you to use TrueType fonts in your SDL applications (Version 2)"
+arch=('x86_64')
+groups=('media-libs')
+url="http://www.libsdl.org/projects/SDL_ttf"
+license=('MIT')
+depends=('sdl2' 'freetype2')
+makedepends=('cmake')
+source=("https://www.libsdl.org/projects/SDL_ttf/release/SDL2_ttf-${pkgver}.tar.gz")
+
+prepare() {
+  cd SDL2_ttf-${pkgver}
+
+  touch NEWS README AUTHORS ChangeLog
+  autoreconf -vi
+}
+
+build() {
+  cd "${srcdir}/SDL2_ttf-${pkgver}/"
+
+  ./configure --disable-static --prefix=/usr
+  make
+}
+
+package() {
+  cd "${srcdir}/SDL2_ttf-${pkgver}/"
+
+  make DESTDIR="${pkgdir}/" install
+  install -Dm644 COPYING.txt "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+}

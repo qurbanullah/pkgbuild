@@ -1,0 +1,29 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libhandy-0
+_realname=libhandy
+pkgver=0.0.13
+pkgrel=1
+pkgdesc="Library full of GTK+ widgets for mobile phones"
+arch=('x86_64')
+groups=('sys-libs')
+url="https://source.puri.sm/Librem5/libhandy"
+license=(LGPL2.1)
+depends=(gtk3)
+makedepends=(git glade gobject-introspection meson vala)
+source=("https://source.puri.sm/Librem5/libhandy/-/archive/v$pkgver/libhandy-v$pkgver.tar.bz2")
+
+build() {
+  avouch-meson $_realname-v$pkgver build \
+    -D gtk_doc=false \
+    -D examples=false \
+    -D glade_catalog=disabled
+  ninja -C build
+}
+
+package() {
+  DESTDIR="$pkgdir" meson install -C build
+}

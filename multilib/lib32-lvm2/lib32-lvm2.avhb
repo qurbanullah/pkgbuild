@@ -1,0 +1,65 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+_realname=LVM2
+pkgname=lib32-lvm2
+pkgver=2.03.11
+pkgrel=1
+pkgdesc='Low-latency audio communication codec (32 bit)'
+arch=('x86_64')
+url='https://sourceware.org/lvm2/'
+license=('GPL2' 'LGPL2.1')
+makedepends=('git' 'systemd' 'thin-provisioning-tools')
+validpgpkeys=('88437EF5C077BD113D3B7224228191C1567E2C17'  # Alasdair G Kergon <agk@redhat.com>
+              'D501A478440AE2FD130A1BE8B9112431E509039F') # Marian Csontos <marian.csontos@gmail.com>
+source=("git+https://sourceware.org/git/lvm2.git#tag=v${pkgver//./_}?signed"
+        'lvm2_install'
+        'lvm2_hook'
+        'sd-lvm2_install'
+        '11-dm-initramfs.rules')
+
+prepare() {
+
+	cd "${srcdir}/${_realname}.${pkgver}"
+
+	# patch -Np1 < ../0001-fix-ordering-in-initramfs.patch
+
+  # remove install section from systemd units that are enabled by default
+  sed -i -e '/^\[Install\]$/,$d' \
+    scripts/dm_event_systemd_red_hat.socket.in \
+    scripts/lvm2_lvmpolld_systemd_red_hat.socket.in \
+    scripts/lvm2_monitoring_systemd_red_hat.service.in
+}
+
+
+build() {
+  cd "${srcdir}/${_realname}.${pkgver}"
+
+  export CC="gcc -m32"
+  export CXX="g++ -m32"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+
+  ./configure --prefix=/usr --libdir=/usr/lib32 --libexecdir=/usr/lib32 usrlibdir=/usr/lib32 \
+    --with-default-dm-run-dir=/run \
+    --with-default-locking-dir=/run/lock/lvm \
+    --with-default-pid-dir=/run \
+    --with-default-run-dir=/run/lvm \
+    --with-systemdsystemunitdir=/usr/lib/systemd/system \
+    --with-thin=internal \
+    --with-udev-prefix=/usr 
+  make ${MAKEFLAGS}
+}
+
+package() {
+  cd "${srcdir}/${_realname}.${pkgver}"
+
+  make DESTDIR="${pkgdir}" install
+  ln -sv libdevmapper.so.1.02 $pkgdir/usr/lib32/libdevmapper.so
+  mkdir -p $pkgdir/usr/lib32/pkgconfig
+  cp libdm/libdevmapper.pc $pkgdir/usr/lib32/pkgconfig/libdevmapper.pc
+
+  rm -rf "${pkgdir}"/etc
+	rm -rf "${pkgdir}"/usr/{bin,sbin,lib,include,share}
+}

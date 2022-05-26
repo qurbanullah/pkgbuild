@@ -1,0 +1,27 @@
+# $Id$
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=popt
+pkgver=1.18
+pkgrel=1
+pkgdesc="A commandline option parser"
+arch=('x86_64')
+groups=('sys-base')
+url="http://rpm5.org"
+license=('custom')
+depends=('glibc')
+options=('staticlibs')
+source=(https://ftp.osuosl.org/pub/rpm/popt/releases/popt-1.x/popt-${pkgver}.tar.gz)
+
+build() {
+	cd "${srcdir}/${pkgname}-${pkgver}"
+	./configure --prefix=/usr
+	make ${MAKEFLAGS}
+}
+
+package() {
+	cd "${srcdir}/${pkgname}-${pkgver}"
+	make DESTDIR="${pkgdir}" install
+}
+

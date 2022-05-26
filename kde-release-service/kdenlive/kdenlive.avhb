@@ -1,0 +1,37 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=kdenlive
+pkgver=22.04.0
+pkgrel=1
+pkgdesc="A non-linear video editor for Linux using the MLT video framework"
+arch=('x86_64')
+groups=('kde-apps')
+url="https://www.kdenlive.org/"
+license=(GPL)
+depends=(knewstuff knotifyconfig kfilemetadata purpose mlt qt5-quickcontrols qt5-quickcontrols2 rttr breeze-icons frei0r-plugins)
+makedepends=(extra-cmake-modules kdoctools v4l-utils)
+optdepends=('ffmpeg: for FFmpeg plugin'
+            'cdrtools: for creation of DVD ISO images'
+            'dvdauthor: for creation of DVD'
+            'dvgrab: for firewire capture'
+            'recordmydesktop: for screen capture'
+            'xine-ui: for DVD preview'
+            'vlc: for DVD preview'
+            'plasma-desktop: theme configuration')
+source=("https://download.kde.org/stable/applications/$pkgver/src/$pkgname-$pkgver.tar.xz"{,.sig})
+validpgpkeys=(CA262C6C83DE4D2FB28A332A3A6A4DB839EAA6D7  # Albert Astals Cid <aacid@kde.org>
+              F23275E4BF10AFC1DF6914A6DBD2CE893E2D1C87) # Christoph Feck <cfeck@kde.org>
+
+build() {
+	cmake -S ${pkgname}-${pkgver} -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DBUILD_TESTING=OFF
+	ninja -C build
+}
+
+package() {
+	DESTDIR="${pkgdir}" ninja -C build install
+}

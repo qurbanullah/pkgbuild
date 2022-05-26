@@ -1,0 +1,36 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=gnome-shell-extension-dash-to-panel
+_realname=dash-to-panel
+pkgver=46
+pkgrel=1
+pkgdesc='Extension for GNOME shell to combine the dash and main panel'
+arch=(any)
+groups=('gnome-extra')
+url="https://github.com/jderose9/dash-to-panel"
+license=(GPL2)
+depends=('gnome-shell')
+makedepends=(git gnome-common intltool make)
+source=("https://github.com/jderose9/dash-to-panel/archive/v${pkgver}.tar.gz")
+
+getsrc() {
+  git clone https://github.com/home-sweet-gnome/dash-to-panel.git
+}
+
+pkgver() {
+  cd $_realname
+  git rev-parse HEAD
+}
+
+build() {
+  cd $_realname
+  make
+}
+
+package() {
+  cd $_realname
+  make DESTDIR="${pkgdir}" VERSION="${pkgver}" install
+}

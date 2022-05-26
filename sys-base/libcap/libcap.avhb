@@ -1,0 +1,46 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libcap
+pkgver=2.49
+pkgrel=1
+pkgdesc="POSIX 1003.1e capabilities"
+arch=('x86_64')
+groups=('sys-base')
+url='https://sites.google.com/site/fullycapable/'
+license=(GPL2)
+depends=(glibc attr)
+makedepends=(linux-api-headers)
+validpgpkeys=(38A644698C69787344E954CE29EE848AE2CCF3F4) # Andrew G. Morgan <morgan@kernel.org>
+source=("https://kernel.org/pub/linux/libs/security/linux-privs/${pkgname}2/${pkgname}-$pkgver.tar."{xz,sign}
+        "${pkgname}-2.45-makefile.patch")
+validpgpkeys=(38A644698C69787344E954CE29EE848AE2CCF3F4) # Andrew G. Morgan <morgan@kernel.org>
+
+prepare() {
+  cd "$pkgname-$pkgver"
+  # SBINDIR is hardcoded to sbin. set to bin
+  # add CPPFLAGS
+  patch -Np1 -i ../"${pkgname}-2.45-makefile.patch"
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+  make KERNEL_HEADERS='/usr/include' lib='lib' prefix='/usr'
+}
+
+check() {
+  cd "$pkgname-$pkgver"
+  make test
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+  make DESTDIR="$pkgdir" RAISE_SETFCAP='no' lib='lib' prefix='/usr' install
+  # docs
+  install -vDm 644 {CHANGELOG,README} -t "${pkgdir}/usr/share/doc/${pkgname}/"
+  install -vDm 644 pam_cap/capability.conf \
+    -t "$pkgdir/usr/share/doc/$pkgname/examples/"
+}
+

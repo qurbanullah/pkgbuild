@@ -1,0 +1,46 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=spirv-llvm-translator
+_realname=SPIRV-LLVM-Translator
+pkgver=14.0.0
+pkgrel=1
+pkgdesc="Tool and a library for bi-directional translation between SPIR-V and LLVM IR"
+arch=(x86_64)
+groups=('dev-utils')
+url="https://github.com/KhronosGroup/SPIRV-LLVM-Translator/"
+license=(custom)
+depends=(llvm-libs)
+makedepends=(cmake llvm spirv-tools)
+checkdepends=(python python-setuptools clang)
+source=(${url}/archive/v${pkgver}/${pkgname}-${pkgver}.tar.gz)
+sha256sums=('6464a722278d37fca783cb505caf44cc8473c22fd22ff6a5d07198bc92059c4f')
+
+prepare() {
+    cd ${_realname}
+    # llvm 14.0.0
+    git checkout e02c210fece5f39a97822e56e41fa6e2fdbd1f25
+}
+build() {
+    cmake -B build -S ${_realname} \
+        -DBUILD_SHARED_LIBS=ON \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+        -DCMAKE_SKIP_RPATH=ON \
+        -DLLVM_INCLUDE_TESTS=ON \
+        -DLLVM_EXTERNAL_LIT=/usr/bin/lit \
+        -Wno-dev
+    make ${MAKEFLAGS} -C build
+}
+
+# check() {
+#     LD_LIBRARY_PATH="${srcdir}/build/lib/SPIRV" make -C build test
+# }
+
+package() {
+    make -C build DESTDIR="${pkgdir}" install
+    install -Dm755 build/tools/llvm-spirv/llvm-spirv "${pkgdir}"/usr/bin/llvm-spirv
+}

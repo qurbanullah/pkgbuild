@@ -1,0 +1,29 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=skanpage
+pkgver=22.04.0
+pkgrel=1
+pkgdesc="KDE image scanning application (git version)"
+arch=('x86_64')
+groups=('kde-release-service')
+url="https://invent.kde.org/utilities/skanpage"
+license=(GPL)
+depends=(kcoreaddons ki18n kxmlgui libksane-git kconfig qt5-base qt5-declarative)
+makedepends=(extra-cmake-modules git cmake kio kirigami2)
+source=('git+https://invent.kde.org/utilities/skanpage.git')
+sha1sums=('SKIP')
+
+build() {
+  cmake -S $pkgname-$pkgver -B build -G Ninja\
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DKDE_INSTALL_LIBDIR=lib \
+    -DBUILD_TESTING=OFF
+  ninja -C build
+}
+
+package() {
+  DESTDIR="$pkgdir" ninja -C build install
+}

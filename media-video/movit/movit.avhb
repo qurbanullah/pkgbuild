@@ -1,0 +1,30 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=movit
+pkgver=1.6.3
+pkgrel=1
+pkgdesc="The modern video toolkit"
+arch=('x86_64')
+groups=('media-video')
+url="https://movit.sesse.net/"
+license=('GPL')
+depends=('fftw' 'libepoxy')
+makedepends=('eigen' 'gtest' 'sdl2')
+source=(https://movit.sesse.net/$pkgname-$pkgver.tar.gz)
+sha256sums=('eb19f109ec99d6050de5267d059c7b351d3d5e39c77d43ca348a95f474a99498')
+
+build() {
+  cd $pkgname-$pkgver
+
+  ./configure --prefix=/usr
+  make GTEST_DIR=/usr/src/googletest
+}
+
+package() {
+  cd $pkgname-$pkgver
+
+  make DESTDIR="$pkgdir" install
+}

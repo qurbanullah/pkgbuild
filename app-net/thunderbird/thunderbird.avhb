@@ -1,0 +1,119 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=thunderbird
+pkgver=78.6.0
+pkgrel=1
+pkgdesc='Standalone mail and news reader from mozilla.org'
+arch=('x86_64')
+groups=('app-net')
+url='https://www.mozilla.org/thunderbird/'
+license=(MPL GPL LGPL)
+depends=(
+  glibc gtk3 libgdk-3.so mime-types dbus libdbus-1.so dbus-glib alsa-lib nss
+  hunspell sqlite ttf-font libvpx libvpx.so zlib bzip2 botan libwebp libevent
+  libjpeg-turbo libffi nspr gcc-libs libx11 libxrender libxfixes libxext
+  libxcomposite libxdamage pango libpango-1.0.so cairo gdk-pixbuf2 icu
+  libicui18n.so libicuuc.so freetype2 libfreetype.so fontconfig
+  libfontconfig.so glib2 libglib-2.0.so pixman libpixman-1.so gnupg
+)
+makedepends=(
+  unzip zip diffutils python python-setuptools yasm nasm mesa imake libpulse
+  inetutils xorg-server-xvfb autoconf2.13 rust clang llvm gtk2 cbindgen nodejs
+  gawk perl findutils
+)
+options=(!emptydirs !makeflags)
+source=(https://ftp.mozilla.org/pub/mozilla.org/thunderbird/releases/$pkgver/source/thunderbird-$pkgver.source.tar.xz{,.asc}
+        thunderbird-78.5-rust-1.48.patch
+        configure-fix-passing-system-bzip2-ldflags.patch
+        $pkgname.desktop)
+validpgpkeys=(14F26682D0916CDD81E37B6D61B7B526D98F0353) # Mozilla Software Releases <release@mozilla.com>
+
+# Google API keys (see http://www.chromium.org/developers/how-tos/api-keys)
+# Note: These are for Avouch Linux use ONLY. For your own distribution, please
+# get your own set of keys. Feel free to contact info@avouch.org for more information.
+_google_api_key=AIzaSyCm8I84pz4zSvrzQGpYiJTaMVgzGSxz8Z4
+
+# Mozilla API keys (see https://location.services.mozilla.com/api)
+# Note: These are for Avouch Linux use ONLY. For your own distribution, please
+# get your own set of keys. Feel free to contact info@avouch.org for more information.
+_mozilla_api_key=7dca4b7b-6085-4ebb-9633-d566ed2de0fd
+
+prepare() {
+  cd $pkgname-$pkgver
+  patch -Np1 -i ../thunderbird-78.5-rust-1.48.patch
+  patch -Np1 -i ../configure-fix-passing-system-bzip2-ldflags.patch
+
+  printf "%s" "$_google_api_key" >google-api-key
+  printf "%s" "$_mozilla_api_key" >mozilla-api-key
+  cp ../mozconfig.cfg .mozconfig
+  sed "s|@PWD@|${PWD@Q}|g" -i .mozconfig
+}
+
+build() {
+  cd $pkgname-$pkgver
+  ./mach configure
+  ./mach build
+  ./mach buildsymbols
+}
+
+package() {
+  cd $pkgname-$pkgver
+  DESTDIR="$pkgdir" ./mach install
+
+  _vendorjs="$pkgdir/usr/lib/$pkgname/defaults/preferences/vendor.js"
+  install -Dm644 /dev/stdin "$_vendorjs" <<END
+// Use LANG environment variable to choose locale
+pref("intl.locale.requested", "");
+
+// Use system-provided dictionaries
+pref("spellchecker.dictionary_path", "/usr/share/hunspell");
+
+// Disable default mailer checking.
+pref("mail.shell.checkDefaultMail", false);
+
+// Don't disable our bundled extensions in the application directory
+pref("extensions.autoDisableScopes", 11);
+pref("extensions.shownSelectionUI", true);
+END
+
+  _distini="$pkgdir/usr/lib/$pkgname/distribution/distribution.ini"
+  install -Dm644 /dev/stdin "$_distini" <<END
+[Global]
+id=avouch
+version=1.0
+about=Mozilla Thunderbird for Avouch Linux
+
+[Preferences]
+app.distributor=avouch
+app.distributor.channel=$pkgname
+app.partner.avouch=avouch
+END
+
+  for i in 16 22 24 32 48 64 128 256; do
+    install -Dm644 comm/mail/branding/thunderbird/default${i}.png \
+      "$pkgdir/usr/share/icons/hicolor/${i}x${i}/apps/$pkgname.png"
+  done
+  install -Dm644 comm/mail/branding/thunderbird/TB-symbolic.svg \
+    "$pkgdir/usr/share/icons/hicolor/symbolic/apps/thunderbird-symbolic.svg"
+
+  install -Dm644 ../$pkgname.desktop \
+    "$pkgdir/usr/share/applications/$pkgname.desktop"
+
+  # Use system-provided dictionaries
+  ln -Ts /usr/share/hunspell "$pkgdir/usr/lib/$pkgname/dictionaries"
+  ln -Ts /usr/share/hyphen "$pkgdir/usr/lib/$pkgname/hyphenation"
+
+  # Install a wrapper to avoid confusion about binary path
+  install -Dm755 /dev/stdin "$pkgdir/usr/bin/$pkgname" <<END
+#!/bin/sh
+exec /usr/lib/$pkgname/thunderbird "\$@"
+END
+
+  # Replace duplicate binary with wrapper
+  # https://bugzilla.mozilla.org/show_bug.cgi?id=658850
+  ln -srf "$pkgdir/usr/bin/$pkgname" \
+    "$pkgdir/usr/lib/$pkgname/thunderbird-bin"
+}

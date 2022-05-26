@@ -1,0 +1,53 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=lib32-vulkan-icd-loader
+_realname=Vulkan-Loader
+pkgver=1.2.186
+pkgrel=1
+arch=(x86_64)
+groups=('multilib')
+pkgdesc="Vulkan Installable Client Driver (ICD) Loader (32-bit)"
+url="https://www.khronos.org/vulkan/"
+license=('custom')
+makedepends=('cmake' 'python' 'lib32-libx11' 'lib32-libxrandr' 'lib32-wayland' 'vulkan-headers' 'git')
+depends=('lib32-glibc')
+optdepends=('lib32-vulkan-driver: packaged vulkan driver')
+provides=('libvulkan.so')
+source=("vulkan-icd-loader-${pkgver}.tar.gz::https://github.com/KhronosGroup/Vulkan-Loader/archive/v${pkgver}.tar.gz")
+sha256sums=('61f2cae1c47f38e17b6a2e578cf247041d733a2db364d6e09f4366cc493aec73')
+
+build() {
+  export ASFLAGS=--32
+  export CFLAGS=-m32
+  export CXXFLAGS=-m32                                                                                                                                                                                                            
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig" 
+
+  cd "${srcdir}"/$_realname-$pkgver
+
+  rm -rf build ; mkdir build ; cd build
+  cmake -DCMAKE_INSTALL_PREFIX=/usr \
+    -DVULKAN_HEADERS_INSTALL_DIR=/usr \
+    -DCMAKE_INSTALL_SYSCONFDIR=/etc \
+    -DCMAKE_INSTALL_LIBDIR=lib32 \
+    -DCMAKE_INSTALL_DATADIR=/share \
+    -DCMAKE_SKIP_RPATH=True \
+    -DBUILD_TESTS=Off \
+    -DBUILD_WSI_XCB_SUPPORT=On \
+    -DBUILD_WSI_XLIB_SUPPORT=On \
+    -DBUILD_WSI_WAYLAND_SUPPORT=On \
+    -DCMAKE_BUILD_TYPE=Release \
+    ..
+  make ${MAKEFLAGS}
+}
+
+package() {
+  cd "${srcdir}"/Vulkan-Loader*/build
+  
+  make DESTDIR="${pkgdir}" install
+
+  install -dm755 "${pkgdir}"/usr/share/licenses/${pkgname}
+  install -m644 ../LICENSE.txt "${pkgdir}"/usr/share/licenses/${pkgname}/
+}

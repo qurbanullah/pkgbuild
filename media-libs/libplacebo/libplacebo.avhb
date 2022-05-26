@@ -1,0 +1,37 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libplacebo
+pkgver=3.120.3
+pkgrel=1
+pkgdesc='Reusable library for GPU-accelerated video/image rendering primitives'
+url='https://github.com/haasn/libplacebo'
+arch=('x86_64')
+groups=('media-libs')
+depends=('vulkan-icd-loader' 'libvulkan.so' 'glslang' 'lcms2' 'liblcms2.so' 'shaderc' 'libshaderc_shared.so'
+         'libepoxy' 'libglvnd' 'glibc' 'gcc-libs')
+makedepends=('meson' 'ninja' 'vulkan-headers' 'python' 'python-mako')
+provides=('libplacebo.so')
+source=(https://code.videolan.org/videolan/libplacebo/-/archive/v${pkgver}/libplacebo-v${pkgver}.tar.gz)
+
+build() {
+  CXXFLAGS+=" -I/usr/include/glslang"
+  avouch-meson ${pkgname}-v${pkgver} build \
+    -D tests=false \
+    -D vulkan=enabled \
+    -D glslang=enabled \
+    -D shaderc=enabled \
+    -D lcms=enabled
+  ninja -C build
+}
+
+# check() {
+#   ninja -C build test
+# }
+
+package() {
+  DESTDIR="${pkgdir}" ninja -C build install
+  install -Dm 644 ${pkgname}-v${pkgver}/README.md -t "${pkgdir}/usr/share/doc/${pkgname}"
+}

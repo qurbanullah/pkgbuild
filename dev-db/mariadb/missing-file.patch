@@ -1,0 +1,10 @@
+--- storage/connect/cmgoconn.h	2021-02-19 09:41:03.000000000 +0000
++++ ../cmgoconn.h	2021-04-17 18:19:16.167281504 +0000
+@@ -6,7 +6,6 @@
+ /*  Include MongoDB library header files.                       	  	 */
+ /***********************************************************************/
+ #include <bson.h>
+-#include <bcon.h>
+ #include <mongoc.h>
+ 
+ // C connection to a MongoDB data source

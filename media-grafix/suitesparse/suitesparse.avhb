@@ -1,0 +1,42 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=suitesparse
+_realname=SuiteSparse
+pkgver=5.11.0
+pkgrel=1
+pkgdesc="A collection of sparse matrix libraries"
+url="http://faculty.cse.tamu.edu/davis/suitesparse.html"
+arch=('x86_64')
+groups=('media-grafix')
+depends=('metis' 'lapack' 'intel-tbb')
+makedepends=('gcc-fortran' 'cmake' 'chrpath')
+license=('GPL')
+options=('staticlibs')
+source=("https://github.com/DrTimothyAldenDavis/SuiteSparse/archive/v$pkgver.tar.gz"
+        suitesparse-no-demo.patch)
+
+prepare() {
+  cd SuiteSparse-$pkgver
+  patch -p1 -i ../suitesparse-no-demo.patch # Don't run demo
+}
+
+build() {
+  cd SuiteSparse-$pkgver
+
+  BLAS=-lblas LAPACK=-llapack MY_METIS_LIB=/usr/lib/libmetis.so make
+}
+
+
+package() {
+  cd SuiteSparse-$pkgver
+  install -dm755 "${pkgdir}"/usr/{include,lib}
+
+  BLAS=-lblas LAPACK=-llapack MY_METIS_LIB=/usr/lib/libmetis.so \
+  make INSTALL_LIB="${pkgdir}"/usr/lib INSTALL_INCLUDE="${pkgdir}"/usr/include install
+
+  # fix RPATH
+  chrpath -d "$pkgdir"/usr/lib/*
+}

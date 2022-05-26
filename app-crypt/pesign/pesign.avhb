@@ -1,0 +1,60 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=pesign
+pkgver=113
+pkgrel=1
+pkgdesc='Tools for manipulating signed PE-COFF binaries'
+arch=('x86_64')
+groups=('app-crypt')
+url='https://github.com/rhinstaller/pesign'
+license=('GPL2')
+depends=('efivar' 'nss' 'libutil-linux')
+source=("${url}/releases/download/${pkgver}/${pkgname}-${pkgver}.tar.bz2"
+        "${pkgname}.sysusers"
+        'https://github.com/rhboot/pesign/releases/download/113/pesign-113.tar.bz2') # No HTTP because custom CA
+
+prepare() {
+    # with gold build failed, --default-symver: unknown option
+    disable_ld_gold
+    cd "${pkgname}-${pkgver}"
+    # -Werror, not even once
+    sed -e 's/\-Werror//g' -i Make.defaults
+    # remove root check
+    patch -Np1 -i "../${pkgname}-113-remove_root_check.patch"
+    # fix assignment
+    patch -Np1 -i "../${pkgname}-113-assignment.patch"
+    # fix issues with nss >=3.44
+    patch -Np1 -i "../${pkgname}-113-nss3.44.patch"
+}
+
+build() {
+  cd "${pkgname}-${pkgver}"
+  make
+}
+
+package() {
+  cd "${pkgname}-${pkgver}"
+  make DESTDIR="${pkgdir}" \
+       libdir=/usr/lib \
+       libexecdir=/usr/lib \
+       install
+  # removing a lot of stuff that we don't need
+  rm -rfv "${pkgdir}/var"
+  rm -rfv "${pkgdir}/etc/rpm"
+  rm -rfv "${pkgdir}/etc/pesign"
+  rm -rfv "${pkgdir}/etc/pki"
+  rm -rfv "${pkgdir}/usr/lib/"
+
+  install -vDm 644 "../${pkgname}.sysusers" \
+    "${pkgdir}/usr/lib/sysusers.d/${pkgname}.conf"
+  install -vDm 644 "../${pkgname}.tmpfiles" \
+    "${pkgdir}/usr/lib/tmpfiles.d/${pkgname}.conf"
+  # install custom service, that can run as separate user
+  # https://github.com/rhboot/pesign/issues/57
+  install -vDm 644 ../*.service \
+    -t "${pkgdir}/usr/lib/systemd/system/"
+  install -vdm 755 "${pkgdir}/etc/pki/pesign"
+}

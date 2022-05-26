@@ -1,0 +1,43 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=lib32-libasyncns
+pkgbase=libasyncns
+pkgver=0.8+3+g68cd5af
+pkgrel=1
+pkgdesc="A C library for Linux/Unix for executing name service queries asynchronously (32-bit)"
+arch=('x86_64')
+groups=('multilib')
+repo=('extra')
+url="http://0pointer.de/lennart/projects/libasyncns"
+license=('LGPL')
+options=('!libtool')
+depends=('lib32-glibc' $_pkgbasename)
+makedepends=('gcc-multilib')
+source=(http://0pointer.de/lennart/projects/libasyncns/${_pkgbasename}-${pkgver}.tar.gz)
+md5sums=('1f553d6ce1ad255bc83b3d8e9384f515')
+
+prepare() {
+  cd "${srcdir}/${pkgbase}"
+  # Fix libdir
+  sed -i '/^libdir=/s:/lib:/lib32:' *.pc.in
+  NOCONFIGURE=1 ./bootstrap.sh
+}
+
+build() {
+	cd "${srcdir}/${pkgbase}"
+
+	export CC="gcc -m32" PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+	./configure --prefix=/usr --libdir=/usr/lib32
+	sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+	make
+}
+
+package() {
+	cd "${srcdir}/${pkgbase}"
+	make DESTDIR="$pkgdir" install
+	rm -rf "${pkgdir}"/usr/{bin,include,share}
+}
+

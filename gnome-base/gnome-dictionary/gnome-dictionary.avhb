@@ -1,0 +1,26 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=gnome-dictionary
+pkgver=40.0
+pkgrel=1
+pkgdesc="Look up words in dictionary sources"
+url="https://wiki.gnome.org/Apps/Dictionary"
+arch=(x86_64)
+groups=(gnome-base)
+license=(GPL2)
+depends=(dconf gtk3)
+makedepends=(itstool docbook-xsl gtk-doc yelp-tools git gobject-introspection meson appstream-glib)
+_commit=c37edfc2cbf91d6bae6d5264d0dcfcb5dd34b313  # tags/40.0^0
+source=(https://gitlab.gnome.org/GNOME/$pkgname/-/archive/$pkgver/$pkgname-$pkgver.tar.bz2)
+
+build() {
+    avouch-meson ${pkgname}-${pkgver} build
+    meson compile -C build
+}
+
+package() {
+    DESTDIR="$pkgdir" meson install -C build
+}

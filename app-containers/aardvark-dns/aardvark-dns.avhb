@@ -1,0 +1,52 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=aardvark-dns
+_commit=da6bc98b1b795d8ca4f4c77a7dbe383f5a62c6f5  # refs/tags/v1.0.1^{}
+pkgver=1.0.1
+pkgrel=1
+pkgdesc="Authoritative dns server for A/AAAA container records"
+arch=(x86_64)
+groups=('app-containers')
+url="https://github.com/containers/aardvark-dns"
+license=(Apache)
+depends=(gcc-libs glibc)
+makedepends=(cargo git libgit2)
+source=("git+https://github.com/containers/aardvark-dns.git#commit=$_commit")
+sha256sums=('SKIP')
+# NOTE: pinning commit until upstream clarifies commitment to chain of trust:
+# https://github.com/containers/aardvark-dns/issues/83
+# validpgpkeys=('74FE091D25519980B2D84447160386BECB6F0643')  # Brent Baude <bbaude@redhat.com>
+
+getsrc() {
+  git clone https://github.com/containers/aardvark-dns.git
+}
+
+prepare() {
+  cd $pkgname
+  git checkout $_commit
+  cargo fetch --locked --target "$CARCH-unknown-linux-gnu"
+}
+
+build() {
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_TARGET_DIR=target
+
+  cd $pkgname
+  cargo build --frozen --release --all-features
+}
+
+check() {
+  export RUSTUP_TOOLCHAIN=stable
+
+  cd $pkgname
+  cargo test --frozen --all-features
+}
+
+package() {
+  cd $pkgname
+  install -vDm 755 target/release/$pkgname -t "$pkgdir/usr/lib/podman/"
+  install -vDm 644 README.md -t "$pkgdir/usr/share/doc/$pkgname/"
+}

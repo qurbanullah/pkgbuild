@@ -1,0 +1,27 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libupnp
+pkgver=1.14.12
+pkgrel=1
+pkgdesc="Portable Open Source UPnP Development Kit"
+arch=('x86_64')
+groups=('media-libs')
+url="http://pupnp.sourceforge.net/"
+license=('BSD')
+depends=('glibc')
+makedepends=('pkgconfig')
+source=("http://downloads.sourceforge.net/sourceforge/pupnp/${pkgname}-${pkgver}.tar.bz2")
+
+build() {
+	cd "${srcdir}/${pkgname}-${pkgver}"
+	./configure --prefix=/usr
+	make
+}
+
+package() {
+	cd "${srcdir}/${pkgname}-${pkgver}"
+	make DESTDIR=${pkgdir} install
+}

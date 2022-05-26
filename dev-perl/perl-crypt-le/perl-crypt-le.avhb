@@ -1,0 +1,33 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=perl-crypt-le
+_realname=Crypt-LE
+pkgver=0.38
+pkgrel=1
+pkgdesc="Provides the functionality necessary to use Let's Encrypt API and generate free SSL certificates"
+arch=('x86_64')
+url="https://github.com/do-know/Crypt-LE"
+license=('PerlArtistic' 'GPL' 'custom')
+depends=(perl perl-cpanel-json-xs perl-json-maybexs perl-log-log4perl)
+options=('!emptydirs' '!strip')
+source=("https://github.com/do-know/Crypt-LE/archive/refs/tags/$pkgver.tar.gz")
+
+build() {
+  cd Crypt-LE-$pkgver
+
+  perl Makefile.PL INSTALLDIRS=vendor
+  make
+}
+
+check() {
+  cd Crypt-LE-$pkgver
+  make test
+}
+
+package() {
+  cd Crypt-LE-$pkgver
+  make install DESTDIR="$pkgdir"
+}

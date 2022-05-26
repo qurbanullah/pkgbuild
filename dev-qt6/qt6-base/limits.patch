@@ -1,0 +1,24 @@
+--- src/corelib/text/qanystringview.h	2021-03-14 23:10:06.501492893 +0000
++++ ../qanystringview.h	2021-03-14 23:01:17.104803000 +0000
+@@ -39,6 +39,9 @@
+ #ifndef QANYSTRINGVIEW_H
+ #define QANYSTRINGVIEW_H
+ 
++#include <stdexcept>
++#include <limits>
++
+ #include <QtCore/qstringview.h>
+ #include <QtCore/qutf8stringview.h>
+
+--- src/corelib/text/qbytearray.h	2021-03-14 23:09:42.518158537 +0000
++++ ../qbytearray.h	2021-03-14 23:01:25.201470000 +0000
+@@ -49,6 +49,9 @@
+ #include <QtCore/qbytearrayalgorithms.h>
+ #include <QtCore/qbytearrayview.h>
+ 
++#include <stdexcept>
++#include <limits>
++
+ #include <stdlib.h>
+ #include <string.h>
+ #include <stdarg.h>

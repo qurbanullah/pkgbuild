@@ -1,0 +1,32 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=gitg
+pkgver=41
+pkgrel=1
+pkgdesc='A GIT repository viewer based on GTK+'
+arch=('x86_64')
+groups=('gnome-extra')
+url='https://git.gnome.org/browse/gitg/'
+license=('GPL')
+depends=(gtksourceview3 git libgit2-glib libgee webkit2gtk libpeas gtkspell3 python-gobject)
+makedepends=(intltool gobject-introspection git meson vala)
+install=gitg.install
+source=(ftp://ftp.gnome.org/pub/GNOME/sources/gitg/${pkgver:0:4}/${pkgname}-${pkgver}.tar.xz)
+
+build() {
+	avouch-meson ${pkgname}-${pkgver} build
+	meson compile -C build
+}
+
+# check() {
+# 	meson test -C build
+# }
+
+package() {
+	DESTDIR="$pkgdir" meson install -C build
+	python -m compileall -d /usr/lib "$pkgdir/usr/lib"
+	python -O -m compileall -d /usr/lib "$pkgdir/usr/lib"
+}

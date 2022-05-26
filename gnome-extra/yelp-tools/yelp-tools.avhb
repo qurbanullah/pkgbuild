@@ -1,0 +1,25 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=yelp-tools
+pkgver=42.0
+pkgrel=1
+pkgdesc="Tools for creating Yelp documentation"
+arch=('any')
+groups=('gnome-extra')
+depends=('yelp-xsl' 'libxslt' 'libxml2' 'itstool')
+license=('GPL')
+options=('!emptydirs')
+url="http://www.gnome.org"
+source=(http://ftp.gnome.org/pub/gnome/sources/$pkgname/${pkgver%.*}/$pkgname-$pkgver.tar.xz)
+
+build() {
+  avouch-meson $pkgname-$pkgver build
+  meson compile -C build
+}
+
+package() {
+  DESTDIR="$pkgdir" meson install -C build
+}

@@ -1,0 +1,54 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=vulkan-tools
+_realname=Vulkan-Tools
+pkgver=1.2.186
+pkgrel=1
+arch=(x86_64)
+groups=('dev-vulkan')
+url="https://www.khronos.org/vulkan/"
+pkgdesc="Vulkan Utilities and Tools"
+license=('custom')
+depends=('libx11' 'wayland' 'libvulkan.so')
+makedepends=('cmake' 'python' 'vulkan-headers' 'vulkan-icd-loader' 'glslang' 'spirv-tools')
+groups=('vulkan-devel')
+source=("${pkgname}-${pkgver}.tar.gz::https://github.com/KhronosGroup/Vulkan-Tools/archive/v${pkgver}.tar.gz")
+sha256sums=('bf7eea7c4eecaa705666c926273fc43ebf2f9661e69321d0f4b02f95c1f6dd3e')
+
+prepare() {
+  cd "${srcdir}"/Vulkan-Tools-$pkgver
+
+  rm -rf build && mkdir build
+}
+
+build() {
+  cd "${srcdir}"/Vulkan-Tools-$pkgver/build
+
+  cmake \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_INSTALL_SYSCONFDIR=/etc \
+    -DCMAKE_INSTALL_DATADIR=/usr/share \
+    -DCMAKE_SKIP_RPATH=True \
+    -DBUILD_WSI_XCB_SUPPORT=On \
+    -DBUILD_WSI_XLIB_SUPPORT=On \
+    -DBUILD_WSI_WAYLAND_SUPPORT=On \
+    -DBUILD_CUBE=ON \
+    -DBUILD_VULKANINFO=ON \
+    -DBUILD_ICD=OFF \
+    -DGLSLANG_INSTALL_DIR=/usr \
+    -DCMAKE_BUILD_TYPE=Release \
+    ..
+  make ${MAKEFLAGS}
+}
+
+package() {
+  cd "${srcdir}"/Vulkan-Tools-$pkgver/build
+  
+  make DESTDIR="${pkgdir}" install
+
+  install -dm755 "${pkgdir}"/usr/share/licenses/${pkgname}
+  install -m644 ../LICENSE.txt "${pkgdir}"/usr/share/licenses/${pkgname}/
+}

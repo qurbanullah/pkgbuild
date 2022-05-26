@@ -1,0 +1,71 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=vpnc
+pkgver=0.5.3.r501.r153
+pkgrel=1
+epoch=1
+pkgdesc='VPN client for cisco3000 VPN Concentrators'
+url='https://github.com/streambinder/vpnc'
+arch=('x86_64')
+groups=('net-misc')
+license=('GPL')
+depends=('libgcrypt' 'openssl' 'iproute2')
+makedepends=('git')
+optdepends=('openresolv: Let vpnc manage resolv.conf')
+backup=('etc/vpnc/default.conf')
+source=("https://github.com/streambinder/vpnc.git"
+        "https://gitlab.com/openconnect/vpnc-scripts.git"
+        "https://github.com/streambinder/vpnc.wiki.git"
+        vpnc.conf
+        vpnc@.service)
+
+_vpnc_commit=249d8fcd0ac25b735638bbe31e86a591acd61348
+_vpncscripts_commit=92fe06f6589dcc21725c51b8f86051482bf3b1bd
+
+getsrc(){
+  git clone https://github.com/streambinder/vpnc.git
+  git clone https://gitlab.com/openconnect/vpnc-scripts.git
+  git clone https://github.com/streambinder/vpnc.wiki.git
+}
+
+pkgver() {
+  cd ${pkgname}
+  printf "%s.r%s.r%s" "$(grep '^VERSION' Makefile|sed 's|VERSION := ||')" \
+    "$(git -C ../vpnc rev-list --count HEAD)" \
+    "$(git -C ../vpnc-scripts rev-list --count HEAD)"
+}
+
+prepare() {
+  cd ${pkgname}
+  git submodule init
+  git config submodule."src/doc".url "${srcdir}/vpnc.wiki"
+  git submodule update --recursive
+
+  # Build hybrid support
+  sed 's|^#OPENSSL|OPENSSL|g' -i Makefile
+  # fix resolvconf location for community/openresolv
+  sed 's|/sbin/resolvconf|/usr/bin/resolvconf|g' -i ../vpnc-scripts/vpnc-script
+  ln -sf ../../vpnc-scripts/vpnc-script src
+  ln -sf ../../vpnc.conf src
+}
+
+build() {
+  make -C ${pkgname}
+}
+
+check() {
+  make -C ${pkgname} test
+}
+
+package() {
+  cd ${pkgname}
+  install -d "${pkgdir}/usr/share/doc/${pkgname}"
+  make DESTDIR="${pkgdir}" PREFIX=/usr SBINDIR=/usr/bin install
+  install -Dm 755 ../vpnc-scripts/vpnc-script -t "${pkgdir}/etc/vpnc"
+  install -Dm 644 ../vpnc@.service -t "${pkgdir}/usr/lib/systemd/system"
+  install -Dm 644 .github/README.md -t "${pkgdir}/usr/share/doc/${pkgname}"
+  install -Dm 644 LICENSE -t "${pkgdir}/usr/share/licenses/${pkgname}"
+}

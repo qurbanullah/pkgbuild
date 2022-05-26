@@ -1,0 +1,39 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=qt6-doc
+_qtver=6.0.2
+pkgver=${_qtver/-/}
+_realname="${pkgname/6-/}-everywhere-src-${_qtver}"
+pkgrel=1
+arch=('any')
+groups=('dev-qt6')
+url='https://www.qt.io'
+license=(GPL3 LGPL3 FDL custom)
+makedepends=(cmake mariadb-libs unixodbc postgresql alsa-lib gst-plugins-base-libs
+             gtk3 libpulse cups freetds vulkan-headers clang python llvm qt6-tools)
+source=("https://download.qt.io/official_releases/qt/${pkgver%.*}/${_qtver}/single/${_pkgfn}.tar.xz"
+         qt6-doc-bindir.patch)
+
+prepare() {
+	cd ${_realname}
+  # Generate headers
+	syncqt.pl -version ${_qtver} sync.profile 
+}
+
+
+build() {
+  cd ${_realname}
+  qmake
+	make ${MAKEFLAGS} docs
+}
+
+package() {
+  cd ${_realname}
+  make INSTALL_ROOT="$pkgdir" install_docs
+
+  install -d "$pkgdir"/usr/share/licenses
+  ln -s /usr/share/licenses/qt6-base "$pkgdir"/usr/share/licenses/$pkgname
+}

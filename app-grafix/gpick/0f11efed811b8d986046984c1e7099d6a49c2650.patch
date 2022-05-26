@@ -1,0 +1,3340 @@
+From 0f11efed811b8d986046984c1e7099d6a49c2650 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Albertas=20Vy=C5=A1niauskas?= <thezbyg@gmail.com>
+Date: Thu, 24 Dec 2020 23:48:34 +0200
+Subject: [PATCH] Refactor drag&drop code.
+
+---
+ source/BlendColors.cpp                        |  31 +-
+ source/BrightnessDarkness.cpp                 |  46 +-
+ source/Clipboard.cpp                          |   2 +-
+ source/ClosestColors.cpp                      |  36 +-
+ source/ColorList.cpp                          |  20 +-
+ source/ColorList.h                            |   4 +-
+ source/ColorMixer.cpp                         |  62 +-
+ source/ColorPicker.cpp                        | 162 ++--
+ source/Converters.cpp                         |  57 ++
+ source/Converters.h                           |   2 +
+ source/DragDrop.cpp                           | 431 ----------
+ source/GenerateScheme.cpp                     | 134 +--
+ source/IDroppableColorUI.h                    |  34 +
+ source/IEditableColorUI.h                     |   2 +
+ source/LayoutPreview.cpp                      |  44 +-
+ source/StandardDragDropHandler.cpp            | 414 ++++++++++
+ .../{DragDrop.h => StandardDragDropHandler.h} |  61 +-
+ source/StandardEventHandler.cpp               |  13 +-
+ source/Variations.cpp                         |  65 +-
+ source/uiImportExport.cpp                     |   2 +-
+ source/uiListPalette.cpp                      | 766 +++++++-----------
+ 21 files changed, 1066 insertions(+), 1322 deletions(-)
+ delete mode 100644 source/DragDrop.cpp
+ create mode 100644 source/IDroppableColorUI.h
+ create mode 100644 source/StandardDragDropHandler.cpp
+ rename source/{DragDrop.h => StandardDragDropHandler.h} (54%)
+
+diff --git a/source/BlendColors.cpp b/source/BlendColors.cpp
+index 93596a2..5572901 100644
+--- a/source/BlendColors.cpp
++++ b/source/BlendColors.cpp
+@@ -26,11 +26,11 @@
+ #include "dynv/Map.h"
+ #include "GlobalState.h"
+ #include "ToolColorNaming.h"
+-#include "DragDrop.h"
+ #include "ColorList.h"
+ #include "color_names/ColorNames.h"
+ #include "gtk/ColorWidget.h"
+ #include "StandardEventHandler.h"
++#include "StandardDragDropHandler.h"
+ #include "IMenuExtension.h"
+ #include "I18N.h"
+ #include <gdk/gdkkeysyms.h>
+@@ -253,17 +253,6 @@ struct BlendColorsArgs {
+ 	};
+ 	std::vector<Editable> editables;
+ };
+-static ColorObject *getColorObject(struct DragDrop *dd) {
+-	auto *args = static_cast<BlendColorsArgs *>(dd->userdata);
+-	args->setActiveWidget(dd->widget);
+-	return args->getColor().copy();
+-}
+-static int setColorObjectAt(struct DragDrop *dd, ColorObject *colorObject, int, int, bool, bool) {
+-	auto *args = static_cast<BlendColorsArgs *>(dd->userdata);
+-	args->setActiveWidget(dd->widget);
+-	args->setColor(*colorObject);
+-	return 0;
+-}
+ static int getColor(BlendColorsArgs *args, ColorObject **color) {
+ 	return -1;
+ }
+@@ -311,35 +300,23 @@ static ColorSource *source_implement(ColorSource *source, GlobalState *gs, const
+ 	GtkWidget *table, *widget;
+ 	int table_y = 0;
+ 	table = gtk_table_new(6, 2, false);
+-	struct DragDrop dd;
+-	dragdrop_init(&dd, gs);
+-	dd.converterType = Converters::Type::display;
+-	dd.userdata = args;
+-	dd.get_color_object = getColorObject;
+-	dd.set_color_object_at = setColorObjectAt;
+ 	gtk_table_attach(GTK_TABLE(table), gtk_label_aligned_new(_("Start:"), 0, 0, 0, 0), 0, 1, table_y, table_y + 1, GtkAttachOptions(GTK_FILL), GTK_FILL, 5, 5);
+ 	args->startColor = widget = gtk_color_new(args->options->getColor("start_color", Color(0.5f)), ColorWidgetConfiguration::standard);
+ 	gtk_table_attach(GTK_TABLE(table), widget, 1, 2, table_y, table_y + 1, GtkAttachOptions(GTK_FILL | GTK_EXPAND), GTK_FILL, 0, 0);
+-	gtk_drag_dest_set(widget, GtkDestDefaults(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT), 0, 0, GDK_ACTION_COPY);
+-	gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
+-	dragdrop_widget_attach(widget, DragDropFlags(DRAGDROP_SOURCE | DRAGDROP_DESTINATION), &dd);
+ 	StandardEventHandler::forWidget(widget, args->gs, &args->editables[0]);
++	StandardDragDropHandler::forWidget(widget, args->gs, &args->editables[0]);
+ 	table_y++;
+ 	gtk_table_attach(GTK_TABLE(table), gtk_label_aligned_new(_("Middle:"), 0, 0, 0, 0), 0, 1, table_y, table_y + 1, GtkAttachOptions(GTK_FILL), GTK_FILL, 5, 5);
+ 	args->middleColor = widget = gtk_color_new(args->options->getColor("middle_color", Color(0.5f)), ColorWidgetConfiguration::standard);
+ 	gtk_table_attach(GTK_TABLE(table), widget, 1, 2, table_y, table_y + 1, GtkAttachOptions(GTK_FILL | GTK_EXPAND), GTK_FILL, 0, 0);
+-	gtk_drag_dest_set(widget, GtkDestDefaults(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT), 0, 0, GDK_ACTION_COPY);
+-	gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
+-	dragdrop_widget_attach(widget, DragDropFlags(DRAGDROP_SOURCE | DRAGDROP_DESTINATION), &dd);
+ 	StandardEventHandler::forWidget(widget, args->gs, &args->editables[1]);
++	StandardDragDropHandler::forWidget(widget, args->gs, &args->editables[1]);
+ 	table_y++;
+ 	gtk_table_attach(GTK_TABLE(table), gtk_label_aligned_new(_("End:"), 0, 0, 0, 0), 0, 1, table_y, table_y + 1, GtkAttachOptions(GTK_FILL), GTK_FILL, 5, 5);
+ 	args->endColor = widget = gtk_color_new(args->options->getColor("end_color", Color(0.5f)), ColorWidgetConfiguration::standard);
+ 	gtk_table_attach(GTK_TABLE(table), widget, 1, 2, table_y, table_y + 1, GtkAttachOptions(GTK_FILL | GTK_EXPAND), GTK_FILL, 0, 0);
+-	gtk_drag_dest_set(widget, GtkDestDefaults(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT), 0, 0, GDK_ACTION_COPY);
+-	gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
+-	dragdrop_widget_attach(widget, DragDropFlags(DRAGDROP_SOURCE | DRAGDROP_DESTINATION), &dd);
+ 	StandardEventHandler::forWidget(widget, args->gs, &args->editables[2]);
++	StandardDragDropHandler::forWidget(widget, args->gs, &args->editables[2]);
+ 	table_y = 0;
+ 	GtkWidget *vbox = gtk_vbox_new(false, 0);
+ 	gtk_box_pack_start(GTK_BOX(vbox), gtk_label_aligned_new(_("Type:"), 0, 0, 0, 0), false, false, 0);
+diff --git a/source/BrightnessDarkness.cpp b/source/BrightnessDarkness.cpp
+index 9716db1..ca8ed85 100644
+--- a/source/BrightnessDarkness.cpp
++++ b/source/BrightnessDarkness.cpp
+@@ -19,7 +19,6 @@
+ #include "BrightnessDarkness.h"
+ #include "ColorSource.h"
+ #include "ColorSourceManager.h"
+-#include "DragDrop.h"
+ #include "GlobalState.h"
+ #include "ToolColorNaming.h"
+ #include "uiUtilities.h"
+@@ -34,6 +33,8 @@
+ #include "layout/Layouts.h"
+ #include "layout/Style.h"
+ #include "StandardEventHandler.h"
++#include "StandardDragDropHandler.h"
++#include "IDroppableColorUI.h"
+ #include "common/Format.h"
+ #include <gdk/gdkkeysyms.h>
+ #include <math.h>
+@@ -167,7 +168,7 @@ struct BrightnessDarknessArgs {
+ 	static void onChange(GtkWidget *, BrightnessDarknessArgs *args) {
+ 		args->update(false);
+ 	}
+-	struct Editable: public IEditableColorsUI {
++	struct Editable: public IEditableColorsUI, public IDroppableColorUI {
+ 		Editable(BrightnessDarknessArgs *args):
+ 			args(args) {
+ 		}
+@@ -179,7 +180,13 @@ struct BrightnessDarknessArgs {
+ 			args->addAllToPalette();
+ 		}
+ 		virtual void setColor(const ColorObject &colorObject) override {
+-			args->setColor(colorObject.getColor());
++			args->setColor(colorObject);
++		}
++		virtual void setColorAt(const ColorObject &colorObject, int x, int y) override {
++			args->setColor(colorObject);
++		}
++		virtual void setColors(const std::vector<ColorObject> &colorObjects) override {
++			args->setColor(colorObjects[0]);
+ 		}
+ 		virtual const ColorObject &getColor() override {
+ 			return args->getColor();
+@@ -196,6 +203,11 @@ struct BrightnessDarknessArgs {
+ 		virtual bool hasSelectedColor() override {
+ 			return args->isSelected();
+ 		}
++		virtual bool testDropAt(int, int) override {
++			return args->selectMain();
++		}
++		virtual void dropEnd(bool move) override {
++		}
+ 	private:
+ 		BrightnessDarknessArgs *args;
+ 	};
+@@ -212,21 +224,6 @@ static int setColor(BrightnessDarknessArgs *args, ColorObject *colorObject) {
+ 	args->setColor(*colorObject);
+ 	return 0;
+ }
+-static ColorObject *getColorObject(struct DragDrop *dd) {
+-	auto *args = static_cast<BrightnessDarknessArgs *>(dd->userdata);
+-	if (!args->isSelected())
+-		return nullptr;
+-	return args->getColor().copy();
+-}
+-static int setColorObjectAt(struct DragDrop *dd, ColorObject *colorObject, int x, int y, bool, bool) {
+-	auto *args = static_cast<BrightnessDarknessArgs *>(dd->userdata);
+-	args->setColor(*colorObject);
+-	return 0;
+-}
+-static bool testAt(struct DragDrop *dd, int x, int y) {
+-	auto *args = static_cast<BrightnessDarknessArgs *>(dd->userdata);
+-	return args->selectMain();
+-}
+ static gboolean onButtonPress(GtkWidget *widget, GdkEventButton *event, BrightnessDarknessArgs *args) {
+ 	if (event->button == 1 && event->type == GDK_2BUTTON_PRESS) {
+ 		args->addToPalette();
+@@ -267,13 +264,6 @@ static ColorSource *implement(ColorSource *source, GlobalState *gs, const dynv::
+ 	args->layoutSystem = nullptr;
+ 	GtkWidget *hbox, *widget;
+ 	hbox = gtk_hbox_new(false, 0);
+-	struct DragDrop dd;
+-	dragdrop_init(&dd, gs);
+-	dd.converterType = Converters::Type::display;
+-	dd.userdata = args;
+-	dd.get_color_object = getColorObject;
+-	dd.set_color_object_at = setColorObjectAt;
+-	dd.test_at = testAt;
+ 	args->brightnessDarkness = widget = gtk_range_2d_new();
+ 	gtk_range_2d_set_values(GTK_RANGE_2D(widget), options->getFloat("brightness", 0.5f), options->getFloat("darkness", 0.5f));
+ 	gtk_range_2d_set_axis(GTK_RANGE_2D(widget), _("Brightness"), _("Darkness"));
+@@ -282,12 +272,8 @@ static ColorSource *implement(ColorSource *source, GlobalState *gs, const dynv::
+ 	args->layoutView = widget = gtk_layout_preview_new();
+ 	g_signal_connect_after(G_OBJECT(widget), "button-press-event", G_CALLBACK(onButtonPress), args);
+ 	StandardEventHandler::forWidget(widget, args->gs, &*args->editable);
++	StandardDragDropHandler::forWidget(widget, args->gs, &*args->editable);
+ 	gtk_box_pack_start(GTK_BOX(hbox), widget, false, false, 0);
+-	//setup drag&drop
+-	gtk_drag_dest_set(widget, GtkDestDefaults(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT), 0, 0, GDK_ACTION_COPY);
+-	gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
+-	dd.userdata2 = (void *)-1;
+-	dragdrop_widget_attach(widget, DragDropFlags(DRAGDROP_SOURCE | DRAGDROP_DESTINATION), &dd);
+ 	auto layout = gs->layouts().byName("std_layout_brightness_darkness");
+ 	if (layout != nullptr) {
+ 		System *layoutSystem = layout->build();
+diff --git a/source/Clipboard.cpp b/source/Clipboard.cpp
+index d8c6013..39175b4 100644
+--- a/source/Clipboard.cpp
++++ b/source/Clipboard.cpp
+@@ -81,7 +81,7 @@ static void setData(GtkClipboard *, GtkSelectionData *selectionData, Target targ
+ 		}
+ 		textLine = text.str();
+ 		if (textLine.length() > 0)
+-			gtk_selection_data_set_text(selectionData, textLine.c_str(), -1);
++			gtk_selection_data_set_text(selectionData, textLine.c_str(), textLine.length());
+ 	} break;
+ 	case Target::color: {
+ 		auto &colorObject = args->colors->colors.front();
+diff --git a/source/ClosestColors.cpp b/source/ClosestColors.cpp
+index 0bf4598..cc80fca 100644
+--- a/source/ClosestColors.cpp
++++ b/source/ClosestColors.cpp
+@@ -20,7 +20,6 @@
+ #include "ColorObject.h"
+ #include "ColorSource.h"
+ #include "ColorSourceManager.h"
+-#include "DragDrop.h"
+ #include "GlobalState.h"
+ #include "ToolColorNaming.h"
+ #include "uiUtilities.h"
+@@ -30,6 +29,7 @@
+ #include "I18N.h"
+ #include "color_names/ColorNames.h"
+ #include "StandardEventHandler.h"
++#include "StandardDragDropHandler.h"
+ #include "common/Format.h"
+ #include <gdk/gdkkeysyms.h>
+ #include <sstream>
+@@ -136,7 +136,10 @@ struct ClosestColorsArgs {
+ 			args->addAllToPalette();
+ 		}
+ 		virtual void setColor(const ColorObject &colorObject) override {
+-			args->setColor(colorObject.getColor());
++			args->setColor(colorObject);
++		}
++		virtual void setColors(const std::vector<ColorObject> &colorObjects) override {
++			args->setColor(colorObjects[0]);
+ 		}
+ 		virtual const ColorObject &getColor() override {
+ 			return args->getColor();
+@@ -189,15 +192,6 @@ static int activate(ClosestColorsArgs *args) {
+ static int deactivate(ClosestColorsArgs *args) {
+ 	return 0;
+ }
+-static ColorObject *getColorObject(DragDrop *dd) {
+-	auto *args = static_cast<ClosestColorsArgs *>(dd->userdata);
+-	return args->getColor().copy();
+-}
+-static int setColorObjectAt(DragDrop *dd, ColorObject *colorObject, int x, int y, bool, bool) {
+-	auto *args = static_cast<ClosestColorsArgs *>(dd->userdata);
+-	setColor(args, colorObject);
+-	return 0;
+-}
+ ColorSource *source_implement(ColorSource *source, GlobalState *gs, const dynv::Ref &options) {
+ 	auto *args = new ClosestColorsArgs;
+ 	args->editable = ClosestColorsArgs::Editable(args);
+@@ -216,12 +210,6 @@ ColorSource *source_implement(ColorSource *source, GlobalState *gs, const dynv::
+ 	gtk_box_pack_start(GTK_BOX(hbox), vbox, true, true, 5);
+ 	args->colorPreviews = gtk_table_new(3, 3, false);
+ 	gtk_box_pack_start(GTK_BOX(vbox), args->colorPreviews, true, true, 0);
+-	DragDrop dd;
+-	dragdrop_init(&dd, gs);
+-	dd.converterType = Converters::Type::display;
+-	dd.userdata = args;
+-	dd.get_color_object = getColorObject;
+-	dd.set_color_object_at = setColorObjectAt;
+ 	widget = gtk_color_new();
+ 	gtk_color_set_rounded(GTK_COLOR(widget), true);
+ 	gtk_color_set_hcenter(GTK_COLOR(widget), true);
+@@ -231,32 +219,22 @@ ColorSource *source_implement(ColorSource *source, GlobalState *gs, const dynv::
+ 	g_signal_connect(G_OBJECT(widget), "activated", G_CALLBACK(ClosestColorsArgs::onColorActivate), args);
+ 	g_signal_connect(G_OBJECT(widget), "focus-in-event", G_CALLBACK(ClosestColorsArgs::onFocusEvent), args);
+ 	StandardEventHandler::forWidget(widget, args->gs, &*args->editable);
++	StandardDragDropHandler::forWidget(widget, args->gs, &*args->editable);
+ 	gtk_widget_set_size_request(widget, 30, 30);
+ 
+-	//setup drag&drop
+-	gtk_drag_dest_set(widget, GtkDestDefaults(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT), 0, 0, GDK_ACTION_COPY);
+-	gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
+-	dd.userdata2 = (void *)-1;
+-	dragdrop_widget_attach(widget, DragDropFlags(DRAGDROP_SOURCE | DRAGDROP_DESTINATION), &dd);
+-
+ 	for (int i = 0; i < 3; ++i) {
+ 		for (int j = 0; j < 3; ++j) {
+ 			widget = gtk_color_new();
+ 			gtk_color_set_rounded(GTK_COLOR(widget), true);
+ 			gtk_color_set_hcenter(GTK_COLOR(widget), true);
+ 			gtk_color_set_roundness(GTK_COLOR(widget), 5);
+-
+ 			gtk_table_attach(GTK_TABLE(args->colorPreviews), widget, i, i + 1, j + 1, j + 2, GtkAttachOptions(GTK_FILL | GTK_EXPAND), GtkAttachOptions(GTK_FILL | GTK_EXPAND), 0, 0);
+ 			args->closestColors[i + j * 3] = widget;
+-
+ 			g_signal_connect(G_OBJECT(widget), "activated", G_CALLBACK(ClosestColorsArgs::onColorActivate), args);
+ 			g_signal_connect(G_OBJECT(widget), "focus-in-event", G_CALLBACK(ClosestColorsArgs::onFocusEvent), args);
+-
+ 			gtk_widget_set_size_request(widget, 30, 30);
+-			gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
+-			dd.userdata2 = reinterpret_cast<void *>(i + j * 3);
+-			dragdrop_widget_attach(widget, DragDropFlags(DRAGDROP_SOURCE), &dd);
+ 			StandardEventHandler::forWidget(widget, args->gs, &*args->editable);
++			StandardDragDropHandler::forWidget(widget, args->gs, &*args->editable, StandardDragDropHandler::Options().allowDrop(false));
+ 		}
+ 	}
+ 	gtk_color_set_color(GTK_COLOR(args->targetColor), options->getColor("color", Color(0.5f)));
+diff --git a/source/ColorList.cpp b/source/ColorList.cpp
+index a41ce0a..f1ad044 100644
+--- a/source/ColorList.cpp
++++ b/source/ColorList.cpp
+@@ -117,11 +117,29 @@ int color_list_remove_selected(ColorList *color_list)
+ 	color_list->on_delete_selected(color_list);
+ 	return 0;
+ }
+-int color_list_set_selected(ColorList *color_list, bool selected) {
++int color_list_remove_visited(ColorList *color_list)
++{
++	ColorList::iter i=color_list->colors.begin();
++	while (i != color_list->colors.end()){
++		if ((*i)->isVisited()){
++			(*i)->release();
++			i = color_list->colors.erase(i);
++		}else ++i;
++	}
++	return 0;
++}
++int color_list_reset_selected(ColorList *color_list) {
+ 	for (auto &color : color_list->colors)
+ 		color->setSelected(false);
+ 	return 0;
+ }
++int color_list_reset_all(ColorList *color_list) {
++	for (auto &color : color_list->colors) {
++		color->setSelected(false);
++		color->setVisited(false);
++	}
++	return 0;
++}
+ int color_list_remove_all(ColorList *color_list)
+ {
+ 	ColorList::iter i;
+diff --git a/source/ColorList.h b/source/ColorList.h
+index bb300c1..8578201 100644
+--- a/source/ColorList.h
++++ b/source/ColorList.h
+@@ -48,7 +48,9 @@ int color_list_add_color_object(ColorList *color_list, const ColorObject &colorO
+ int color_list_add(ColorList *color_list, ColorList *items, bool add_to_palette);
+ int color_list_remove_color_object(ColorList *color_list, ColorObject *color_object);
+ int color_list_remove_selected(ColorList *color_list);
+-int color_list_set_selected(ColorList *color_list, bool selected);
++int color_list_remove_visited(ColorList *color_list);
++int color_list_reset_selected(ColorList *color_list);
++int color_list_reset_all(ColorList *color_list);
+ int color_list_remove_all(ColorList *color_list);
+ size_t color_list_get_count(ColorList *color_list);
+ int color_list_get_positions(ColorList *color_list);
+diff --git a/source/ColorMixer.cpp b/source/ColorMixer.cpp
+index 2c1a9c0..031e3a9 100644
+--- a/source/ColorMixer.cpp
++++ b/source/ColorMixer.cpp
+@@ -20,7 +20,6 @@
+ #include "ColorObject.h"
+ #include "ColorSource.h"
+ #include "ColorSourceManager.h"
+-#include "DragDrop.h"
+ #include "GlobalState.h"
+ #include "ToolColorNaming.h"
+ #include "uiUtilities.h"
+@@ -31,6 +30,7 @@
+ #include "I18N.h"
+ #include "color_names/ColorNames.h"
+ #include "StandardEventHandler.h"
++#include "StandardDragDropHandler.h"
+ #include "IMenuExtension.h"
+ #include "common/Format.h"
+ #include <gdk/gdkkeysyms.h>
+@@ -222,20 +222,28 @@ struct ColorMixerArgs {
+ 		}
+ 	}
+ 	struct Editable: IEditableColorsUI, IMenuExtension {
+-		Editable(ColorMixerArgs *args):
+-			args(args) {
++		Editable(ColorMixerArgs *args, GtkWidget *widget):
++			args(args),
++			widget(widget) {
+ 		}
+ 		virtual ~Editable() = default;
+ 		virtual void addToPalette(const ColorObject &) override {
++			args->setActiveWidget(widget);
+ 			args->addToPalette();
+ 		}
+ 		virtual void addAllToPalette() override {
+ 			args->addAllToPalette();
+ 		}
+ 		virtual void setColor(const ColorObject &colorObject) override {
+-			args->setColor(colorObject.getColor());
++			args->setActiveWidget(widget);
++			args->setColor(colorObject);
++		}
++		virtual void setColors(const std::vector<ColorObject> &colorObjects) override {
++			args->setActiveWidget(widget);
++			args->setColor(colorObjects[0]);
+ 		}
+ 		virtual const ColorObject &getColor() override {
++			args->setActiveWidget(widget);
+ 			return args->getColor();
+ 		}
+ 		virtual std::vector<ColorObject> getColors(bool selected) override {
+@@ -244,6 +252,7 @@ struct ColorMixerArgs {
+ 			return colors;
+ 		}
+ 		virtual bool isEditable() override {
++			args->setActiveWidget(widget);
+ 			return args->isEditable();
+ 		}
+ 		virtual bool hasColor() override {
+@@ -269,8 +278,9 @@ struct ColorMixerArgs {
+ 		}
+ 	private:
+ 		ColorMixerArgs *args;
++		GtkWidget *widget;
+ 	};
+-	boost::optional<Editable> editable;
++	boost::optional<Editable> editable[1 + Rows * 2];
+ };
+ static int destroy(ColorMixerArgs *args) {
+ 	Color c;
+@@ -310,19 +320,8 @@ static int deactivate(ColorMixerArgs *args) {
+ 	args->update(true);
+ 	return 0;
+ }
+-static ColorObject *getColorObject(DragDrop *dd) {
+-	auto *args = static_cast<ColorMixerArgs *>(dd->userdata);
+-	return args->getColor().copy();
+-}
+-static int setColorObjectAt(DragDrop *dd, ColorObject *colorObject, int, int, bool, bool) {
+-	auto *args = static_cast<ColorMixerArgs *>(dd->userdata);
+-	args->setActiveWidget(dd->widget);
+-	args->setColor(*colorObject);
+-	return 0;
+-}
+ static ColorSource *source_implement(ColorSource *source, GlobalState *gs, const dynv::Ref &options) {
+ 	auto *args = new ColorMixerArgs;
+-	args->editable = ColorMixerArgs::Editable(args);
+ 	args->options = options;
+ 	args->statusBar = gs->getStatusBar();
+ 	args->gs = gs;
+@@ -338,12 +337,6 @@ static ColorSource *source_implement(ColorSource *source, GlobalState *gs, const
+ 	gtk_box_pack_start(GTK_BOX(hbox), vbox, true, true, 5);
+ 	args->colorPreviews = gtk_table_new(Rows, 3, false);
+ 	gtk_box_pack_start(GTK_BOX(vbox), args->colorPreviews, true, true, 0);
+-	DragDrop dd;
+-	dragdrop_init(&dd, gs);
+-	dd.converterType = Converters::Type::display;
+-	dd.userdata = args;
+-	dd.get_color_object = getColorObject;
+-	dd.set_color_object_at = setColorObjectAt;
+ 	widget = gtk_color_new();
+ 	gtk_color_set_rounded(GTK_COLOR(widget), true);
+ 	gtk_color_set_hcenter(GTK_COLOR(widget), true);
+@@ -352,13 +345,10 @@ static ColorSource *source_implement(ColorSource *source, GlobalState *gs, const
+ 	args->secondaryColor = widget;
+ 	g_signal_connect(G_OBJECT(widget), "activated", G_CALLBACK(ColorMixerArgs::onColorActivate), args);
+ 	g_signal_connect(G_OBJECT(widget), "focus-in-event", G_CALLBACK(ColorMixerArgs::onFocusEvent), args);
+-	StandardEventHandler::forWidget(widget, args->gs, &*args->editable);
++	args->editable[0] = ColorMixerArgs::Editable(args, widget);
++	StandardEventHandler::forWidget(widget, args->gs, &*args->editable[0]);
++	StandardDragDropHandler::forWidget(widget, args->gs, &*args->editable[0]);
+ 	gtk_widget_set_size_request(widget, 50, 50);
+-	//setup drag&drop
+-	gtk_drag_dest_set(widget, GtkDestDefaults(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT), 0, 0, GDK_ACTION_COPY);
+-	gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
+-	dd.userdata2 = (void *)-1;
+-	dragdrop_widget_attach(widget, DragDropFlags(DRAGDROP_SOURCE | DRAGDROP_DESTINATION), &dd);
+ 	for (intptr_t i = 0; i < Rows; ++i) {
+ 		for (intptr_t j = 0; j < 2; ++j) {
+ 			widget = gtk_color_new();
+@@ -373,19 +363,13 @@ static ColorSource *source_implement(ColorSource *source, GlobalState *gs, const
+ 			}
+ 			g_signal_connect(G_OBJECT(widget), "activated", G_CALLBACK(ColorMixerArgs::onColorActivate), args);
+ 			g_signal_connect(G_OBJECT(widget), "focus-in-event", G_CALLBACK(ColorMixerArgs::onFocusEvent), args);
+-			StandardEventHandler::forWidget(widget, args->gs, &*args->editable);
++			gtk_widget_set_size_request(widget, 30, 30);
++			args->editable[1 + i + j * Rows] = ColorMixerArgs::Editable(args, widget);
++			StandardEventHandler::forWidget(widget, args->gs, &*args->editable[1 + i + j * Rows]);
+ 			if (j == 0) {
+-				//setup drag&drop
+-				gtk_widget_set_size_request(widget, 30, 30);
+-				gtk_drag_dest_set(widget, GtkDestDefaults(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT), 0, 0, GDK_ACTION_COPY);
+-				gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
+-				dd.userdata2 = (void *)i;
+-				dragdrop_widget_attach(widget, DragDropFlags(DRAGDROP_SOURCE | DRAGDROP_DESTINATION), &dd);
++				StandardDragDropHandler::forWidget(widget, args->gs, &*args->editable[1 + i + j * Rows]);
+ 			} else {
+-				gtk_widget_set_size_request(widget, 30, 30);
+-				gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
+-				dd.userdata2 = (void *)i;
+-				dragdrop_widget_attach(widget, DragDropFlags(DRAGDROP_SOURCE), &dd);
++				StandardDragDropHandler::forWidget(widget, args->gs, &*args->editable[1 + i + j * Rows], StandardDragDropHandler::Options().allowDrop(false));
+ 			}
+ 		}
+ 	}
+diff --git a/source/ColorPicker.cpp b/source/ColorPicker.cpp
+index 2bd844c..48d609b 100644
+--- a/source/ColorPicker.cpp
++++ b/source/ColorPicker.cpp
+@@ -22,7 +22,6 @@
+ #include "ColorList.h"
+ #include "ColorSource.h"
+ #include "ColorSourceManager.h"
+-#include "DragDrop.h"
+ #include "Converters.h"
+ #include "dynv/Map.h"
+ #include "FloatingPicker.h"
+@@ -38,6 +37,8 @@
+ #include "uiColorInput.h"
+ #include "uiConverter.h"
+ #include "StandardEventHandler.h"
++#include "StandardDragDropHandler.h"
++#include "IDroppableColorUI.h"
+ #include "I18N.h"
+ #include "color_names/ColorNames.h"
+ #include "ScreenReader.h"
+@@ -134,17 +135,22 @@ struct ColorPickerArgs {
+ 			addToPalette(color);
+ 		}
+ 	}
+-	void setColor(const Color &color) {
+-		Color copy = color;
++	void setColor(const ColorObject &colorObject) {
++		Color copy = colorObject.getColor();
+ 		gtk_swatch_set_active_color(GTK_SWATCH(swatch_display), &copy);
+ 		updateDisplays(this, nullptr);
+ 	}
+-	void setColor(ColorObject *colorObject) {
+-		Color copy = colorObject->getColor();
+-		gtk_swatch_set_active_color(GTK_SWATCH(swatch_display), &copy);
++	bool testDropAt(int x, int y) {
++		gint colorIndex = gtk_swatch_get_color_at(GTK_SWATCH(swatch_display), x, y);
++		return colorIndex > 0;
++	}
++	void setColorAt(const ColorObject &colorObject, int x, int y) {
++		gint colorIndex = gtk_swatch_get_color_at(GTK_SWATCH(swatch_display), x, y);
++		Color color = colorObject.getColor();
++		gtk_swatch_set_color(GTK_SWATCH(swatch_display), colorIndex, &color);
+ 		updateDisplays(this, nullptr);
+ 	}
+-	struct SwatchEditable: public IEditableColorsUI {
++	struct SwatchEditable: public IEditableColorsUI, public IDroppableColorUI {
+ 		SwatchEditable(ColorPickerArgs *args):
+ 			args(args) {
+ 		}
+@@ -156,7 +162,13 @@ struct ColorPickerArgs {
+ 			args->addAllToPalette();
+ 		}
+ 		virtual void setColor(const ColorObject &colorObject) override {
+-			args->setColor(colorObject.getColor());
++			args->setColor(colorObject);
++		}
++		virtual void setColorAt(const ColorObject &colorObject, int x, int y) override {
++			args->setColorAt(colorObject, x, y);
++		}
++		virtual void setColors(const std::vector<ColorObject> &colorObjects) override {
++			args->setColor(colorObjects[0]);
+ 		}
+ 		virtual const ColorObject &getColor() override {
+ 			args->getActive(colorObject);
+@@ -181,6 +193,11 @@ struct ColorPickerArgs {
+ 		virtual bool hasSelectedColor() override {
+ 			return true;
+ 		}
++		virtual bool testDropAt(int x, int y) override {
++			return args->testDropAt(x, y);
++		}
++		virtual void dropEnd(bool move) override {
++		}
+ 	private:
+ 		ColorPickerArgs *args;
+ 		ColorObject colorObject;
+@@ -209,7 +226,38 @@ struct ColorPickerArgs {
+ 		ColorPickerArgs *args;
+ 		ColorObject colorObject;
+ 	};
+-	boost::optional<ColorInputReadonly> colorInputEditable;
++	boost::optional<ColorInputReadonly> colorInputReadonly;
++	struct ContrastEditable: public IEditableColorUI {
++		ContrastEditable(ColorPickerArgs *args):
++			args(args) {
++		}
++		virtual ~ContrastEditable() = default;
++		virtual void addToPalette(const ColorObject &) override {
++			Color color;
++			gtk_color_get_color(GTK_COLOR(args->contrastCheck), &color);
++			args->addToPalette(color);
++		}
++		virtual const ColorObject &getColor() override {
++			Color color;
++			gtk_color_get_color(GTK_COLOR(args->contrastCheck), &color);
++			colorObject.setColor(color);
++			return colorObject;
++		}
++		virtual void setColor(const ColorObject &colorObject) override {
++			gtk_color_set_color(GTK_COLOR(args->contrastCheck), colorObject.getColor(), _("Sample"));
++			updateDisplays(args, nullptr);
++		}
++		virtual bool hasSelectedColor() override {
++			return true;
++		}
++		virtual bool isEditable() override {
++			return true;
++		}
++	private:
++		ColorPickerArgs *args;
++		ColorObject colorObject;
++	};
++	boost::optional<ContrastEditable> contrastEditable;
+ };
+ 
+ struct ColorCompItem{
+@@ -781,72 +829,22 @@ static int source_activate(ColorPickerArgs *args)
+ 
+ 	return 0;
+ }
+-
+-static int source_deactivate(ColorPickerArgs *args){
+-
++static int source_deactivate(ColorPickerArgs *args) {
+ 	gtk_statusbar_pop(GTK_STATUSBAR(args->statusbar), gtk_statusbar_get_context_id(GTK_STATUSBAR(args->statusbar), "focus_swatch"));
+-
+-	if (args->timeout_source_id > 0){
++	if (args->timeout_source_id > 0) {
+ 		g_source_remove(args->timeout_source_id);
+ 		args->timeout_source_id = 0;
+ 	}
+ 	return 0;
+ }
+-
+-
+-static ColorObject* get_color_object(struct DragDrop* dd){
+-	ColorPickerArgs* args=(ColorPickerArgs*)dd->userdata;
+-	ColorObject *color_object;
+-	source_get_color(args, &color_object);
+-	return color_object;
+-}
+-
+-static int set_color_object_at(struct DragDrop* dd, ColorObject* color_object, int x, int y, bool, bool)
+-{
+-	gint color_index = gtk_swatch_get_color_at(GTK_SWATCH(dd->widget), x, y);
+-	Color color = color_object->getColor();
+-	gtk_swatch_set_color(GTK_SWATCH(dd->widget), color_index, &color);
+-	updateDisplays((ColorPickerArgs*)dd->userdata, 0);
+-	return 0;
+-}
+-static bool test_at(struct DragDrop* dd, int x, int y){
+-	gint color_index = gtk_swatch_get_color_at(GTK_SWATCH(dd->widget), x, y);
+-	if (color_index>0) return true;
+-	return false;
+-}
+ void color_picker_set_floating_picker(ColorSource *color_source, FloatingPicker floating_picker){
+ 	ColorPickerArgs* args = (ColorPickerArgs*)color_source;
+ 	args->floating_picker = floating_picker;
+ }
+-static ColorObject* getColorObjectForColorInput(struct DragDrop* dd) {
+-	ColorPickerArgs* args = static_cast<ColorPickerArgs*>(dd->userdata);
+-	Color color;
+-	gtk_color_get_color(GTK_COLOR(args->colorWidget), &color);
+-	string name = color_names_get(args->gs->getColorNames(), &color, args->gs->settings().getBool("gpick.color_names.imprecision_postfix", false));
+-	return new ColorObject(name, color);
+-}
+-static ColorObject* get_color_object_contrast(struct DragDrop* dd)
+-{
+-	ColorPickerArgs* args = static_cast<ColorPickerArgs*>(dd->userdata);
+-	Color color;
+-	gtk_color_get_color(GTK_COLOR(dd->widget), &color);
+-	string name = color_names_get(args->gs->getColorNames(), &color, args->gs->settings().getBool("gpick.color_names.imprecision_postfix", false));
+-	return new ColorObject(name, color);
+-}
+-static int set_color_object_at_contrast(struct DragDrop* dd, ColorObject* color_object, int x, int y, bool, bool)
+-{
+-	ColorPickerArgs* args = static_cast<ColorPickerArgs*>(dd->userdata);
+-	Color color = color_object->getColor();
+-	gtk_color_set_color(GTK_COLOR(args->contrastCheck), &color, "Sample");
+-	updateDisplays((ColorPickerArgs*)dd->userdata, 0);
+-	return 0;
+-}
+-
+ static void show_dialog_converter(GtkWidget *widget, ColorPickerArgs *args){
+ 	dialog_converter_show(GTK_WINDOW(gtk_widget_get_toplevel(args->main)), args->gs);
+ 	return;
+ }
+-
+ static void on_zoomed_activate(GtkWidget *widget, ColorPickerArgs *args){
+ 	if (args->options->getBool("zoomed_enabled", true)){
+ 		gtk_zoomed_set_fade(GTK_ZOOMED(args->zoomed_display), true);
+@@ -873,7 +871,8 @@ static void on_zoomed_activate(GtkWidget *widget, ColorPickerArgs *args){
+ static ColorSource* source_implement(ColorSource *source, GlobalState *gs, const dynv::Ref &options){
+ 	ColorPickerArgs* args = new ColorPickerArgs;
+ 	args->swatchEditable = ColorPickerArgs::SwatchEditable(args);
+-	args->colorInputEditable = ColorPickerArgs::ColorInputReadonly(args);
++	args->colorInputReadonly = ColorPickerArgs::ColorInputReadonly(args);
++	args->contrastEditable = ColorPickerArgs::ContrastEditable(args);
+ 
+ 	args->options = options;
+ 	args->mainOptions = gs->settings().getOrCreateMap("gpick.picker");
+@@ -918,21 +917,10 @@ static ColorSource* source_implement(ColorSource *source, GlobalState *gs, const
+ 			g_signal_connect(G_OBJECT(widget), "color_activated", G_CALLBACK(on_swatch_color_activated), args);
+ 			g_signal_connect(G_OBJECT(widget), "center_activated", G_CALLBACK(on_swatch_center_activated), args);
+ 			StandardEventHandler::forWidget(widget, args->gs, &*args->swatchEditable);
++			StandardDragDropHandler::forWidget(widget, args->gs, &*args->swatchEditable);
+ 
+ 			gtk_swatch_set_active_index(GTK_SWATCH(widget), options->getInt32("swatch.active_color", 1));
+ 
+-			gtk_drag_dest_set(widget, GtkDestDefaults(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT), 0, 0, GDK_ACTION_COPY);
+-			gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
+-
+-			struct DragDrop dd;
+-			dragdrop_init(&dd, gs);
+-			dd.converterType = Converters::Type::display;
+-			dd.userdata = args;
+-			dd.get_color_object = get_color_object;
+-			dd.set_color_object_at = set_color_object_at;
+-			dd.test_at = test_at;
+-			dragdrop_widget_attach(widget, DragDropFlags(DRAGDROP_SOURCE | DRAGDROP_DESTINATION), &dd);
+-
+ 			{
+ 				char tmp[32];
+ 				Color color;
+@@ -1100,31 +1088,20 @@ static ColorSource* source_implement(ColorSource *source, GlobalState *gs, const
+ 					widget = gtk_entry_new();
+ 					gtk_table_attach(GTK_TABLE(table), widget,1,3,table_y,table_y+1,GtkAttachOptions(GTK_FILL | GTK_EXPAND),GTK_FILL,5,0);
+ 					gtk_editable_set_editable(GTK_EDITABLE(widget), FALSE);
+-					//gtk_widget_set_sensitive(GTK_WIDGET(widget), FALSE);
+ 					args->color_name = widget;
+ 					table_y++;
+ 
+-					dragdrop_init(&dd, gs);
+-					dd.converterType = Converters::Type::display;
+-					dd.userdata = args;
+-					dd.get_color_object = get_color_object_contrast;
+-					dd.set_color_object_at = set_color_object_at_contrast;
+-
+ 					gtk_table_attach(GTK_TABLE(table), gtk_label_aligned_new(_("Contrast:"),0,0.5,0,0),0,1,table_y,table_y+1,GtkAttachOptions(GTK_FILL),GTK_FILL,5,5);
+-					widget = gtk_color_new();
+-
++					args->contrastCheck = widget = gtk_color_new();
++					StandardEventHandler::forWidget(widget, args->gs, &*args->contrastEditable);
++					StandardDragDropHandler::forWidget(widget, args->gs, &*args->contrastEditable);
+ 					auto color = options->getColor("contrast.color", Color(1));
+ 					gtk_color_set_color(GTK_COLOR(widget), color, _("Sample"));
+ 					gtk_color_set_rounded(GTK_COLOR(widget), true);
+ 					gtk_color_set_hcenter(GTK_COLOR(widget), true);
+ 					gtk_color_set_roundness(GTK_COLOR(widget), 5);
+ 					gtk_table_attach(GTK_TABLE(table), widget,1,2,table_y,table_y+1,GtkAttachOptions(GTK_FILL | GTK_EXPAND),GTK_FILL,5,0);
+-					args->contrastCheck = widget;
+ 
+-					gtk_drag_dest_set(widget, GtkDestDefaults(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT), 0, 0, GDK_ACTION_COPY);
+-					gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
+-					dd.userdata2 = 0;
+-					dragdrop_widget_attach(widget, DragDropFlags(DRAGDROP_SOURCE | DRAGDROP_DESTINATION), &dd);
+ 
+ 					gtk_table_attach(GTK_TABLE(table), args->contrastCheckMsg = gtk_label_new(""),2,3,table_y,table_y+1,GtkAttachOptions(GTK_FILL | GTK_EXPAND),GTK_FILL,5,5);
+ 
+@@ -1153,13 +1130,8 @@ static ColorSource* source_implement(ColorSource *source, GlobalState *gs, const
+ 					gtk_color_set_roundness(GTK_COLOR(widget), 5);
+ 					gtk_widget_set_size_request(widget, 30, 30);
+ 					gtk_table_attach(GTK_TABLE(table), widget, 1, 3, table_y, table_y + 1, GtkAttachOptions(GTK_FILL | GTK_EXPAND), GTK_FILL, 5, 0);
+-					StandardEventHandler::forWidget(widget, args->gs, &*args->colorInputEditable);
+-					dragdrop_init(&dd, gs);
+-					dd.converterType = Converters::Type::display;
+-					dd.userdata = args;
+-					dd.get_color_object = getColorObjectForColorInput;
+-					gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
+-					dragdrop_widget_attach(widget, DragDropFlags(DRAGDROP_SOURCE), &dd);
++					StandardEventHandler::forWidget(widget, args->gs, &*args->colorInputReadonly);
++					StandardDragDropHandler::forWidget(widget, args->gs, &*args->colorInputReadonly);
+ 					table_y++;
+ 
+ 
+diff --git a/source/Converters.cpp b/source/Converters.cpp
+index 8dbdef3..849acbb 100644
+--- a/source/Converters.cpp
++++ b/source/Converters.cpp
+@@ -149,6 +149,27 @@ Converter *Converters::byNameOrFirstCopy(const char *name) const
+ 	if (m_copy_converters.size() == 0) return nullptr;
+ 	return m_copy_converters.front();
+ }
++std::string Converters::serialize(const ColorObject &colorObject, Type type) {
++	Converter *converter;
++	switch (type){
++		case Type::colorList:
++			converter = colorList();
++			break;
++		case Type::display:
++			converter = display();
++			break;
++		default:
++			converter = nullptr;
++	}
++	if (converter){
++		return converter->serialize(&colorObject);
++	}
++	converter = firstCopyOrAny();
++	if (converter){
++		return converter->serialize(&colorObject);
++	}
++	return "";
++}
+ std::string Converters::serialize(ColorObject *color_object, Type type)
+ {
+ 	Converter *converter;
+@@ -216,6 +237,42 @@ bool Converters::deserialize(const char *value, ColorObject **output_color_objec
+ 		return true;
+ 	}
+ }
++bool Converters::deserialize(const std::string &value, ColorObject &outputColorObject) {
++	std::multimap<float, ColorObject, greater<float>> results;
++	if (m_display_converter) {
++		Converter *converter = m_display_converter;
++		if (converter->hasDeserialize()) {
++			float quality;
++			if (converter->deserialize(value.c_str(), &outputColorObject, quality)){
++				if (quality > 0){
++					results.insert(std::make_pair(quality, outputColorObject));
++				}
++			}
++		}
++	}
++	for (auto &converter: m_paste_converters) {
++		if (!converter->hasDeserialize())
++			continue;
++		float quality;
++		if (converter->deserialize(value.c_str(), &outputColorObject, quality)){
++			if (quality > 0){
++				results.insert(std::make_pair(quality, outputColorObject));
++			}
++		}
++	}
++	bool first = true;
++	for (auto result: results) {
++		if (first) {
++			first = false;
++			outputColorObject = result.second;
++		} else break;
++	}
++	if (first) {
++		return false;
++	}else{
++		return true;
++	}
++}
+ void Converters::reorder(const char **names, size_t count)
+ {
+ 	set<Converter*> used;
+diff --git a/source/Converters.h b/source/Converters.h
+index 1ce05b5..bfa0d45 100644
+--- a/source/Converters.h
++++ b/source/Converters.h
+@@ -51,8 +51,10 @@ struct Converters {
+ 	Converter *firstCopyOrAny() const;
+ 	Converter *byNameOrFirstCopy(const char *name) const;
+ 	std::string serialize(ColorObject *color_object, Type type);
++	std::string serialize(const ColorObject &colorObject, Type type);
+ 	std::string serialize(const Color &color, Type type);
+ 	bool deserialize(const char *value, ColorObject **color_object);
++	bool deserialize(const std::string &value, ColorObject &outputColorObject);
+ 	void rebuildCopyPasteArrays();
+ 	void reorder(const char **names, size_t count);
+ 	void reorder(const std::vector<std::string> &names);
+diff --git a/source/DragDrop.cpp b/source/DragDrop.cpp
+deleted file mode 100644
+index 373a04e..0000000
+--- a/source/DragDrop.cpp
++++ /dev/null
+@@ -1,431 +0,0 @@
+-/*
+- * Copyright (c) 2009-2017, Albertas Vyšniauskas
+- * All rights reserved.
+- *
+- * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+- *
+- *     * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+- *     * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+- *     * Neither the name of the software author nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
+- *
+- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+- * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
+- * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+- * OF THE POSSIBILITY OF SUCH DAMAGE.
+- */
+-
+-#include "DragDrop.h"
+-#include "ColorObject.h"
+-#include "dynv/Map.h"
+-#include "GlobalState.h"
+-#include "gtk/ColorWidget.h"
+-#include "Converters.h"
+-#include "Converter.h"
+-#include "common/Scoped.h"
+-#include <string.h>
+-#include <iostream>
+-#include <sstream>
+-enum class Target : guint {
+-	string = 1,
+-	color,
+-	colorObjectList,
+-	serializedColorObjectList,
+-};
+-static GtkTargetEntry targets[] = {
+-	{ const_cast<gchar *>("color-object-list"), GTK_TARGET_SAME_APP, static_cast<guint>(Target::colorObjectList) },
+-	{ const_cast<gchar *>("application/x-color_object-list"), GTK_TARGET_OTHER_APP, static_cast<guint>(Target::serializedColorObjectList) },
+-	{ const_cast<gchar *>("application/x-color-object-list"), GTK_TARGET_OTHER_APP, static_cast<guint>(Target::serializedColorObjectList) },
+-	{ const_cast<gchar *>("application/x-color"), 0, static_cast<guint>(Target::color) },
+-	{ const_cast<gchar *>("text/plain"), 0, static_cast<guint>(Target::string) },
+-	{ const_cast<gchar *>("UTF8_STRING"), 0, static_cast<guint>(Target::string) },
+-	{ const_cast<gchar *>("STRING"), 0, static_cast<guint>(Target::string) },
+-};
+-static const size_t targetCount = sizeof(targets) / sizeof(GtkTargetEntry);
+-struct ColorObjectList {
+-	uintptr_t sourceWidgetId;
+-	uint64_t colorObjectCount;
+-	ColorObject *colorObject[1];
+-};
+-static void drag_data_received(GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *selectionData, Target targetType, guint time, DragDrop *dd);
+-static gboolean drag_motion(GtkWidget *widget, GdkDragContext *context, gint x, gint y, guint t, DragDrop *dd);
+-static void drag_leave(GtkWidget *widget, GdkDragContext *context, guint time, DragDrop *dd);
+-static gboolean drag_drop(GtkWidget *widget, GdkDragContext *context, gint x, gint y, guint time, DragDrop *dd);
+-static void drag_data_delete(GtkWidget *widget, GdkDragContext *context, DragDrop *dd);
+-static void drag_data_get(GtkWidget *widget, GdkDragContext *context, GtkSelectionData *selectionData, Target targetType, guint time, DragDrop *dd);
+-static void drag_begin(GtkWidget *widget, GdkDragContext *context, DragDrop *dd);
+-static void drag_end(GtkWidget *widget, GdkDragContext *context, DragDrop *dd);
+-static void drag_destroy(GtkWidget *widget, DragDrop *dd);
+-int dragdrop_init(DragDrop *dd, GlobalState *gs) {
+-	dd->get_color_object = 0;
+-	dd->set_color_object_at = 0;
+-	dd->test_at = 0;
+-	dd->data_delete = 0;
+-	dd->drag_end = 0;
+-	dd->get_color_object_list = 0;
+-	dd->set_color_object_list_at = 0;
+-	dd->data_type = DragDrop::DATA_TYPE_NONE;
+-	memset(&dd->data, 0, sizeof(dd->data));
+-	dd->widget = 0;
+-	dd->gs = gs;
+-	dd->dragwidget = 0;
+-	return 0;
+-}
+-int dragdrop_widget_attach(GtkWidget *widget, DragDropFlags flags, DragDrop *user_dd) {
+-	DragDrop *dd = new DragDrop;
+-	memcpy(dd, user_dd, sizeof(DragDrop));
+-	dd->widget = widget;
+-	if (flags & DRAGDROP_SOURCE) {
+-		GtkTargetList *target_list = gtk_drag_source_get_target_list(widget);
+-		if (target_list) {
+-			gtk_target_list_add_table(target_list, targets, targetCount);
+-		} else {
+-			target_list = gtk_target_list_new(targets, targetCount);
+-			gtk_drag_source_set_target_list(widget, target_list);
+-		}
+-		g_signal_connect(widget, "drag-data-get", G_CALLBACK(drag_data_get), dd);
+-		g_signal_connect(widget, "drag-data-delete", G_CALLBACK(drag_data_delete), dd);
+-		g_signal_connect(widget, "drag-begin", G_CALLBACK(drag_begin), dd);
+-		g_signal_connect(widget, "drag-end", G_CALLBACK(drag_end), dd);
+-	}
+-	if (flags & DRAGDROP_DESTINATION) {
+-		GtkTargetList *target_list = gtk_drag_dest_get_target_list(widget);
+-		if (target_list) {
+-			gtk_target_list_add_table(target_list, targets, targetCount);
+-		} else {
+-			target_list = gtk_target_list_new(targets, targetCount);
+-			gtk_drag_dest_set_target_list(widget, target_list);
+-		}
+-		g_signal_connect(widget, "drag-data-received", G_CALLBACK(drag_data_received), dd);
+-		g_signal_connect(widget, "drag-leave", G_CALLBACK(drag_leave), dd);
+-		g_signal_connect(widget, "drag-motion", G_CALLBACK(drag_motion), dd);
+-		g_signal_connect(widget, "drag-drop", G_CALLBACK(drag_drop), dd);
+-	}
+-	g_signal_connect(widget, "destroy", G_CALLBACK(drag_destroy), dd);
+-	return 0;
+-}
+-static void drag_data_received(GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *selectionData, Target targetType, guint time, DragDrop *dd) {
+-	if ((selectionData == nullptr) || (gtk_selection_data_get_length(selectionData) == 0)) {
+-		gtk_drag_finish(context, false, gdk_drag_context_get_actions(context) == GDK_ACTION_MOVE, time);
+-		return;
+-	}
+-	bool success = false;
+-	switch (targetType) {
+-	case Target::colorObjectList: {
+-		ColorObjectList data;
+-		memcpy(&data, gtk_selection_data_get_data(selectionData), offsetof(ColorObjectList, colorObject));
+-		bool sameWidget = data.sourceWidgetId == reinterpret_cast<uintptr_t>(dd->widget);
+-		if (data.colorObjectCount > 1) {
+-			std::vector<ColorObject *> colorObjects(data.colorObjectCount);
+-			memcpy(&colorObjects.front(), gtk_selection_data_get_data(selectionData) + offsetof(ColorObjectList, colorObject), sizeof(ColorObject *) * data.colorObjectCount);
+-			if (dd->set_color_object_list_at)
+-				dd->set_color_object_list_at(dd, &colorObjects.front(), data.colorObjectCount, x, y, gdk_drag_context_get_actions(context) & GDK_ACTION_MOVE, sameWidget);
+-			else if (dd->set_color_object_at) {
+-				memcpy(&data, gtk_selection_data_get_data(selectionData), sizeof(ColorObjectList));
+-				dd->set_color_object_at(dd, data.colorObject[0], x, y, gdk_drag_context_get_actions(context) & GDK_ACTION_MOVE, sameWidget);
+-			}
+-		} else {
+-			if (dd->set_color_object_at) {
+-				memcpy(&data, gtk_selection_data_get_data(selectionData), sizeof(ColorObjectList));
+-				dd->set_color_object_at(dd, data.colorObject[0], x, y, gdk_drag_context_get_actions(context) & GDK_ACTION_MOVE, sameWidget);
+-			}
+-		}
+-	} break;
+-	case Target::serializedColorObjectList: {
+-		auto data = gtk_selection_data_get_data(selectionData);
+-		auto text = std::string(reinterpret_cast<const char *>(data), reinterpret_cast<const char *>(data) + gtk_selection_data_get_length(selectionData));
+-		std::stringstream textStream(text);
+-		dynv::Map values;
+-		if (!values.deserializeXml(textStream))
+-			break;
+-		auto colors = values.getMaps("colors");
+-		if (colors.size() == 0)
+-			break;
+-		static Color defaultColor = {};
+-		if (colors.size() == 1) {
+-			if (dd->set_color_object_at) {
+-				auto *colorObject = new ColorObject();
+-				colorObject->setName(colors[0]->getString("name", ""));
+-				colorObject->setColor(colors[0]->getColor("color", defaultColor));
+-				dd->set_color_object_at(dd, colorObject, x, y, false, false);
+-				colorObject->release();
+-				success = true;
+-				break;
+-			}
+-		}
+-		if (dd->set_color_object_list_at) {
+-			size_t colorCount = colors.size();
+-			std::vector<ColorObject *> colorObjects(colorCount);
+-			auto releaseColorObjects = common::makeScoped(std::function<void()>([&colorObjects]() {
+-				for (auto colorObject: colorObjects)
+-					if (colorObject)
+-						colorObject->release();
+-			}));
+-			for (size_t i = 0; i < colorCount; i++)
+-				colorObjects[i] = new ColorObject(colors[i]->getString("name", ""), colors[i]->getColor("color", defaultColor));
+-			dd->set_color_object_list_at(dd, &colorObjects.front(), colorCount, x, y, false, false);
+-			success = true;
+-		}
+-	} break;
+-	case Target::string: {
+-		gchar *data = (gchar *)gtk_selection_data_get_data(selectionData);
+-		if (data[gtk_selection_data_get_length(selectionData)] != 0) break; //not null terminated
+-		ColorObject *colorObject = nullptr;
+-		if (!dd->gs->converters().deserialize(data, &colorObject)) {
+-			gtk_drag_finish(context, false, false, time);
+-			return;
+-		}
+-		dd->set_color_object_at(dd, colorObject, x, y, gdk_drag_context_get_actions(context) & GDK_ACTION_MOVE, false);
+-		colorObject->release();
+-		success = true;
+-	} break;
+-	case Target::color: {
+-		guint16 *data = (guint16 *)gtk_selection_data_get_data(selectionData);
+-		Color color;
+-		color.rgb.red = static_cast<float>(data[0] / static_cast<double>(0xFFFF));
+-		color.rgb.green = static_cast<float>(data[1] / static_cast<double>(0xFFFF));
+-		color.rgb.blue = static_cast<float>(data[2] / static_cast<double>(0xFFFF));
+-		color.ma[3] = 0;
+-		auto *colorObject = new ColorObject("", color);
+-		dd->set_color_object_at(dd, colorObject, x, y, gdk_drag_context_get_actions(context) & GDK_ACTION_MOVE, false);
+-		colorObject->release();
+-		success = true;
+-	} break;
+-	}
+-	gtk_drag_finish(context, success, gdk_drag_context_get_actions(context) == GDK_ACTION_MOVE, time);
+-}
+-static gboolean drag_motion(GtkWidget *widget, GdkDragContext *context, gint x, gint y, guint time, DragDrop *dd) {
+-	GdkDragAction suggested_action;
+-	bool suggested_action_set = true;
+-	bool dragging_moves = dd->gs->settings().getBool("gpick.main.dragging_moves", true);
+-	if (dragging_moves) {
+-		if ((gdk_drag_context_get_actions(context) & GDK_ACTION_MOVE) == GDK_ACTION_MOVE)
+-			suggested_action = GDK_ACTION_MOVE;
+-		else if ((gdk_drag_context_get_actions(context) & GDK_ACTION_COPY) == GDK_ACTION_COPY)
+-			suggested_action = GDK_ACTION_COPY;
+-		else
+-			suggested_action_set = false;
+-	} else {
+-		if ((gdk_drag_context_get_actions(context) & GDK_ACTION_COPY) == GDK_ACTION_COPY)
+-			suggested_action = GDK_ACTION_COPY;
+-		else if ((gdk_drag_context_get_actions(context) & GDK_ACTION_MOVE) == GDK_ACTION_MOVE)
+-			suggested_action = GDK_ACTION_MOVE;
+-		else
+-			suggested_action_set = false;
+-	}
+-	if (!dd->test_at) {
+-		GdkAtom target = gtk_drag_dest_find_target(widget, context, 0);
+-		if (target) {
+-			gdk_drag_status(context, suggested_action_set ? suggested_action : gdk_drag_context_get_selected_action(context), time);
+-		} else {
+-			gdk_drag_status(context, suggested_action_set ? suggested_action : GdkDragAction(0), time);
+-		}
+-		return true;
+-	}
+-	if (dd->test_at(dd, x, y)) {
+-		GdkAtom target = gtk_drag_dest_find_target(widget, context, 0);
+-		if (target) {
+-			gdk_drag_status(context, suggested_action_set ? suggested_action : gdk_drag_context_get_selected_action(context), time);
+-		} else {
+-			gdk_drag_status(context, suggested_action_set ? suggested_action : GdkDragAction(0), time);
+-		}
+-	} else {
+-		gdk_drag_status(context, suggested_action_set ? suggested_action : GdkDragAction(0), time);
+-	}
+-	return true;
+-}
+-
+-static void drag_leave(GtkWidget *widget, GdkDragContext *context, guint time, DragDrop *dd) {
+-}
+-static gboolean drag_drop(GtkWidget *widget, GdkDragContext *context, gint x, gint y, guint time, DragDrop *dd) {
+-	GdkAtom target = gtk_drag_dest_find_target(widget, context, 0);
+-	if (target != GDK_NONE) {
+-		gtk_drag_get_data(widget, context, target, time);
+-		if (dd->drag_end)
+-			dd->drag_end(dd, widget, context);
+-		return true;
+-	}
+-	if (dd->drag_end)
+-		dd->drag_end(dd, widget, context);
+-	return false;
+-}
+-static void drag_data_delete(GtkWidget *widget, GdkDragContext *context, DragDrop *dd) {
+-	if (dd->data_delete) {
+-		dd->data_delete(dd, widget, context);
+-	}
+-}
+-static void drag_data_get(GtkWidget *widget, GdkDragContext *context, GtkSelectionData *selectionData, Target targetType, guint time, DragDrop *dd) {
+-	if (!selectionData)
+-		return;
+-	if (dd->data_type == DragDrop::DATA_TYPE_COLOR_OBJECT) {
+-		ColorObject *colorObject = dd->data.colorObject.colorObject;
+-		if (!colorObject) return;
+-		Color color;
+-		switch (targetType) {
+-		case Target::colorObjectList: {
+-			ColorObjectList data;
+-			data.sourceWidgetId = reinterpret_cast<uintptr_t>(dd->widget);
+-			data.colorObjectCount = 1;
+-			data.colorObject[0] = colorObject;
+-			gtk_selection_data_set(selectionData, gdk_atom_intern("colorObject", false), 8, (guchar *)&data, sizeof(data));
+-		} break;
+-		case Target::serializedColorObjectList: {
+-			std::vector<dynv::Ref> colors;
+-			auto color = dynv::Map::create();
+-			color->set("name", colorObject->getName());
+-			color->set("color", colorObject->getColor());
+-			colors.push_back(color);
+-			dynv::Map values;
+-			values.set("colors", colors);
+-			std::stringstream str;
+-			values.serializeXml(str);
+-			auto data = str.str();
+-			gtk_selection_data_set(selectionData, gdk_atom_intern("application/x-color-object-list", false), 8, reinterpret_cast<guchar *>(&data.front()), data.length());
+-		} break;
+-		case Target::string: {
+-			auto text = dd->gs->converters().serialize(colorObject, Converters::Type::copy);
+-			gtk_selection_data_set_text(selectionData, text.c_str(), text.length() + 1);
+-		} break;
+-		case Target::color: {
+-			color = colorObject->getColor();
+-			guint16 data_color[4];
+-			data_color[0] = int(color.rgb.red * 0xFFFF);
+-			data_color[1] = int(color.rgb.green * 0xFFFF);
+-			data_color[2] = int(color.rgb.blue * 0xFFFF);
+-			data_color[3] = 0xffff;
+-			gtk_selection_data_set(selectionData, gdk_atom_intern("application/x-color", false), 16, (guchar *)data_color, 8);
+-		} break;
+-		}
+-	} else if (dd->data_type == DragDrop::DATA_TYPE_COLOR_OBJECTS) {
+-		ColorObject **colorObjects = dd->data.colorObjects.colorObjects;
+-		uint32_t colorObjectCount = dd->data.colorObjects.colorObjectCount;
+-		if (!colorObjects) return;
+-		Color color;
+-		switch (targetType) {
+-		case Target::colorObjectList: {
+-			size_t dataLength = offsetof(ColorObjectList, colorObject) + sizeof(ColorObject *) * colorObjectCount;
+-			std::vector<uint8_t> dataBytes(dataLength);
+-			auto data = reinterpret_cast<ColorObjectList *>(&dataBytes.front());
+-			data->sourceWidgetId = reinterpret_cast<uintptr_t>(dd->widget);
+-			data->colorObjectCount = colorObjectCount;
+-			memcpy(&data->colorObject[0], colorObjects, sizeof(ColorObject *) * colorObjectCount);
+-			gtk_selection_data_set(selectionData, gdk_atom_intern("color-object", false), 8, reinterpret_cast<const guchar *>(&dataBytes.front()), dataLength);
+-		} break;
+-		case Target::serializedColorObjectList: {
+-			std::vector<dynv::Ref> colors;
+-			colors.reserve(colorObjectCount);
+-			for (uint32_t i = 0; i < colorObjectCount; i++) {
+-				auto color = dynv::Map::create();
+-				color->set("name", colorObjects[i]->getName());
+-				color->set("color", colorObjects[i]->getColor());
+-				colors.push_back(color);
+-			}
+-			dynv::Map values;
+-			values.set("colors", colors);
+-			std::stringstream str;
+-			values.serializeXml(str);
+-			auto data = str.str();
+-			gtk_selection_data_set(selectionData, gdk_atom_intern("application/x-color-object-list", false), 8, (guchar *)&data.front(), data.length());
+-		} break;
+-		case Target::string: {
+-			std::stringstream ss;
+-			auto converter = dd->gs->converters().firstCopy();
+-			if (converter) {
+-				for (uint32_t i = 0; i != colorObjectCount; i++) {
+-					ss << converter->serialize(colorObjects[i]) << "\n";
+-				}
+-			}
+-			std::string text = ss.str();
+-			gtk_selection_data_set_text(selectionData, text.c_str(), text.length() + 1);
+-		} break;
+-		case Target::color: {
+-			ColorObject *colorObject = colorObjects[0];
+-			color = colorObject->getColor();
+-			guint16 data_color[4];
+-			data_color[0] = int(color.rgb.red * 0xFFFF);
+-			data_color[1] = int(color.rgb.green * 0xFFFF);
+-			data_color[2] = int(color.rgb.blue * 0xFFFF);
+-			data_color[3] = 0xffff;
+-			gtk_selection_data_set(selectionData, gdk_atom_intern("application/x-color", false), 16, (guchar *)data_color, 8);
+-		} break;
+-		}
+-	}
+-}
+-
+-static void drag_begin(GtkWidget *widget, GdkDragContext *context, DragDrop *dd) {
+-	if (dd->get_color_object_list) {
+-		size_t colorObjectCount;
+-		auto colorObjects = dd->get_color_object_list(dd, &colorObjectCount);
+-		if (colorObjects) {
+-			dd->data_type = DragDrop::DATA_TYPE_COLOR_OBJECTS;
+-			dd->data.colorObjects.colorObjects = colorObjects;
+-			dd->data.colorObjects.colorObjectCount = colorObjectCount;
+-			auto dragWindow = gtk_window_new(GTK_WINDOW_POPUP);
+-			auto hbox = gtk_vbox_new(true, 0);
+-			gtk_container_add(GTK_CONTAINER(dragWindow), hbox);
+-			auto showColors = std::min<size_t>(colorObjectCount, 5);
+-			gtk_widget_set_size_request(dragWindow, 164, 24 * showColors);
+-			auto converter = dd->gs->converters().forType(dd->converterType);
+-			if (converter) {
+-				for (size_t i = 0; i < showColors; i++) {
+-					auto colorWidget = gtk_color_new();
+-					auto text = converter ? converter->serialize(colorObjects[i]) : "";
+-					Color color = colorObjects[i]->getColor();
+-					gtk_color_set_color(GTK_COLOR(colorWidget), &color, text.c_str());
+-					gtk_box_pack_start(GTK_BOX(hbox), colorWidget, true, true, 0);
+-				}
+-			}
+-			gtk_drag_set_icon_widget(context, dragWindow, 0, 0);
+-			gtk_widget_show_all(dragWindow);
+-			dd->dragwidget = dragWindow;
+-			return;
+-		}
+-	}
+-	if (dd->get_color_object) {
+-		ColorObject *colorObject = dd->get_color_object(dd);
+-		if (colorObject) {
+-			dd->data_type = DragDrop::DATA_TYPE_COLOR_OBJECT;
+-			dd->data.colorObject.colorObject = colorObject;
+-			auto dragWindow = gtk_window_new(GTK_WINDOW_POPUP);
+-			auto colorWidget = gtk_color_new();
+-			gtk_container_add(GTK_CONTAINER(dragWindow), colorWidget);
+-			gtk_widget_set_size_request(dragWindow, 164, 24);
+-			auto text = dd->gs->converters().serialize(colorObject, dd->converterType);
+-			Color color = colorObject->getColor();
+-			gtk_color_set_color(GTK_COLOR(colorWidget), &color, text.c_str());
+-			gtk_drag_set_icon_widget(context, dragWindow, 0, 0);
+-			gtk_widget_show_all(dragWindow);
+-			dd->dragwidget = dragWindow;
+-			return;
+-		}
+-	}
+-}
+-static void drag_end(GtkWidget *widget, GdkDragContext *context, DragDrop *dd) {
+-	if (dd->data_type == DragDrop::DATA_TYPE_COLOR_OBJECT) {
+-		if (dd->data.colorObject.colorObject) {
+-			dd->data.colorObject.colorObject->release();
+-			memset(&dd->data, 0, sizeof(dd->data));
+-		}
+-		dd->data_type = DragDrop::DATA_TYPE_NONE;
+-	}
+-	if (dd->data_type == DragDrop::DATA_TYPE_COLOR_OBJECTS) {
+-		if (dd->data.colorObjects.colorObjects) {
+-			for (uint32_t i = 0; i < dd->data.colorObjects.colorObjectCount; i++) {
+-				dd->data.colorObjects.colorObjects[i]->release();
+-			}
+-			delete[] dd->data.colorObjects.colorObjects;
+-			memset(&dd->data, 0, sizeof(dd->data));
+-		}
+-		dd->data_type = DragDrop::DATA_TYPE_NONE;
+-	}
+-	if (dd->dragwidget) {
+-		gtk_widget_destroy(dd->dragwidget);
+-		dd->dragwidget = 0;
+-	}
+-	if (dd->drag_end)
+-		dd->drag_end(dd, widget, context);
+-}
+-static void drag_destroy(GtkWidget *widget, DragDrop *dd) {
+-	delete dd;
+-}
+diff --git a/source/GenerateScheme.cpp b/source/GenerateScheme.cpp
+index 73e819a..3ce0e96 100644
+--- a/source/GenerateScheme.cpp
++++ b/source/GenerateScheme.cpp
+@@ -20,7 +20,6 @@
+ #include "ColorObject.h"
+ #include "ColorSourceManager.h"
+ #include "ColorSource.h"
+-#include "DragDrop.h"
+ #include "GlobalState.h"
+ #include "ToolColorNaming.h"
+ #include "uiUtilities.h"
+@@ -35,6 +34,8 @@
+ #include "I18N.h"
+ #include "Random.h"
+ #include "StandardEventHandler.h"
++#include "StandardDragDropHandler.h"
++#include "IDroppableColorUI.h"
+ #include "IMenuExtension.h"
+ #include "color_names/ColorNames.h"
+ #include <gdk/gdkkeysyms.h>
+@@ -273,20 +274,28 @@ struct GenerateSchemeArgs {
+ 		}
+ 	}
+ 	struct Editable: IEditableColorsUI, IMenuExtension {
+-		Editable(GenerateSchemeArgs *args):
+-			args(args) {
++		Editable(GenerateSchemeArgs *args, GtkWidget *widget):
++			args(args),
++			widget(widget) {
+ 		}
+ 		virtual ~Editable() = default;
+ 		virtual void addToPalette(const ColorObject &) override {
++			args->setActiveWidget(widget);
+ 			args->addToPalette();
+ 		}
+ 		virtual void addAllToPalette() override {
+ 			args->addAllToPalette();
+ 		}
+ 		virtual void setColor(const ColorObject &colorObject) override {
+-			args->setColor(colorObject.getColor());
++			args->setActiveWidget(widget);
++			args->setColor(colorObject);
++		}
++		virtual void setColors(const std::vector<ColorObject> &colorObjects) override {
++			args->setActiveWidget(widget);
++			args->setColor(colorObjects[0]);
+ 		}
+ 		virtual const ColorObject &getColor() override {
++			args->setActiveWidget(widget);
+ 			return args->getColor();
+ 		}
+ 		virtual std::vector<ColorObject> getColors(bool selected) override {
+@@ -316,8 +325,60 @@ struct GenerateSchemeArgs {
+ 		}
+ 	private:
+ 		GenerateSchemeArgs *args;
++		GtkWidget *widget;
+ 	};
+-	boost::optional<Editable> editable;
++	boost::optional<Editable> editable[MaxColors];
++	struct ColorWheelEditable: IEditableColorUI, IDroppableColorUI {
++		ColorWheelEditable(GenerateSchemeArgs *args):
++			args(args) {
++		}
++		virtual ~ColorWheelEditable() = default;
++		virtual void addToPalette(const ColorObject &) override {
++		}
++		virtual void setColor(const ColorObject &colorObject) override {
++		}
++		virtual void setColorAt(const ColorObject &colorObject, int x, int y) override {
++			int index = gtk_color_wheel_get_at(GTK_COLOR_WHEEL(args->colorWheel), x, y);
++			if (!(index >= 0 && index < MaxColors))
++				return;
++			Color color, hsl;
++			float hue;
++			color = colorObject.getColor();
++			color_rgb_to_hsl(&color, &hsl);
++			int wheelType = gtk_combo_box_get_active(GTK_COMBO_BOX(args->wheelTypeCombo));
++			auto &wheel = color_wheel_types_get()[wheelType];
++			double tmp;
++			wheel.rgbhue_to_hue(hsl.hsl.hue, &tmp);
++			hue = static_cast<float>(tmp);
++			if (args->wheelLocked) {
++				float hueShift = (hue - args->items[index].originalHue) - args->items[index].hueShift;
++				hue = wrap_float(static_cast<float>(gtk_range_get_value(GTK_RANGE(args->hueRange))) / 360.0f + hueShift);
++				gtk_range_set_value(GTK_RANGE(args->hueRange), hue * 360.0f);
++			} else {
++				args->items[index].hueShift = hue - args->items[index].originalHue;
++				args->update();
++			}
++		}
++		virtual const ColorObject &getColor() override {
++			return colorObject;
++		}
++		virtual bool isEditable() override {
++			return true;
++		}
++		virtual bool hasSelectedColor() override {
++			return true;
++		}
++		virtual bool testDropAt(int x, int y) override {
++			int index = gtk_color_wheel_get_at(GTK_COLOR_WHEEL(args->colorWheel), x, y);
++			return index >= 0 && index < MaxColors;
++		}
++		virtual void dropEnd(bool move) override {
++		}
++	private:
++		GenerateSchemeArgs *args;
++		ColorObject colorObject;
++	};
++	boost::optional<ColorWheelEditable> colorWheelEditable;
+ };
+ static void showMenu(GtkWidget *widget, GenerateSchemeArgs *args, GdkEventButton *event) {
+ 	auto menu = gtk_menu_new();
+@@ -381,47 +442,9 @@ static int deactivate(GenerateSchemeArgs *args) {
+ 	args->options->set("hsv_shift", common::Span<float>(hsvShifts, MaxColors * 3));
+ 	return 0;
+ }
+-static ColorObject *getColorObject(struct DragDrop *dd) {
+-	auto *args = (GenerateSchemeArgs *)dd->userdata;
+-	return args->getColor().copy();
+-}
+-static int setColorObjectAt(struct DragDrop *dd, ColorObject *colorObject, int, int, bool, bool) {
+-	auto *args = static_cast<GenerateSchemeArgs *>(dd->userdata);
+-	args->setActiveWidget(dd->widget);
+-	args->setColor(*colorObject);
+-	return 0;
+-}
+-static int setColorObjectAtColorWheel(struct DragDrop *dd, ColorObject *colorObject, int x, int y, bool, bool) {
+-	int index = gtk_color_wheel_get_at(GTK_COLOR_WHEEL(dd->widget), x, y);
+-	if (!(index >= 0 && index < MaxColors))
+-		return -1;
+-	auto *args = static_cast<GenerateSchemeArgs *>(dd->userdata);
+-	Color color, hsl;
+-	float hue;
+-	color = colorObject->getColor();
+-	color_rgb_to_hsl(&color, &hsl);
+-	int wheelType = gtk_combo_box_get_active(GTK_COMBO_BOX(args->wheelTypeCombo));
+-	auto &wheel = color_wheel_types_get()[wheelType];
+-	double tmp;
+-	wheel.rgbhue_to_hue(hsl.hsl.hue, &tmp);
+-	hue = static_cast<float>(tmp);
+-	if (args->wheelLocked) {
+-		float hueShift = (hue - args->items[index].originalHue) - args->items[index].hueShift;
+-		hue = wrap_float(static_cast<float>(gtk_range_get_value(GTK_RANGE(args->hueRange))) / 360.0f + hueShift);
+-		gtk_range_set_value(GTK_RANGE(args->hueRange), hue * 360.0f);
+-	} else {
+-		args->items[index].hueShift = hue - args->items[index].originalHue;
+-		args->update();
+-	}
+-	return 0;
+-}
+-static bool testAtColorWheel(struct DragDrop *dd, int x, int y) {
+-	int index = gtk_color_wheel_get_at(GTK_COLOR_WHEEL(dd->widget), x, y);
+-	return index >= 0 && index < MaxColors;
+-}
+ static ColorSource *source_implement(ColorSource *source, GlobalState *gs, const dynv::Ref &options) {
+ 	auto *args = new GenerateSchemeArgs;
+-	args->editable = GenerateSchemeArgs::Editable(args);
++	args->colorWheelEditable = GenerateSchemeArgs::ColorWheelEditable(args);
+ 	args->options = options;
+ 	args->statusBar = gs->getStatusBar();
+ 	args->gs = gs;
+@@ -451,12 +474,6 @@ static ColorSource *source_implement(ColorSource *source, GlobalState *gs, const
+ 	gtk_box_pack_start(GTK_BOX(hbox), vbox, true, true, 5);
+ 	args->colorPreviews = gtk_table_new(3, 2, false);
+ 	gtk_box_pack_start(GTK_BOX(vbox), args->colorPreviews, true, true, 0);
+-	struct DragDrop dd;
+-	dragdrop_init(&dd, gs);
+-	dd.converterType = Converters::Type::display;
+-	dd.userdata = args;
+-	dd.get_color_object = getColorObject;
+-	dd.set_color_object_at = setColorObjectAt;
+ 	for (intptr_t i = 0; i < MaxColors; ++i) {
+ 		widget = gtk_color_new();
+ 		gtk_color_set_rounded(GTK_COLOR(widget), true);
+@@ -466,15 +483,13 @@ static ColorSource *source_implement(ColorSource *source, GlobalState *gs, const
+ 		args->items[i].widget = widget;
+ 		g_signal_connect(G_OBJECT(widget), "activated", G_CALLBACK(GenerateSchemeArgs::onColorActivate), args);
+ 		g_signal_connect(G_OBJECT(widget), "focus-in-event", G_CALLBACK(GenerateSchemeArgs::onFocusEvent), args);
+-		StandardEventHandler::forWidget(widget, args->gs, &*args->editable);
+-		//setup drag&drop
+-		gtk_drag_dest_set(widget, GtkDestDefaults(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT), 0, 0, GDK_ACTION_COPY);
+-		gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
+-		dragdrop_widget_attach(widget, DragDropFlags(DRAGDROP_SOURCE | DRAGDROP_DESTINATION), &dd);
++		args->editable[i] = GenerateSchemeArgs::Editable(args, widget);
++		StandardEventHandler::forWidget(widget, args->gs, &*args->editable[i]);
++		StandardDragDropHandler::forWidget(widget, args->gs, &*args->editable[i]);
+ 	}
+ 	hbox2 = gtk_hbox_new(false, 5);
+ 	gtk_box_pack_start(GTK_BOX(vbox), hbox2, false, false, 0);
+-	args->colorWheel = gtk_color_wheel_new();
++	args->colorWheel = widget = gtk_color_wheel_new();
+ 	gtk_box_pack_start(GTK_BOX(hbox2), args->colorWheel, false, false, 0);
+ 	g_signal_connect(G_OBJECT(args->colorWheel), "hue_changed", G_CALLBACK(GenerateSchemeArgs::onHueChange), args);
+ 	g_signal_connect(G_OBJECT(args->colorWheel), "saturation_value_changed", G_CALLBACK(GenerateSchemeArgs::onSaturationChange), args);
+@@ -482,11 +497,8 @@ static ColorSource *source_implement(ColorSource *source, GlobalState *gs, const
+ 	g_signal_connect(G_OBJECT(args->colorWheel), "button-press-event", G_CALLBACK(onButtonPress), args);
+ 	args->wheelLocked = options->getBool("wheel_locked", true);
+ 	gtk_color_wheel_set_block_editable(GTK_COLOR_WHEEL(args->colorWheel), !args->wheelLocked);
+-	gtk_drag_dest_set(args->colorWheel, GtkDestDefaults(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT), 0, 0, GDK_ACTION_COPY);
+-	dd.userdata = args;
+-	dd.set_color_object_at = setColorObjectAtColorWheel;
+-	dd.test_at = testAtColorWheel;
+-	dragdrop_widget_attach(args->colorWheel, DragDropFlags(DRAGDROP_DESTINATION), &dd);
++	StandardDragDropHandler::forWidget(widget, args->gs, &*args->colorWheelEditable, StandardDragDropHandler::Options().allowDrag(false));
++
+ 	gint table_y;
+ 	table = gtk_table_new(5, 2, false);
+ 	gtk_box_pack_start(GTK_BOX(hbox2), table, true, true, 0);
+diff --git a/source/IDroppableColorUI.h b/source/IDroppableColorUI.h
+new file mode 100644
+index 0000000..f4a3493
+--- /dev/null
++++ b/source/IDroppableColorUI.h
+@@ -0,0 +1,34 @@
++/*
++ * Copyright (c) 2009-2020, Albertas Vyšniauskas
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
++ *
++ *     * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
++ *     * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
++ *     * Neither the name of the software author nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
++ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
++ * OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#ifndef GPICK_IDROPPABLE_COLOR_UI_H_
++#define GPICK_IDROPPABLE_COLOR_UI_H_
++#include <vector>
++struct ColorObject;
++struct IDraggableColorUI {
++	virtual void dragEnd(bool move) = 0;
++};
++struct IDroppableColorUI {
++	virtual void setColorAt(const ColorObject &colorObject, int x, int y) = 0;
++	virtual bool testDropAt(int x, int y) = 0;
++	virtual void dropEnd(bool move) = 0;
++};
++struct IDroppableColorsUI: IDroppableColorUI {
++	virtual void setColorsAt(const std::vector<ColorObject> &colorObjects, int x, int y) = 0;
++};
++#endif /* GPICK_IDROPPABLE_COLOR_UI_H_ */
+diff --git a/source/IEditableColorUI.h b/source/IEditableColorUI.h
+index f391436..f6dc027 100644
+--- a/source/IEditableColorUI.h
++++ b/source/IEditableColorUI.h
+@@ -19,10 +19,12 @@
+ #ifndef GPICK_IEDITABLE_COLOR_UI_H_
+ #define GPICK_IEDITABLE_COLOR_UI_H_
+ #include "IReadonlyColorUI.h"
++#include <vector>
+ struct IEditableColorUI: virtual IReadonlyColorUI {
+ 	virtual void setColor(const ColorObject &colorObject) = 0;
+ 	virtual bool isEditable() = 0;
+ };
+ struct IEditableColorsUI: IEditableColorUI, IReadonlyColorsUI {
++	virtual void setColors(const std::vector<ColorObject> &colorObjects) = 0;
+ };
+ #endif /* GPICK_IEDITABLE_COLOR_UI_H_ */
+diff --git a/source/LayoutPreview.cpp b/source/LayoutPreview.cpp
+index a95aa00..3089246 100644
+--- a/source/LayoutPreview.cpp
++++ b/source/LayoutPreview.cpp
+@@ -19,7 +19,6 @@
+ #include "LayoutPreview.h"
+ #include "ColorSourceManager.h"
+ #include "ColorSource.h"
+-#include "DragDrop.h"
+ #include "Converters.h"
+ #include "Converter.h"
+ #include "dynv/Map.h"
+@@ -34,6 +33,8 @@
+ #include "layout/Layouts.h"
+ #include "layout/Style.h"
+ #include "StandardEventHandler.h"
++#include "StandardDragDropHandler.h"
++#include "IDroppableColorUI.h"
+ #include <gdk/gdkkeysyms.h>
+ #include <sstream>
+ #include <fstream>
+@@ -124,7 +125,7 @@ struct LayoutPreviewArgs {
+ 			return false;
+ 		return gtk_layout_preview_is_editable(GTK_LAYOUT_PREVIEW(layoutView));
+ 	}
+-	struct Editable: IEditableColorsUI {
++	struct Editable: IEditableColorsUI, IDroppableColorUI {
+ 		Editable(LayoutPreviewArgs *args):
+ 			args(args) {
+ 		}
+@@ -138,6 +139,13 @@ struct LayoutPreviewArgs {
+ 		virtual void setColor(const ColorObject &colorObject) override {
+ 			args->setColor(colorObject.getColor());
+ 		}
++		virtual void setColorAt(const ColorObject &colorObject, int x, int y) override {
++			args->select(x, y);
++			args->setColor(colorObject);
++		}
++		virtual void setColors(const std::vector<ColorObject> &colorObjects) override {
++			args->setColor(colorObjects[0]);
++		}
+ 		virtual const ColorObject &getColor() override {
+ 			return args->getColor();
+ 		}
+@@ -153,6 +161,11 @@ struct LayoutPreviewArgs {
+ 		virtual bool hasSelectedColor() override {
+ 			return args->isSelected();
+ 		}
++		virtual bool testDropAt(int x, int y) override {
++			return args->select(x, y);
++		}
++		virtual void dropEnd(bool move) override {
++		}
+ 	private:
+ 		LayoutPreviewArgs *args;
+ 	};
+@@ -279,22 +292,6 @@ static int setColor(LayoutPreviewArgs *args, ColorObject *colorObject) {
+ static int deactivate(LayoutPreviewArgs *args) {
+ 	return 0;
+ }
+-static ColorObject *getColorObject(DragDrop *dd) {
+-	auto *args = static_cast<LayoutPreviewArgs *>(dd->userdata);
+-	if (!args->isSelected())
+-		return nullptr;
+-	return args->getColor().copy();
+-}
+-static int setColorObjectAt(struct DragDrop *dd, ColorObject *colorObject, int x, int y, bool, bool) {
+-	auto *args = static_cast<LayoutPreviewArgs *>(dd->userdata);
+-	args->select(x, y);
+-	args->setColor(*colorObject);
+-	return 0;
+-}
+-static bool testAt(struct DragDrop *dd, int x, int y) {
+-	auto *args = static_cast<LayoutPreviewArgs *>(dd->userdata);
+-	return args->select(x, y);
+-}
+ static GtkWidget *newLayoutDropdown() {
+ 	auto store = gtk_list_store_new(LAYOUTLIST_N_COLUMNS, G_TYPE_STRING, G_TYPE_POINTER);
+ 	auto combo = gtk_combo_box_new_with_model(GTK_TREE_MODEL(store));
+@@ -464,17 +461,8 @@ static ColorSource *source_implement(ColorSource *source, GlobalState *gs, const
+ 	gtk_scrolled_window_add_with_viewport(GTK_SCROLLED_WINDOW(scrolled), args->layoutView = gtk_layout_preview_new());
+ 	g_signal_connect_after(G_OBJECT(args->layoutView), "button-press-event", G_CALLBACK(onButtonPress), args);
+ 	StandardEventHandler::forWidget(args->layoutView, args->gs, &*args->editable);
++	StandardDragDropHandler::forWidget(args->layoutView, args->gs, &*args->editable);
+ 	table_y++;
+-	struct DragDrop dd;
+-	dragdrop_init(&dd, gs);
+-	dd.converterType = Converters::Type::display;
+-	dd.userdata = args;
+-	dd.get_color_object = getColorObject;
+-	dd.set_color_object_at = setColorObjectAt;
+-	dd.test_at = testAt;
+-	gtk_drag_dest_set(args->layoutView, GtkDestDefaults(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT), 0, 0, GDK_ACTION_COPY);
+-	gtk_drag_source_set(args->layoutView, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
+-	dragdrop_widget_attach(args->layoutView, DragDropFlags(DRAGDROP_SOURCE | DRAGDROP_DESTINATION), &dd);
+ 	// Restore settings and fill list
+ 	auto layoutName = args->options->getString("layout_name", "std_layout_menu_1");
+ 	GtkTreeModel *model = gtk_combo_box_get_model(GTK_COMBO_BOX(layoutDropdown));
+diff --git a/source/StandardDragDropHandler.cpp b/source/StandardDragDropHandler.cpp
+new file mode 100644
+index 0000000..052d2d4
+--- /dev/null
++++ b/source/StandardDragDropHandler.cpp
+@@ -0,0 +1,414 @@
++/*
++ * Copyright (c) 2009-2020, Albertas Vyšniauskas
++ * All rights reserved.
++ *
++ * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
++ *
++ *     * Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
++ *     * Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
++ *     * Neither the name of the software author nor the names of its contributors may be used to endorse or promote products derived from this software without specific prior written permission.
++ *
++ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
++ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
++ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER
++ * IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
++ * OF THE POSSIBILITY OF SUCH DAMAGE.
++ */
++
++#include "StandardDragDropHandler.h"
++#include "GlobalState.h"
++#include "ColorObject.h"
++#include "Converter.h"
++#include "dynv/Map.h"
++#include "IDroppableColorUI.h"
++#include "gtk/ColorWidget.h"
++#include <sstream>
++
++struct State {
++	GlobalState &gs;
++	Converters::Type converterType;
++	std::vector<ColorObject> colorObjects;
++	GtkWidget *dragWidget;
++	bool supportsMove;
++	State(GlobalState &gs, Converters::Type converterType, bool supportsMove):
++		gs(gs),
++		converterType(converterType),
++		dragWidget(nullptr),
++		supportsMove(supportsMove) {
++	}
++};
++enum class Target : guint {
++	string = 1,
++	color,
++	colorObjectList,
++	serializedColorObjectList,
++};
++static GtkTargetEntry targets[] = {
++	{ const_cast<gchar *>("color-object-list"), GTK_TARGET_SAME_APP, static_cast<guint>(Target::colorObjectList) },
++	{ const_cast<gchar *>("application/x-color_object-list"), GTK_TARGET_OTHER_APP, static_cast<guint>(Target::serializedColorObjectList) },
++	{ const_cast<gchar *>("application/x-color-object-list"), GTK_TARGET_OTHER_APP, static_cast<guint>(Target::serializedColorObjectList) },
++	{ const_cast<gchar *>("application/x-color"), 0, static_cast<guint>(Target::color) },
++	{ const_cast<gchar *>("text/plain"), 0, static_cast<guint>(Target::string) },
++	{ const_cast<gchar *>("UTF8_STRING"), 0, static_cast<guint>(Target::string) },
++	{ const_cast<gchar *>("STRING"), 0, static_cast<guint>(Target::string) },
++};
++static const size_t targetCount = sizeof(targets) / sizeof(GtkTargetEntry);
++struct ColorObjectList {
++	std::vector<ColorObject> *colorObjects;
++};
++static bool setColor(ColorObject &colorObject, IReadonlyColorUI *readonlyColorUI, int x, int y) {
++	auto *droppableColorUI = dynamic_cast<IDroppableColorUI*>(readonlyColorUI);
++	if (droppableColorUI) {
++		droppableColorUI->setColorAt(colorObject, x, y);
++		return true;
++	}
++	auto *editableColorUI = dynamic_cast<IEditableColorUI*>(readonlyColorUI);
++	if (editableColorUI) {
++		editableColorUI->setColor(colorObject);
++		return true;
++	}
++	return false;
++}
++static bool setColors(std::vector<ColorObject> &colorObjects, IReadonlyColorUI *readonlyColorUI, int x, int y) {
++	if (colorObjects.size() == 0)
++		return false;
++	if (colorObjects.size() == 1) {
++		auto *droppableColorUI = dynamic_cast<IDroppableColorUI*>(readonlyColorUI);
++		if (droppableColorUI) {
++			droppableColorUI->setColorAt(colorObjects[0], x, y);
++			return true;
++		}
++		auto *editableColorUI = dynamic_cast<IEditableColorUI*>(readonlyColorUI);
++		if (editableColorUI) {
++			editableColorUI->setColor(colorObjects[0]);
++			return true;
++		}
++		return false;
++	}
++	auto *droppableColorsUI = dynamic_cast<IDroppableColorsUI*>(readonlyColorUI);
++	if (droppableColorsUI) {
++		droppableColorsUI->setColorsAt(colorObjects, x, y);
++		return true;
++	}
++	auto *droppableColorUI = dynamic_cast<IDroppableColorUI*>(readonlyColorUI);
++	if (droppableColorUI) {
++		droppableColorUI->setColorAt(colorObjects[0], x, y);
++		return true;
++	}
++	auto *editableColorsUI = dynamic_cast<IEditableColorsUI*>(readonlyColorUI);
++	if (editableColorsUI) {
++		editableColorsUI->setColors(colorObjects);
++		return true;
++	}
++	auto *editableColorUI = dynamic_cast<IEditableColorUI*>(readonlyColorUI);
++	if (editableColorUI) {
++		editableColorUI->setColor(colorObjects[0]);
++		return true;
++	}
++	return false;
++}
++static void onDragDataReceived(GtkWidget *widget, GdkDragContext *context, gint x, gint y, GtkSelectionData *selectionData, Target targetType, guint time, IReadonlyColorUI *readonlyColorUI) {
++	if ((selectionData == nullptr) || (gtk_selection_data_get_length(selectionData) == 0)) {
++		gtk_drag_finish(context, false, gdk_drag_context_get_actions(context) == GDK_ACTION_MOVE, time);
++		return;
++	}
++	auto &state = *reinterpret_cast<State *>(g_object_get_data(G_OBJECT(widget), "dragDropState"));
++	bool success = false;
++	switch (targetType) {
++	case Target::colorObjectList: {
++		auto *dataPointer = gtk_selection_data_get_data(selectionData);
++		if (!dataPointer)
++			break;
++		const auto &data = *reinterpret_cast<const ColorObjectList *>(dataPointer);
++		success = setColors(*data.colorObjects, readonlyColorUI, x, y);
++	} break;
++	case Target::serializedColorObjectList: {
++		auto data = gtk_selection_data_get_data(selectionData);
++		auto text = std::string(reinterpret_cast<const char *>(data), reinterpret_cast<const char *>(data) + gtk_selection_data_get_length(selectionData));
++		std::stringstream textStream(text);
++		dynv::Map values;
++		if (!values.deserializeXml(textStream))
++			break;
++		auto colors = values.getMaps("colors");
++		if (colors.size() == 0)
++			break;
++		static Color defaultColor = {};
++		std::vector<ColorObject> colorObjects;
++		colorObjects.reserve(colors.size());
++		for (size_t i = 0; i < colors.size(); i++) {
++			colorObjects.emplace_back(colors[i]->getString("name", ""), colors[i]->getColor("color", defaultColor));
++		}
++		success = setColors(colorObjects, readonlyColorUI, x, y);
++	} break;
++	case Target::string: {
++		gchar *data = (gchar *)gtk_selection_data_get_data(selectionData);
++		ColorObject colorObject;
++		if (!state.gs.converters().deserialize(std::string(data, data + gtk_selection_data_get_length(selectionData)), colorObject)) {
++			gtk_drag_finish(context, false, false, time);
++			return;
++		}
++		success = setColor(colorObject, readonlyColorUI, x, y);
++	} break;
++	case Target::color: {
++		guint16 *data = (guint16 *)gtk_selection_data_get_data(selectionData);
++		Color color;
++		color.rgb.red = static_cast<float>(data[0] / static_cast<double>(0xFFFF));
++		color.rgb.green = static_cast<float>(data[1] / static_cast<double>(0xFFFF));
++		color.rgb.blue = static_cast<float>(data[2] / static_cast<double>(0xFFFF));
++		color.ma[3] = 0;
++		ColorObject colorObject("", color);
++		success = setColor(colorObject, readonlyColorUI, x, y);
++	} break;
++	}
++	gtk_drag_finish(context, success, gdk_drag_context_get_actions(context) == GDK_ACTION_MOVE, time);
++}
++static gboolean onDragMotion(GtkWidget *widget, GdkDragContext *context, gint x, gint y, guint time, IReadonlyColorUI *readonlyColorUI) {
++	GdkDragAction suggestedAction;
++	bool suggestedActionSet = true;
++	auto &state = *reinterpret_cast<State *>(g_object_get_data(G_OBJECT(widget), "dragDropState"));
++	if (state.supportsMove) {
++		bool draggingMoves = state.gs.settings().getBool("gpick.main.dragging_moves", true);
++		if (draggingMoves) {
++			if ((gdk_drag_context_get_actions(context) & GDK_ACTION_MOVE) == GDK_ACTION_MOVE)
++				suggestedAction = GDK_ACTION_MOVE;
++			else if ((gdk_drag_context_get_actions(context) & GDK_ACTION_COPY) == GDK_ACTION_COPY)
++				suggestedAction = GDK_ACTION_COPY;
++			else
++				suggestedActionSet = false;
++		} else {
++			if ((gdk_drag_context_get_actions(context) & GDK_ACTION_COPY) == GDK_ACTION_COPY)
++				suggestedAction = GDK_ACTION_COPY;
++			else if ((gdk_drag_context_get_actions(context) & GDK_ACTION_MOVE) == GDK_ACTION_MOVE)
++				suggestedAction = GDK_ACTION_MOVE;
++			else
++				suggestedActionSet = false;
++		}
++	} else {
++		suggestedActionSet = false;
++	}
++	auto *droppableColorUI = dynamic_cast<IDroppableColorUI*>(readonlyColorUI);
++	if (!droppableColorUI) {
++		GdkAtom target = gtk_drag_dest_find_target(widget, context, 0);
++		if (target) {
++			gdk_drag_status(context, suggestedActionSet ? suggestedAction : gdk_drag_context_get_selected_action(context), time);
++		} else {
++			gdk_drag_status(context, suggestedActionSet ? suggestedAction : GdkDragAction(0), time);
++		}
++		return true;
++	}
++	if (droppableColorUI->testDropAt(x, y)) {
++		GdkAtom target = gtk_drag_dest_find_target(widget, context, 0);
++		if (target) {
++			gdk_drag_status(context, suggestedActionSet ? suggestedAction : gdk_drag_context_get_selected_action(context), time);
++		} else {
++			gdk_drag_status(context, suggestedActionSet ? suggestedAction : GdkDragAction(0), time);
++		}
++	} else {
++		gdk_drag_status(context, suggestedActionSet ? suggestedAction : GdkDragAction(0), time);
++	}
++	return true;
++}
++static gboolean onDragDrop(GtkWidget *widget, GdkDragContext *context, gint x, gint y, guint time, IReadonlyColorUI *readonlyColorUI) {
++	GdkAtom target = gtk_drag_dest_find_target(widget, context, 0);
++	auto *droppableColorUI = dynamic_cast<IDroppableColorUI*>(readonlyColorUI);
++	if (target != GDK_NONE) {
++		gtk_drag_get_data(widget, context, target, time);
++		if (droppableColorUI)
++			droppableColorUI->dropEnd(gdk_drag_context_get_selected_action(context) == GDK_ACTION_MOVE);
++		return true;
++	}
++	if (droppableColorUI)
++		droppableColorUI->dropEnd(gdk_drag_context_get_selected_action(context) == GDK_ACTION_MOVE);
++	return false;
++}
++static void onDragDataGet(GtkWidget *widget, GdkDragContext *context, GtkSelectionData *selectionData, Target targetType, guint time, IReadonlyColorUI *readonlyColorUI) {
++	if (!selectionData)
++		return;
++	auto &state = *reinterpret_cast<State *>(g_object_get_data(G_OBJECT(widget), "dragDropState"));
++	if (state.colorObjects.size() == 0)
++		return;
++	Color color;
++	switch (targetType) {
++	case Target::colorObjectList: {
++		ColorObjectList data;
++		data.colorObjects = &state.colorObjects;
++		gtk_selection_data_set(selectionData, gdk_atom_intern("color-object", false), 8, reinterpret_cast<const guchar *>(&data), sizeof(ColorObjectList));
++	} break;
++	case Target::serializedColorObjectList: {
++		std::vector<dynv::Ref> colors;
++		colors.reserve(state.colorObjects.size());
++		for (uint32_t i = 0; i < state.colorObjects.size(); i++) {
++			auto color = dynv::Map::create();
++			color->set("name", state.colorObjects[i].getName());
++			color->set("color", state.colorObjects[i].getColor());
++			colors.push_back(color);
++		}
++		dynv::Map values;
++		values.set("colors", colors);
++		std::stringstream str;
++		values.serializeXml(str);
++		auto data = str.str();
++		gtk_selection_data_set(selectionData, gdk_atom_intern("application/x-color-object-list", false), 8, (guchar *)&data.front(), data.length());
++	} break;
++	case Target::string: {
++		std::stringstream ss;
++		ConverterSerializePosition position(state.colorObjects.size());
++		auto converter = state.gs.converters().firstCopy();
++		if (converter) {
++			for (size_t i = 0, count = state.colorObjects.size(); i < count; i++) {
++				if (position.index() + 1 == position.count())
++					position.last(true);
++				if (position.first()) {
++					ss << converter->serialize(state.colorObjects[i], position);
++					position.first(false);
++				} else {
++					ss << "\n" << converter->serialize(state.colorObjects[i], position);
++				}
++				position.incrementIndex();
++			}
++		}
++		std::string text = ss.str();
++		gtk_selection_data_set_text(selectionData, text.c_str(), text.length());
++	} break;
++	case Target::color: {
++		const auto &colorObject = state.colorObjects[0];
++		color = colorObject.getColor();
++		guint16 dataColor[4];
++		dataColor[0] = int(color.rgb.red * 0xFFFF);
++		dataColor[1] = int(color.rgb.green * 0xFFFF);
++		dataColor[2] = int(color.rgb.blue * 0xFFFF);
++		dataColor[3] = 0xffff;
++		gtk_selection_data_set(selectionData, gdk_atom_intern("application/x-color", false), 16, (guchar *)dataColor, 8);
++	} break;
++	}
++}
++static void onDragBegin(GtkWidget *widget, GdkDragContext *context, IReadonlyColorUI *readonlyColorUI) {
++	auto &state = *reinterpret_cast<State *>(g_object_get_data(G_OBJECT(widget), "dragDropState"));
++	auto *readonlyColorsUI = dynamic_cast<IReadonlyColorsUI *>(readonlyColorUI);
++	if (readonlyColorsUI) {
++		if (!readonlyColorsUI->hasSelectedColor())
++			return;
++		auto colorObjects = readonlyColorsUI->getColors(true);
++		if (colorObjects.size() == 0)
++			return;
++		state.colorObjects = colorObjects;
++		auto dragWindow = gtk_window_new(GTK_WINDOW_POPUP);
++		auto hbox = gtk_vbox_new(true, 0);
++		gtk_container_add(GTK_CONTAINER(dragWindow), hbox);
++		auto showColors = std::min<size_t>(colorObjects.size(), 5);
++		gtk_widget_set_size_request(dragWindow, 164, 24 * showColors);
++		auto converter = state.gs.converters().forType(state.converterType);
++		if (converter) {
++			for (size_t i = 0; i < showColors; i++) {
++				auto colorWidget = gtk_color_new();
++				auto text = converter ? converter->serialize(colorObjects[i]) : "";
++				Color color = colorObjects[i].getColor();
++				gtk_color_set_color(GTK_COLOR(colorWidget), &color, text.c_str());
++				gtk_box_pack_start(GTK_BOX(hbox), colorWidget, true, true, 0);
++			}
++		}
++		gtk_drag_set_icon_widget(context, dragWindow, 0, 0);
++		gtk_widget_show_all(dragWindow);
++		state.dragWidget = dragWindow;
++		return;
++	}
++	if (!readonlyColorUI->hasSelectedColor())
++		return;
++	auto colorObject = readonlyColorUI->getColor();
++	state.colorObjects.push_back(colorObject);
++	auto dragWindow = gtk_window_new(GTK_WINDOW_POPUP);
++	auto colorWidget = gtk_color_new();
++	gtk_container_add(GTK_CONTAINER(dragWindow), colorWidget);
++	gtk_widget_set_size_request(dragWindow, 164, 24);
++	auto text = state.gs.converters().serialize(colorObject, state.converterType);
++	Color color = colorObject.getColor();
++	gtk_color_set_color(GTK_COLOR(colorWidget), &color, text.c_str());
++	gtk_drag_set_icon_widget(context, dragWindow, 0, 0);
++	gtk_widget_show_all(dragWindow);
++	state.dragWidget = dragWindow;
++	return;
++}
++static void onDragEnd(GtkWidget *widget, GdkDragContext *context, IReadonlyColorUI *readonlyColorUI) {
++	auto &state = *reinterpret_cast<State *>(g_object_get_data(G_OBJECT(widget), "dragDropState"));
++	state.colorObjects.resize(0);
++	state.colorObjects.shrink_to_fit();
++	if (state.dragWidget) {
++		gtk_widget_destroy(state.dragWidget);
++		state.dragWidget = nullptr;
++	}
++	auto *draggableColorUI= dynamic_cast<IDraggableColorUI*>(readonlyColorUI);
++	if (draggableColorUI)
++		draggableColorUI->dragEnd(gdk_drag_context_get_selected_action(context) == GDK_ACTION_MOVE);
++}
++static void onStateDestroy(State *state){
++	delete state;
++}
++StandardDragDropHandler::Options::Options():
++	m_afterEvents(true),
++	m_supportsMove(false),
++	m_allowDrop(true),
++	m_allowDrag(true),
++	m_converterType(Converters::Type::display) {
++}
++StandardDragDropHandler::Options &StandardDragDropHandler::Options::afterEvents(bool enable) {
++	m_afterEvents = enable;
++	return *this;
++}
++StandardDragDropHandler::Options &StandardDragDropHandler::Options::supportsMove(bool enable) {
++	m_supportsMove = enable;
++	return *this;
++}
++StandardDragDropHandler::Options &StandardDragDropHandler::Options::allowDrop(bool enable) {
++	m_allowDrop = enable;
++	return *this;
++}
++StandardDragDropHandler::Options &StandardDragDropHandler::Options::allowDrag(bool enable) {
++	m_allowDrag = enable;
++	return *this;
++}
++StandardDragDropHandler::Options &StandardDragDropHandler::Options::converterType(Converters::Type type) {
++	m_converterType = type;
++	return *this;
++}
++void StandardDragDropHandler::forWidget(GtkWidget *widget, GlobalState *gs, Interface interface, Options options) {
++	void *data = boost::apply_visitor([](auto *interface) -> void * {
++		return interface;
++	}, interface);
++	auto flags = options.m_afterEvents ? G_CONNECT_AFTER : static_cast<GConnectFlags>(0);
++	if (options.m_allowDrag) {
++		if (options.m_supportsMove)
++			gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GdkDragAction(GDK_ACTION_COPY | GDK_ACTION_MOVE | GDK_ACTION_ASK));
++		else
++			gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
++		GtkTargetList *targetList = gtk_drag_source_get_target_list(widget);
++		if (targetList) {
++			gtk_target_list_add_table(targetList, targets, targetCount);
++		} else {
++			targetList = gtk_target_list_new(targets, targetCount);
++			gtk_drag_source_set_target_list(widget, targetList);
++		}
++		g_signal_connect_data(widget, "drag-data-get", G_CALLBACK(onDragDataGet), data, nullptr, flags);
++		g_signal_connect_data(widget, "drag-begin", G_CALLBACK(onDragBegin), data, nullptr, flags);
++		g_signal_connect_data(widget, "drag-end", G_CALLBACK(onDragEnd), data, nullptr, flags);
++	}
++	auto *editableColorUI = dynamic_cast<IEditableColorUI *>(static_cast<IReadonlyColorUI *>(data));
++	if (options.m_allowDrop && editableColorUI) {
++		if (options.m_supportsMove)
++			gtk_drag_dest_set(widget, GtkDestDefaults(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT), 0, 0, GdkDragAction(GDK_ACTION_COPY | GDK_ACTION_MOVE | GDK_ACTION_ASK));
++		else
++			gtk_drag_dest_set(widget, GtkDestDefaults(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT), 0, 0, GDK_ACTION_COPY);
++		GtkTargetList *targetList = gtk_drag_dest_get_target_list(widget);
++		if (targetList) {
++			gtk_target_list_add_table(targetList, targets, targetCount);
++		} else {
++			targetList = gtk_target_list_new(targets, targetCount);
++			gtk_drag_dest_set_target_list(widget, targetList);
++		}
++		g_signal_connect_data(widget, "drag-data-received", G_CALLBACK(onDragDataReceived), data, nullptr, flags);
++		g_signal_connect_data(widget, "drag-motion", G_CALLBACK(onDragMotion), data, nullptr, flags);
++		g_signal_connect_data(widget, "drag-drop", G_CALLBACK(onDragDrop), data, nullptr, flags);
++	}
++	auto state = new State(*gs, options.m_converterType, options.m_supportsMove);
++	g_object_set_data_full(G_OBJECT(widget), "dragDropState", state, GDestroyNotify(onStateDestroy));
++}
+diff --git a/source/DragDrop.h b/source/StandardDragDropHandler.h
+similarity index 54%
+rename from source/DragDrop.h
+rename to source/StandardDragDropHandler.h
+index e41af07..4a9e69a 100644
+--- a/source/DragDrop.h
++++ b/source/StandardDragDropHandler.h
+@@ -1,5 +1,5 @@
+ /*
+- * Copyright (c) 2009-2016, Albertas Vyšniauskas
++ * Copyright (c) 2009-2020, Albertas Vyšniauskas
+  * All rights reserved.
+  *
+  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+@@ -16,46 +16,31 @@
+  * OF THE POSSIBILITY OF SUCH DAMAGE.
+  */
+ 
+-#ifndef GPICK_DRAG_DROP_H_
+-#define GPICK_DRAG_DROP_H_
++#ifndef GPICK_STANDARD_DRAG_DROP_HANDLER_H_
++#define GPICK_STANDARD_DRAG_DROP_HANDLER_H_
++#include "IEditableColorUI.h"
++#include "IReadonlyColorUI.h"
+ #include "Converters.h"
+ #include <gtk/gtk.h>
+-struct GlobalState;
++#include <boost/variant.hpp>
+ struct ColorObject;
+-enum DragDropFlags {
+-	DRAGDROP_SOURCE = 1 << 1,
+-	DRAGDROP_DESTINATION = 1 << 2,
+-};
+-struct DragDrop {
+-	GtkWidget *widget;
+-	void *userdata;
+-	ColorObject *(*get_color_object)(DragDrop *dd);
+-	int (*set_color_object_at)(DragDrop *dd, ColorObject *colorobject, int x, int y, bool move, bool sameWidget);
+-	ColorObject **(*get_color_object_list)(DragDrop *dd, size_t *colorobject_n);
+-	int (*set_color_object_list_at)(DragDrop *dd, ColorObject **colorobject, size_t colorobject_n, int x, int y, bool move, bool sameWidget);
+-	bool (*test_at)(DragDrop *dd, int x, int y);
+-	bool (*data_delete)(DragDrop *dd, GtkWidget *widget, GdkDragContext *context);
+-	bool (*drag_end)(DragDrop *dd, GtkWidget *widget, GdkDragContext *context);
+-	enum DataType {
+-		DATA_TYPE_NONE,
+-		DATA_TYPE_COLOR_OBJECT,
+-		DATA_TYPE_COLOR_OBJECTS,
++struct GlobalState;
++struct StandardDragDropHandler {
++	using Interface = boost::variant<IEditableColorUI *, IEditableColorsUI *, IReadonlyColorUI *, IReadonlyColorsUI *>;
++	struct Options {
++		Options();
++		Options &afterEvents(bool enable);
++		Options &supportsMove(bool enable);
++		Options &allowDrop(bool enable);
++		Options &allowDrag(bool enable);
++		Options &converterType(Converters::Type type);
++	private:
++		bool m_afterEvents, m_supportsMove, m_allowDrop, m_allowDrag;
++		Converters::Type m_converterType;
++		friend StandardDragDropHandler;
+ 	};
+-	DataType data_type;
+-	Converters::Type converterType;
+-	union {
+-		struct {
+-			ColorObject *colorObject;
+-		} colorObject;
+-		struct {
+-			ColorObject **colorObjects;
+-			size_t colorObjectCount;
+-		} colorObjects;
+-	} data;
+-	GtkWidget *dragwidget;
++	static void forWidget(GtkWidget *widget, GlobalState *gs, Interface interface, Options options = {});
++private:
+ 	GlobalState *gs;
+-	void *userdata2;
+ };
+-int dragdrop_init(DragDrop *dd, GlobalState *gs);
+-int dragdrop_widget_attach(GtkWidget *widget, DragDropFlags flags, DragDrop *dd);
+-#endif /* GPICK_DRAG_DROP_H_ */
++#endif /* GPICK_STANDARD_DRAG_DROP_HANDLER_H_ */
+diff --git a/source/StandardEventHandler.cpp b/source/StandardEventHandler.cpp
+index 0613b43..79fce81 100644
+--- a/source/StandardEventHandler.cpp
++++ b/source/StandardEventHandler.cpp
+@@ -116,14 +116,9 @@ void StandardEventHandler::forWidget(GtkWidget *widget, GlobalState *gs, Interfa
+ 	void *data = boost::apply_visitor([](auto *interface) -> void * {
+ 		return interface;
+ 	}, interface);
+-	if (options.m_afterEvents) {
+-		g_signal_connect_after(G_OBJECT(widget), "key_press_event", G_CALLBACK(onKeyPress), data);
+-		g_signal_connect_after(G_OBJECT(widget), "button-press-event", G_CALLBACK(onButtonPress), data);
+-		g_signal_connect_after(G_OBJECT(widget), "popup-menu", G_CALLBACK(onPopupMenu), data);
+-	} else {
+-		g_signal_connect(G_OBJECT(widget), "key_press_event", G_CALLBACK(onKeyPress), data);
+-		g_signal_connect(G_OBJECT(widget), "button-press-event", G_CALLBACK(onButtonPress), data);
+-		g_signal_connect(G_OBJECT(widget), "popup-menu", G_CALLBACK(onPopupMenu), data);
+-	}
++	auto flags = options.m_afterEvents ? G_CONNECT_AFTER : static_cast<GConnectFlags>(0);
++	g_signal_connect_data(G_OBJECT(widget), "key_press_event", G_CALLBACK(onKeyPress), data, nullptr, flags);
++	g_signal_connect_data(G_OBJECT(widget), "button-press-event", G_CALLBACK(onButtonPress), data, nullptr, flags);
++	g_signal_connect_data(G_OBJECT(widget), "popup-menu", G_CALLBACK(onPopupMenu), data, nullptr, flags);
+ 	g_object_set_data(G_OBJECT(widget), "gs", gs);
+ }
+diff --git a/source/Variations.cpp b/source/Variations.cpp
+index 70c6edf..54b5ff2 100644
+--- a/source/Variations.cpp
++++ b/source/Variations.cpp
+@@ -20,7 +20,6 @@
+ #include "ColorObject.h"
+ #include "ColorSource.h"
+ #include "ColorSourceManager.h"
+-#include "DragDrop.h"
+ #include "GlobalState.h"
+ #include "ToolColorNaming.h"
+ #include "uiUtilities.h"
+@@ -31,6 +30,7 @@
+ #include "I18N.h"
+ #include "color_names/ColorNames.h"
+ #include "StandardEventHandler.h"
++#include "StandardDragDropHandler.h"
+ #include "IMenuExtension.h"
+ #include "common/Format.h"
+ #include <gdk/gdkkeysyms.h>
+@@ -260,20 +260,28 @@ struct VariationsArgs {
+ 		}
+ 	}
+ 	struct Editable: IEditableColorsUI, IMenuExtension {
+-		Editable(VariationsArgs *args):
+-			args(args) {
++		Editable(VariationsArgs *args, GtkWidget *widget):
++			args(args),
++			widget(widget) {
+ 		}
+ 		virtual ~Editable() = default;
+ 		virtual void addToPalette(const ColorObject &) override {
++			args->setActiveWidget(widget);
+ 			args->addToPalette();
+ 		}
+ 		virtual void addAllToPalette() override {
+ 			args->addAllToPalette();
+ 		}
+ 		virtual void setColor(const ColorObject &colorObject) override {
+-			args->setColor(colorObject.getColor());
++			args->setActiveWidget(widget);
++			args->setColor(colorObject);
++		}
++		virtual void setColors(const std::vector<ColorObject> &colorObjects) override {
++			args->setActiveWidget(widget);
++			args->setColor(colorObjects[0]);
+ 		}
+ 		virtual const ColorObject &getColor() override {
++			args->setActiveWidget(widget);
+ 			return args->getColor();
+ 		}
+ 		virtual std::vector<ColorObject> getColors(bool selected) override {
+@@ -282,6 +290,7 @@ struct VariationsArgs {
+ 			return colors;
+ 		}
+ 		virtual bool isEditable() override {
++			args->setActiveWidget(widget);
+ 			return args->isEditable();
+ 		}
+ 		virtual bool hasColor() override {
+@@ -309,8 +318,9 @@ struct VariationsArgs {
+ 		}
+ 	private:
+ 		VariationsArgs *args;
++		GtkWidget *widget;
+ 	};
+-	boost::optional<Editable> editable;
++	boost::optional<Editable> editable[1 + Rows * (1 + VariantWidgets)];
+ };
+ static int destroy(VariationsArgs *args) {
+ 	Color color;
+@@ -353,19 +363,8 @@ static int deactivate(VariationsArgs *args) {
+ 	args->update(true);
+ 	return 0;
+ }
+-static ColorObject *getColorObject(struct DragDrop *dd) {
+-	auto *args = static_cast<VariationsArgs *>(dd->userdata);
+-	return args->getColor().copy();
+-}
+-static int setColorObjectAt(struct DragDrop *dd, ColorObject *colorObject, int x, int y, bool, bool) {
+-	auto *args = static_cast<VariationsArgs *>(dd->userdata);
+-	args->setActiveWidget(dd->widget);
+-	args->setColor(*colorObject);
+-	return 0;
+-}
+ static ColorSource *source_implement(ColorSource *source, GlobalState *gs, const dynv::Ref &options) {
+ 	auto *args = new VariationsArgs;
+-	args->editable = VariationsArgs::Editable(args);
+ 	args->options = options;
+ 	args->statusBar = gs->getStatusBar();
+ 	args->gs = gs;
+@@ -381,26 +380,18 @@ static ColorSource *source_implement(ColorSource *source, GlobalState *gs, const
+ 	gtk_box_pack_start(GTK_BOX(hbox), vbox, true, true, 5);
+ 	args->colorPreviews = gtk_table_new(Rows, VariantWidgets + 1, false);
+ 	gtk_box_pack_start(GTK_BOX(vbox), args->colorPreviews, true, true, 0);
+-	struct DragDrop dd;
+-	dragdrop_init(&dd, gs);
+-	dd.converterType = Converters::Type::display;
+-	dd.userdata = args;
+-	dd.get_color_object = getColorObject;
+-	dd.set_color_object_at = setColorObjectAt;
+ 	widget = gtk_color_new();
+ 	gtk_color_set_rounded(GTK_COLOR(widget), true);
+ 	gtk_color_set_hcenter(GTK_COLOR(widget), true);
+ 	gtk_color_set_roundness(GTK_COLOR(widget), 5);
+ 	gtk_table_attach(GTK_TABLE(args->colorPreviews), widget, VariantWidgets / 2, VariantWidgets / 2 + 1, 0, 1, GtkAttachOptions(GTK_FILL | GTK_EXPAND), GtkAttachOptions(GTK_FILL), 0, 0);
+ 	args->allColors = widget;
++	gtk_widget_set_size_request(widget, 60, 30);
+ 	g_signal_connect(G_OBJECT(widget), "activated", G_CALLBACK(VariationsArgs::onColorActivate), args);
+ 	g_signal_connect(G_OBJECT(widget), "focus-in-event", G_CALLBACK(VariationsArgs::onFocusEvent), args);
+-	StandardEventHandler::forWidget(widget, args->gs, &*args->editable);
+-	//setup drag&drop
+-	gtk_widget_set_size_request(widget, 60, 30);
+-	gtk_drag_dest_set(widget, GtkDestDefaults(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT), 0, 0, GDK_ACTION_COPY);
+-	gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
+-	dragdrop_widget_attach(widget, DragDropFlags(DRAGDROP_SOURCE | DRAGDROP_DESTINATION), &dd);
++	args->editable[0] = VariationsArgs::Editable(args, widget);
++	StandardEventHandler::forWidget(widget, args->gs, &*args->editable[0]);
++	StandardDragDropHandler::forWidget(widget, args->gs, &*args->editable[0]);
+ 	for (int i = 0; i < Rows; ++i) {
+ 		args->rows[i].type = &types[i];
+ 		args->rows[i].primary = widget = gtk_color_new();
+@@ -408,13 +399,12 @@ static ColorSource *source_implement(ColorSource *source, GlobalState *gs, const
+ 		gtk_color_set_hcenter(GTK_COLOR(widget), true);
+ 		gtk_color_set_roundness(GTK_COLOR(widget), 5);
+ 		gtk_table_attach(GTK_TABLE(args->colorPreviews), widget, VariantWidgets / 2, VariantWidgets / 2 + 1, i + 1, i + 2, GtkAttachOptions(GTK_FILL | GTK_EXPAND), GtkAttachOptions(GTK_FILL | GTK_EXPAND), 0, 0);
++		gtk_widget_set_size_request(widget, 60, 30);
+ 		g_signal_connect(G_OBJECT(widget), "activated", G_CALLBACK(VariationsArgs::onColorActivate), args);
+ 		g_signal_connect(G_OBJECT(widget), "focus-in-event", G_CALLBACK(VariationsArgs::onFocusEvent), args);
+-		StandardEventHandler::forWidget(widget, args->gs, &*args->editable);
+-		gtk_widget_set_size_request(widget, 60, 30);
+-		gtk_drag_dest_set(widget, GtkDestDefaults(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT), 0, 0, GDK_ACTION_COPY);
+-		gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
+-		dragdrop_widget_attach(widget, DragDropFlags(DRAGDROP_SOURCE | DRAGDROP_DESTINATION), &dd);
++	args->editable[1 + i] = VariationsArgs::Editable(args, widget);
++		StandardEventHandler::forWidget(widget, args->gs, &*args->editable[1 + i]);
++		StandardDragDropHandler::forWidget(widget, args->gs, &*args->editable[1 + i]);
+ 		for (int j = 0; j < VariantWidgets; ++j) {
+ 			int x = j + (j >= VariantWidgets / 2 ? 1 : 0);
+ 			args->rows[i].variants[j] = widget = gtk_color_new();
+@@ -422,12 +412,13 @@ static ColorSource *source_implement(ColorSource *source, GlobalState *gs, const
+ 			gtk_color_set_hcenter(GTK_COLOR(widget), true);
+ 			gtk_color_set_roundness(GTK_COLOR(widget), 5);
+ 			gtk_table_attach(GTK_TABLE(args->colorPreviews), widget, x, x + 1, i + 1, i + 2, GtkAttachOptions(GTK_FILL | GTK_EXPAND), GtkAttachOptions(GTK_FILL | GTK_EXPAND), 0, 0);
++			gtk_widget_set_size_request(widget, 30, 30);
+ 			g_signal_connect(G_OBJECT(widget), "activated", G_CALLBACK(VariationsArgs::onColorActivate), args);
+ 			g_signal_connect(G_OBJECT(widget), "focus-in-event", G_CALLBACK(VariationsArgs::onFocusEvent), args);
+-			StandardEventHandler::forWidget(widget, args->gs, &*args->editable);
+-			gtk_widget_set_size_request(widget, 30, 30);
+-			gtk_drag_source_set(widget, GDK_BUTTON1_MASK, 0, 0, GDK_ACTION_COPY);
+-			dragdrop_widget_attach(widget, DragDropFlags(DRAGDROP_SOURCE), &dd);
++			size_t index = 1 + Rows + j + i * VariantWidgets;
++			args->editable[index] = VariationsArgs::Editable(args, widget);
++			StandardEventHandler::forWidget(widget, args->gs, &*args->editable[index]);
++			StandardDragDropHandler::forWidget(widget, args->gs, &*args->editable[index]);
+ 		}
+ 	}
+ 	char tmp[32];
+diff --git a/source/uiImportExport.cpp b/source/uiImportExport.cpp
+index 7eef633..e68e1c4 100644
+--- a/source/uiImportExport.cpp
++++ b/source/uiImportExport.cpp
+@@ -291,7 +291,7 @@ struct ImportExportDialogOptions
+ 		gtk_widget_set_sensitive(m_converters, format->type == FileType::txt);
+ 		gtk_widget_set_sensitive(m_item_sizes, format->type == FileType::html);
+ 		gtk_widget_set_sensitive(m_backgrounds, format->type == FileType::html);
+-		gtk_widget_set_sensitive(m_include_color_names, format->type == FileType::html | format->type == FileType::txt);
++		gtk_widget_set_sensitive(m_include_color_names, format->type == FileType::html || format->type == FileType::txt);
+ 	}
+ 	static void filterChanged(GtkFileChooserDialog*, GParamSpec*, ImportExportDialogOptions *import_export_dialog)
+ 	{
+diff --git a/source/uiListPalette.cpp b/source/uiListPalette.cpp
+index 2add708..115f8ec 100644
+--- a/source/uiListPalette.cpp
++++ b/source/uiListPalette.cpp
+@@ -22,7 +22,6 @@
+ #include "ColorObject.h"
+ #include "ColorList.h"
+ #include "ColorSource.h"
+-#include "DragDrop.h"
+ #include "GlobalState.h"
+ #include "Converters.h"
+ #include "Converter.h"
+@@ -33,23 +32,33 @@
+ #include "common/Format.h"
+ #include "StandardMenu.h"
+ #include "StandardEventHandler.h"
++#include "StandardDragDropHandler.h"
++#include "IDroppableColorUI.h"
+ #include <sstream>
+ #include <iomanip>
+ using namespace math;
+ using namespace std;
+ 
++struct ListPaletteArgs;
+ static void foreachSelectedItem(GtkTreeView *treeView, std::function<bool(ColorObject *)> callback);
+ static void foreachItem(GtkTreeView *treeView, std::function<bool(ColorObject *)> callback);
+-
+-struct ListPaletteArgs : public IReadonlyColorsUI {
++static void palette_list_entry_fill(GtkListStore* store, GtkTreeIter *iter, ColorObject* color_object, ListPaletteArgs* args);
++const int ScrollEdgeSize = 15; //SCROLL_EDGE_SIZE from gtktreeview.c
++struct ListPaletteArgs : public IEditableColorsUI, public IDroppableColorsUI, public IDraggableColorUI {
+ 	ColorSource source;
+ 	GtkWidget *treeview;
+-	gint scroll_timeout;
++	gint scrollTimeout;
+ 	Vec2<int> last_click_position;
+ 	bool disable_selection;
+-	GtkWidget* count_label;
++	GtkWidget* countLabel;
+ 	GlobalState* gs;
+-
++	bool countUpdateBlocked;
++	ListPaletteArgs(GlobalState *gs, GtkWidget *countLabel):
++		scrollTimeout(0),
++		countLabel(countLabel),
++		gs(gs),
++		countUpdateBlocked(false) {
++	}
+ 	virtual ~ListPaletteArgs() {
+ 	}
+ 	virtual void addToPalette(const ColorObject &) override {
+@@ -87,155 +96,265 @@ struct ListPaletteArgs : public IReadonlyColorsUI {
+ 		});
+ 		return result;
+ 	}
++	virtual bool isEditable() override {
++		return false;
++	}
++	virtual void setColor(const ColorObject &colorObject) override {
++	}
++	virtual void setColors(const std::vector<ColorObject> &colorObjects) override {
++	}
++	virtual void setColorAt(const ColorObject &colorObject, int x, int y) override {
++		setColorsAt(std::vector<ColorObject>{ colorObject }, x, y);
++	}
++	virtual void setColorsAt(const std::vector<ColorObject> &colorObjects, int x, int y) override {
++		color_list_reset_selected(gs->getColorList());
++		removeScrollTimeout();
++		auto model = gtk_tree_view_get_model(GTK_TREE_VIEW(treeview));
++		boost::optional<GtkTreeIter> insertIterator;
++		GtkTreePath* path;
++		GtkTreeViewDropPosition pos;
++		if (getPathAt(GTK_TREE_VIEW(treeview), x, y, path, pos)) {
++			GtkTreeIter iter;
++			gtk_tree_model_get_iter(model, &iter, path);
++			gtk_tree_path_free(path);
++			insertIterator = iter;
++		}
++		ColorObject *colorObject = nullptr;
++		for (size_t i = 0, count = colorObjects.size(); i < count; i++) {
++			if (insertIterator) {
++				if (pos == GTK_TREE_VIEW_DROP_BEFORE || pos == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE) {
++					colorObject = colorObjects[i].copy();
++				} else if (pos == GTK_TREE_VIEW_DROP_AFTER || pos == GTK_TREE_VIEW_DROP_INTO_OR_AFTER) {
++					colorObject = colorObjects[count - i - 1].copy();
++				}
++				colorObject->setSelected(true);
++				GtkTreeIter iter;
++				if (pos == GTK_TREE_VIEW_DROP_BEFORE || pos == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE) {
++					gtk_list_store_insert_before(GTK_LIST_STORE(model), &iter, &*insertIterator);
++				} else {
++					gtk_list_store_insert_after(GTK_LIST_STORE(model), &iter, &*insertIterator);
++				}
++				palette_list_entry_fill(GTK_LIST_STORE(model), &iter, colorObject, this);
++				color_list_add_color_object(gs->getColorList(), colorObject, false);
++			} else {
++				colorObject = colorObjects[i].copy();
++				colorObject->setSelected(true);
++				color_list_add_color_object(gs->getColorList(), colorObject, true);
++			}
++			colorObject->release();
++		}
++	}
+ 	virtual std::vector<ColorObject> getColors(bool selected) {
+ 		std::vector<ColorObject> result;
++		color_list_reset_all(gs->getColorList());
+ 		if (selected)
+ 			foreachSelectedItem(GTK_TREE_VIEW(treeview), [&result](ColorObject *colorObject) {
+ 				result.push_back(*colorObject);
++				colorObject->setVisited(true);
+ 				return true;
+ 			});
+ 		else
+ 			foreachItem(GTK_TREE_VIEW(treeview), [&result](ColorObject *colorObject) {
+ 				result.push_back(*colorObject);
++				colorObject->setVisited(true);
+ 				return true;
+ 			});
+ 		return result;
+ 	}
+-	ColorObject colorObject;
+-};
+-
+-static void destroy_arguments(gpointer data);
+-static ColorObject* get_color_object(struct DragDrop* dd);
+-static ColorObject** get_color_object_list(struct DragDrop* dd, size_t *color_object_n);
+-
+-#define SCROLL_EDGE_SIZE 15 //SCROLL_EDGE_SIZE from gtktreeview.c
+-
+-static void add_scroll_timeout(ListPaletteArgs *args);
+-static void remove_scroll_timeout(ListPaletteArgs *args);
+-static gboolean scroll_row_timeout(ListPaletteArgs *args);
+-static void palette_list_vertical_autoscroll(GtkTreeView *treeview);
+-
+-static void update_counts(ListPaletteArgs *args);
+-
+-static gboolean scroll_row_timeout(ListPaletteArgs *args){
+-	palette_list_vertical_autoscroll(GTK_TREE_VIEW(args->treeview));
+-	return true;
+-}
+-
+-static void add_scroll_timeout(ListPaletteArgs *args){
+-	if (!args->scroll_timeout){
+-		args->scroll_timeout = gdk_threads_add_timeout(150, (GSourceFunc)scroll_row_timeout, args);
+-	}
+-}
+-
+-static void remove_scroll_timeout(ListPaletteArgs *args){
+-	if (args->scroll_timeout){
+-		g_source_remove(args->scroll_timeout);
+-		args->scroll_timeout = 0;
++	static gboolean scrollRowTimeout(ListPaletteArgs *args){
++		GdkRectangle visibleRect;
++		gint y, offset, dy;
++		gdk_window_get_pointer(gtk_tree_view_get_bin_window(GTK_TREE_VIEW(args->treeview)), nullptr, &y, nullptr);
++		gtk_tree_view_convert_bin_window_to_tree_coords(GTK_TREE_VIEW(args->treeview), 0, 0, 0, &dy);
++		y += dy;
++		gtk_tree_view_get_visible_rect(GTK_TREE_VIEW(args->treeview), &visibleRect);
++		offset = y - (visibleRect.y + 2 * ScrollEdgeSize);
++		if (offset > 0) {
++			offset = y - (visibleRect.y + visibleRect.height - 2 * ScrollEdgeSize);
++			if (offset < 0)
++				return true;
++		}
++		GtkAdjustment *adjustment = gtk_tree_view_get_vadjustment(GTK_TREE_VIEW(args->treeview));
++		gtk_adjustment_set_value(adjustment, min(max(gtk_adjustment_get_value(adjustment) + offset, 0.0), gtk_adjustment_get_upper(adjustment) - gtk_adjustment_get_page_size (adjustment)));
++		return true;
+ 	}
+-}
+-
+-static bool drag_end(struct DragDrop* dd, GtkWidget *widget, GdkDragContext *context){
+-	remove_scroll_timeout((ListPaletteArgs*)dd->userdata);
+-	update_counts((ListPaletteArgs*)dd->userdata);
+-	return true;
+-}
+-
+-typedef struct SelectionBoundsArgs{
+-	int min_index;
+-	int max_index;
+-	int last_index;
+-	bool discontinuous;
+-} SelectionBoundsArgs;
+-
+-
+-static void find_selection_bounds(GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter, gpointer data){
+-	gint *indices = gtk_tree_path_get_indices(path);
+-	SelectionBoundsArgs *args = (SelectionBoundsArgs *) data;
+-	int index = indices[0]; // currently indices are all 1d.
+-	int diff = index - args->last_index;
+-	if ((args->last_index != 0x7fffffff) && (diff != 1) && (diff != -1)){
+-		args->discontinuous = true;
++	static bool getPathAt(GtkTreeView *treeView, int x, int y, GtkTreePath *&path, GtkTreeViewDropPosition &position) {
++		if (gtk_tree_view_get_dest_row_at_pos(treeView, x, y, &path, &position)) {
++			GdkModifierType mask;
++			gdk_window_get_pointer(gtk_tree_view_get_bin_window(treeView), nullptr, nullptr, &mask);
++			if ((mask & GDK_CONTROL_MASK) && (position == GTK_TREE_VIEW_DROP_INTO_OR_AFTER || position == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE)) {
++				position = GTK_TREE_VIEW_DROP_INTO_OR_BEFORE;
++			} else if (position == GTK_TREE_VIEW_DROP_BEFORE || position == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE) {
++				position = GTK_TREE_VIEW_DROP_BEFORE;
++			} else {
++				position = GTK_TREE_VIEW_DROP_AFTER;
++			}
++			return true;
++		}else{
++			int tx, ty;
++			gtk_tree_view_convert_widget_to_tree_coords(treeView, x, y, &tx, &ty);
++			GtkTreeModel *model = gtk_tree_view_get_model(treeView);
++			GtkTreeIter last, iter;
++			if (!gtk_tree_model_get_iter_first(model, &iter)) {
++				position = GTK_TREE_VIEW_DROP_AFTER;
++				return false;
++			}
++			if (ty >= 0) {
++				do {
++					last = iter;
++				} while (gtk_tree_model_iter_next(model, &iter));
++				position = GTK_TREE_VIEW_DROP_AFTER;
++				iter = last;
++			} else {
++				position = GTK_TREE_VIEW_DROP_BEFORE;
++			}
++			path = gtk_tree_model_get_path(model, &iter);
++			return true;
++		}
+ 	}
+-	if (index > args->max_index){
+-		args->max_index = index;
++	virtual bool testDropAt(int x, int y) override {
++		GtkTreePath* path;
++		GtkTreeViewDropPosition pos;
++		if (getPathAt(GTK_TREE_VIEW(treeview), x, y, path, pos)) {
++			gtk_tree_view_set_drag_dest_row(GTK_TREE_VIEW(treeview), path, pos);
++			gtk_tree_path_free(path);
++		} else {
++			gtk_tree_view_set_drag_dest_row(GTK_TREE_VIEW(treeview), nullptr, pos);
++		}
++		if (!scrollTimeout) {
++			scrollTimeout = gdk_threads_add_timeout(150, GSourceFunc(scrollRowTimeout), this);
++		}
++		return true;
+ 	}
+-	if (index < args->min_index){
+-		args->min_index = index;
++	void removeScrollTimeout() {
++		if (scrollTimeout) {
++			g_source_remove(scrollTimeout);
++			scrollTimeout = 0;
++		}
+ 	}
+-	args->last_index = index;
+-}
+-
+-static void update_counts(ListPaletteArgs *args){
+-	stringstream s;
+-	GtkTreeSelection *sel;
+-	GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(args->treeview));
+-	SelectionBoundsArgs bounds;
+-	int selected_count;
+-	int total_colors;
+-
+-	if (!args->count_label){
+-		return;
++	virtual void dropEnd(bool move) override {
++		countUpdateBlocked = true;
++		removeScrollTimeout();
++		auto *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeview));
++		gtk_tree_selection_set_select_function(selection, nullptr, nullptr, nullptr);
++		gtk_tree_selection_unselect_all(selection);
++		auto model = gtk_tree_view_get_model(GTK_TREE_VIEW(treeview));
++		GtkTreeIter iter;
++		bool valid = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(model), &iter);
++		bool first = true;
++		while (valid) {
++			ColorObject *colorObject;
++			gtk_tree_model_get(model, &iter, 0, &colorObject, -1);
++			if (colorObject->isSelected()) {
++				gtk_tree_selection_select_iter(selection, &iter);
++				if (first) {
++					first = false;
++					auto path = gtk_tree_model_get_path(model, &iter);
++					gtk_tree_view_set_cursor(GTK_TREE_VIEW(treeview), path, nullptr, false);
++					gtk_tree_path_free(path);
++				}
++			}
++			valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(model), &iter);
++		}
++		if (move) {
++			GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(treeview)));;
++			GtkTreeIter iter;
++			gboolean valid = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(store), &iter);
++			ColorObject* colorObject;
++			while (valid) {
++				gtk_tree_model_get(GTK_TREE_MODEL(store), &iter, 0, &colorObject, -1);
++				if (colorObject->isVisited()) {
++					valid = gtk_list_store_remove(GTK_LIST_STORE(store), &iter);
++					colorObject->release();
++				}else{
++					valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
++				}
++			}
++			color_list_remove_visited(gs->getColorList());
++			color_list_reset_selected(gs->getColorList());
++		} else {
++			color_list_reset_all(gs->getColorList());
++		}
++		countUpdateBlocked = false;
++		updateCounts();
++	}
++	virtual void dragEnd(bool move) override {
++		removeScrollTimeout();
++		updateCounts();
++	}
++	struct SelectionBoundsArgs {
++		int minIndex;
++		int maxIndex;
++		int lastIndex;
++		bool discontinuous;
++	};
++	static void findSelectionBounds(GtkTreeModel *model, GtkTreePath *path, GtkTreeIter *iter, gpointer data){
++		gint *indices = gtk_tree_path_get_indices(path);
++		SelectionBoundsArgs *args = (SelectionBoundsArgs *) data;
++		int index = indices[0]; // currently indices are all 1d.
++		int diff = index - args->lastIndex;
++		if ((args->lastIndex != 0x7fffffff) && (diff != 1) && (diff != -1)){
++			args->discontinuous = true;
++		}
++		if (index > args->maxIndex){
++			args->maxIndex = index;
++		}
++		if (index < args->minIndex){
++			args->minIndex = index;
++		}
++		args->lastIndex = index;
+ 	}
+-
+-	sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(args->treeview));
+-	selected_count = gtk_tree_selection_count_selected_rows(sel);
+-	total_colors = gtk_tree_model_iter_n_children(model, nullptr);
+-
+-	bounds.discontinuous = false;
+-	bounds.min_index = 0x7fffffff;
+-	bounds.last_index = 0x7fffffff;
+-	bounds.max_index = 0;
+-	if (selected_count > 0){
+-		s.str("");
+-		s << "#";
+-		gtk_tree_selection_selected_foreach(sel, &find_selection_bounds, &bounds);
+-		if (bounds.min_index < bounds.max_index){
+-			s << bounds.min_index;
+-			if (bounds.discontinuous){
+-				s << "..";
++	void updateCounts() {
++		if (countUpdateBlocked)
++			return;
++		std::stringstream ss;
++		GtkTreeSelection *sel;
++		GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(treeview));
++		SelectionBoundsArgs bounds;
++		int selected_count;
++		int total_colors;
++		if (!countLabel){
++			return;
++		}
++		sel = gtk_tree_view_get_selection(GTK_TREE_VIEW(treeview));
++		selected_count = gtk_tree_selection_count_selected_rows(sel);
++		total_colors = gtk_tree_model_iter_n_children(model, nullptr);
++		bounds.discontinuous = false;
++		bounds.minIndex = 0x7fffffff;
++		bounds.lastIndex = 0x7fffffff;
++		bounds.maxIndex = 0;
++		if (selected_count > 0){
++			ss.str("");
++			ss << "#";
++			gtk_tree_selection_selected_foreach(sel, findSelectionBounds, &bounds);
++			if (bounds.minIndex < bounds.maxIndex){
++				ss << bounds.minIndex;
++				if (bounds.discontinuous){
++					ss << "..";
++				}else{
++					ss << "-";
++				}
++				ss << bounds.maxIndex;
+ 			}else{
+-				s << "-";
++				ss << bounds.minIndex;
+ 			}
+-			s << bounds.max_index;
+-		}else{
+-			s << bounds.min_index;
+-		}
+ #ifdef ENABLE_NLS
+-		s << " (" << common::format(ngettext("{} color", "{} colors", selected_count), selected_count) << ")";
++			ss << " (" << common::format(ngettext("{} color", "{} colors", selected_count), selected_count) << ")";
+ #else
+-		s << " (" << ((selected_count == 1) ? "color" : "colors") << ")";
++			ss << " (" << ((selected_count == 1) ? "color" : "colors") << ")";
+ #endif
+-		s << " " << _("selected") << ". ";
+-	}
++			ss << " " << _("selected") << ". ";
++		}
+ #ifdef ENABLE_NLS
+-	s << common::format(ngettext("Total {} color", "Total {} colors", total_colors), total_colors);
++		ss << common::format(ngettext("Total {} color", "Total {} colors", total_colors), total_colors);
+ #else
+-	s << "Total " << total_colors << ((total_colors == 1) ? " color" : " colors");
++		ss << "Total " << total_colors << ((total_colors == 1) ? " color" : " colors");
+ #endif
+-	auto message = s.str();
+-	gtk_label_set_text(GTK_LABEL(args->count_label), message.c_str());
+-}
+-static void palette_list_vertical_autoscroll(GtkTreeView *treeview)
+-{
+-	GdkRectangle visible_rect;
+-	gint y;
+-	gint offset;
+-	gdk_window_get_pointer(gtk_tree_view_get_bin_window(treeview), nullptr, &y, nullptr);
+-	gint dy;
+-	gtk_tree_view_convert_bin_window_to_tree_coords(treeview, 0, 0, 0, &dy);
+-	y += dy;
+-	gtk_tree_view_get_visible_rect(treeview, &visible_rect);
+-	offset = y - (visible_rect.y + 2 * SCROLL_EDGE_SIZE);
+-	if (offset > 0) {
+-		offset = y - (visible_rect.y + visible_rect.height - 2 * SCROLL_EDGE_SIZE);
+-		if (offset < 0)
+-			return;
++		auto message = ss.str();
++		gtk_label_set_text(GTK_LABEL(countLabel), message.c_str());
+ 	}
+-	GtkAdjustment *adjustment = gtk_tree_view_get_vadjustment(treeview);
+-	gtk_adjustment_set_value(adjustment, min(max(gtk_adjustment_get_value(adjustment) + offset, 0.0), gtk_adjustment_get_upper(adjustment) - gtk_adjustment_get_page_size (adjustment)));
+-}
+-
++	ColorObject colorObject;
++};
+ static void palette_list_entry_fill(GtkListStore* store, GtkTreeIter *iter, ColorObject* color_object, ListPaletteArgs* args)
+ {
+ 	string text = args->gs->converters().serialize(color_object, Converters::Type::colorList);
+@@ -250,10 +369,10 @@ static void palette_list_entry_update_name(GtkListStore* store, GtkTreeIter *ite
+ {
+ 	gtk_list_store_set(store, iter, 2, color_object->getName().c_str(), -1);
+ }
+-static void palette_list_cell_edited(GtkCellRendererText *cell, gchar *path, gchar *new_text, gpointer user_data)
++static void palette_list_cell_edited(GtkCellRendererText *cell, gchar *path, gchar *new_text, gpointer userData)
+ {
+ 	GtkTreeIter iter;
+-	GtkTreeModel *model=GTK_TREE_MODEL(user_data);
++	GtkTreeModel *model=GTK_TREE_MODEL(userData);
+ 	gtk_tree_model_get_iter_from_string(model, &iter, path );
+ 	gtk_list_store_set(GTK_LIST_STORE(model), &iter,
+ 		2, new_text,
+@@ -262,10 +381,10 @@ static void palette_list_cell_edited(GtkCellRendererText *cell, gchar *path, gch
+ 	gtk_tree_model_get(model, &iter, 0, &color_object, -1);
+ 	color_object->setName(new_text);
+ }
+-static void palette_list_row_activated(GtkTreeView *tree_view, GtkTreePath *path, GtkTreeViewColumn *column, gpointer user_data)
++static void palette_list_row_activated(GtkTreeView *treeView, GtkTreePath *path, GtkTreeViewColumn *column, gpointer userData)
+ {
+-	ListPaletteArgs* args = (ListPaletteArgs*)user_data;
+-	GtkTreeModel* model = gtk_tree_view_get_model(tree_view);;
++	ListPaletteArgs* args = (ListPaletteArgs*)userData;
++	GtkTreeModel* model = gtk_tree_view_get_model(treeView);;
+ 	GtkTreeIter iter;
+ 	gtk_tree_model_get_iter(model, &iter, path);
+ 	ColorObject *color_object;
+@@ -273,7 +392,7 @@ static void palette_list_row_activated(GtkTreeView *tree_view, GtkTreePath *path
+ 	ColorSource *color_source = args->gs->getCurrentColorSource();
+ 	if (color_source != nullptr)
+ 		color_source_set_color(color_source, color_object);
+-	update_counts(args);
++	args->updateCounts();
+ }
+ 
+ static int palette_list_preview_on_insert(ColorList* color_list, ColorObject* color_object){
+@@ -287,7 +406,7 @@ static int palette_list_preview_on_clear(ColorList* color_list){
+ }
+ 
+ static void destroy_cb(GtkWidget* widget, ListPaletteArgs *args){
+-	remove_scroll_timeout(args);
++	args->removeScrollTimeout();
+ 	palette_list_remove_all_entries(widget);
+ }
+ 
+@@ -385,11 +504,9 @@ static gboolean onPreviewButtonRelease(GtkTreeView *treeView, GdkEventButton *ev
+ 	}
+ 	return false;
+ }
++static void destroy_arguments(gpointer data);
+ GtkWidget* palette_list_preview_new(GlobalState* gs, bool expander, bool expanded, ColorList* color_list, ColorList** out_color_list) {
+-	auto args = new ListPaletteArgs;
+-	args->gs = gs;
+-	args->scroll_timeout = 0;
+-	args->count_label = nullptr;
++	auto args = new ListPaletteArgs(gs, nullptr);
+ 	auto view = args->treeview = gtk_tree_view_new();
+ 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), 0);
+ 	gtk_tree_view_set_fixed_height_mode(GTK_TREE_VIEW(view), true);
+@@ -413,16 +530,7 @@ GtkWidget* palette_list_preview_new(GlobalState* gs, bool expander, bool expande
+ 	g_signal_connect(G_OBJECT(view), "button-release-event", G_CALLBACK(onPreviewButtonRelease), args);
+ 	g_signal_connect(G_OBJECT(view), "row-activated", G_CALLBACK(onPreviewActivate), args);
+ 	StandardEventHandler::forWidget(view, args->gs, args, StandardEventHandler::Options().afterEvents(false));
+-	gtk_drag_source_set(view, GDK_BUTTON1_MASK, 0, 0, GdkDragAction(GDK_ACTION_COPY));
+-
+-	struct DragDrop dd;
+-	dragdrop_init(&dd, gs);
+-	dd.converterType = Converters::Type::colorList;
+-	dd.get_color_object = get_color_object;
+-	dd.get_color_object_list = get_color_object_list;
+-	dd.drag_end = drag_end;
+-	dd.userdata = args;
+-	dragdrop_widget_attach(view, DragDropFlags(DRAGDROP_SOURCE), &dd);
++	StandardDragDropHandler::forWidget(view, args->gs, args, StandardDragDropHandler::Options().allowDrop(true).converterType(Converters::Type::colorList));
+ 
+ 	if (out_color_list) {
+ 		ColorList* cl=color_list_new();
+@@ -450,323 +558,10 @@ GtkWidget* palette_list_preview_new(GlobalState* gs, bool expander, bool expande
+ 	g_signal_connect(G_OBJECT(view), "destroy", G_CALLBACK(destroy_cb), args);
+ 	return mainWidget;
+ }
+-
+-static ColorObject** get_color_object_list(struct DragDrop* dd, size_t *color_object_n){
+-
+-	GtkTreeIter iter;
+-	GtkTreeSelection* selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(dd->widget));
+-	GtkTreeModel* model;
+-	gint selected = gtk_tree_selection_count_selected_rows(selection);
+-	if (selected <= 1){
+-		if (color_object_n) *color_object_n = selected;
+-		return 0;
+-	}
+-
+-	GList *list = gtk_tree_selection_get_selected_rows(selection, &model);
+-
+-	ColorObject** color_objects = new ColorObject*[selected];
+-	if (color_object_n) *color_object_n = selected;
+-
+-	if (list){
+-		GList *i = list;
+-
+-		ColorObject* color_object;
+-		uint32_t j = 0;
+-		while (i) {
+-			gtk_tree_model_get_iter(model, &iter, (GtkTreePath*) (i->data));
+-			gtk_tree_model_get(model, &iter, 0, &color_object, -1);
+-
+-			color_objects[j] = color_object->reference();
+-
+-			i = g_list_next(i);
+-			j++;
+-		}
+-
+-		g_list_foreach (list, (GFunc)gtk_tree_path_free, nullptr);
+-		g_list_free (list);
+-	}
+-
+-	return color_objects;
+-}
+-
+-static ColorObject* get_color_object(struct DragDrop* dd){
+-
+-	GtkTreeIter iter;
+-	GtkTreeSelection* selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(dd->widget));
+-	GtkTreeModel* model;
+-	GList *list = gtk_tree_selection_get_selected_rows ( selection, &model );
+-
+-	if (list){
+-		GList *i = list;
+-
+-		ColorObject* color_object;
+-		while (i) {
+-			gtk_tree_model_get_iter(model, &iter, (GtkTreePath*) (i->data));
+-			gtk_tree_model_get(model, &iter, 0, &color_object, -1);
+-
+-			g_list_foreach (list, (GFunc)gtk_tree_path_free, nullptr);
+-			g_list_free (list);
+-			return color_object->reference();
+-
+-			i = g_list_next(i);
+-		}
+-
+-		g_list_foreach (list, (GFunc)gtk_tree_path_free, nullptr);
+-		g_list_free (list);
+-	}
+-
+-	return 0;
+-}
+-
+-static bool getPathAt(GtkTreeView *tree_view, int x, int y, GtkTreePath *&path, GtkTreeViewDropPosition &position) {
+-	if (gtk_tree_view_get_dest_row_at_pos(tree_view, x, y, &path, &position)) {
+-		GdkModifierType mask;
+-		gdk_window_get_pointer(gtk_tree_view_get_bin_window(tree_view), nullptr, nullptr, &mask);
+-		if ((mask & GDK_CONTROL_MASK) && (position == GTK_TREE_VIEW_DROP_INTO_OR_AFTER || position == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE)) {
+-			position = GTK_TREE_VIEW_DROP_INTO_OR_BEFORE;
+-		} else if (position == GTK_TREE_VIEW_DROP_BEFORE || position == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE) {
+-			position = GTK_TREE_VIEW_DROP_BEFORE;
+-		} else {
+-			position = GTK_TREE_VIEW_DROP_AFTER;
+-		}
+-		return true;
+-	}else{
+-		int tx, ty;
+-		gtk_tree_view_convert_widget_to_tree_coords(tree_view, x, y, &tx, &ty);
+-		GtkTreeModel *model = gtk_tree_view_get_model(tree_view);
+-		GtkTreeIter last, iter;
+-		if (!gtk_tree_model_get_iter_first(model, &iter)) {
+-			position = GTK_TREE_VIEW_DROP_AFTER;
+-			return false;
+-		}
+-		if (ty >= 0) {
+-			do {
+-				last = iter;
+-			} while (gtk_tree_model_iter_next(model, &iter));
+-			position = GTK_TREE_VIEW_DROP_AFTER;
+-			iter = last;
+-		} else {
+-			position = GTK_TREE_VIEW_DROP_BEFORE;
+-		}
+-		path = gtk_tree_model_get_path(model, &iter);
+-		return true;
+-	}
+-}
+-static int set_color_object_list_at(DragDrop* dd, ColorObject** color_objects, size_t color_object_n, int x, int y, bool move, bool sameWidget) {
+-	ListPaletteArgs* args = (ListPaletteArgs*)dd->userdata;
+-	color_list_set_selected(args->gs->getColorList(), false);
+-	remove_scroll_timeout(args);
+-	auto model = gtk_tree_view_get_model(GTK_TREE_VIEW(dd->widget));
+-	boost::optional<GtkTreeIter> insertIterator;
+-	GtkTreePath* path;
+-	GtkTreeViewDropPosition pos;
+-	if (getPathAt(GTK_TREE_VIEW(dd->widget), x, y, path, pos)) {
+-		GtkTreeIter iter;
+-		gtk_tree_model_get_iter(model, &iter, path);
+-		gtk_tree_path_free(path);
+-		insertIterator = iter;
+-	}
+-	if (sameWidget && move) {
+-		for (size_t i = 0; i != color_object_n; i++) {
+-			ColorObject *color_object = nullptr;
+-			if (pos == GTK_TREE_VIEW_DROP_BEFORE || pos == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE) {
+-				color_object = color_objects[i];
+-			} else if (pos == GTK_TREE_VIEW_DROP_AFTER || pos == GTK_TREE_VIEW_DROP_INTO_OR_AFTER) {
+-				color_object = color_objects[color_object_n - i - 1];
+-			}
+-			ColorObject *reference_color_object = nullptr;
+-			if (insertIterator) {
+-				gtk_tree_model_get(GTK_TREE_MODEL(model), &*insertIterator, 0, &reference_color_object, -1);
+-			}
+-			if (reference_color_object == color_object){
+-				// Reference item is going to be removed, so any further inserts
+-				// will fail if the same iterator is used. Iterator is moved forward
+-				// to avoid that.
+-				GtkTreeIter iter = *insertIterator;
+-				if (pos == GTK_TREE_VIEW_DROP_BEFORE || pos == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE) {
+-					if (gtk_tree_model_iter_next(GTK_TREE_MODEL(model), &iter)){
+-						insertIterator = iter;
+-					} else {
+-						insertIterator.reset();
+-					}
+-				}else if (pos == GTK_TREE_VIEW_DROP_AFTER || pos == GTK_TREE_VIEW_DROP_INTO_OR_AFTER) {
+-					GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(model), &iter);
+-					if (gtk_tree_path_prev(path)) {
+-						if (gtk_tree_model_get_iter(GTK_TREE_MODEL(model), &iter, path)){
+-							insertIterator = iter;
+-						} else {
+-							insertIterator.reset();
+-						}
+-					}else{
+-						insertIterator.reset();
+-					}
+-					gtk_tree_path_free(path);
+-				}
+-			}
+-			color_list_remove_color_object(args->gs->getColorList(), color_object);
+-			color_object->setSelected(true);
+-			if (insertIterator) {
+-				GtkTreeIter iter;
+-				if (pos == GTK_TREE_VIEW_DROP_BEFORE || pos == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE) {
+-					gtk_list_store_insert_before(GTK_LIST_STORE(model), &iter, &*insertIterator);
+-				} else {
+-					gtk_list_store_insert_after(GTK_LIST_STORE(model), &iter, &*insertIterator);
+-				}
+-				palette_list_entry_fill(GTK_LIST_STORE(model), &iter, color_object, args);
+-				color_list_add_color_object(args->gs->getColorList(), color_object, false);
+-			}else{
+-				color_list_add_color_object(args->gs->getColorList(), color_object, true);
+-			}
+-		}
+-	} else {
+-		for (size_t i = 0; i != color_object_n; i++) {
+-			ColorObject *color_object = nullptr;
+-			if (pos == GTK_TREE_VIEW_DROP_BEFORE || pos == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE) {
+-				color_object = color_objects[i]->copy();
+-			} else if (pos == GTK_TREE_VIEW_DROP_AFTER || pos == GTK_TREE_VIEW_DROP_INTO_OR_AFTER) {
+-				color_object = color_objects[color_object_n - i - 1]->copy();
+-			}
+-			color_object->setSelected(true);
+-			if (insertIterator) {
+-				GtkTreeIter iter;
+-				if (pos == GTK_TREE_VIEW_DROP_BEFORE || pos == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE) {
+-					gtk_list_store_insert_before(GTK_LIST_STORE(model), &iter, &*insertIterator);
+-				} else {
+-					gtk_list_store_insert_after(GTK_LIST_STORE(model), &iter, &*insertIterator);
+-				}
+-				palette_list_entry_fill(GTK_LIST_STORE(model), &iter, color_object, args);
+-				color_list_add_color_object(args->gs->getColorList(), color_object, false);
+-			}else{
+-				color_list_add_color_object(args->gs->getColorList(), color_object, true);
+-				color_object->release();
+-			}
+-		}
+-	}
+-	auto *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(dd->widget));
+-	gtk_tree_selection_set_select_function(selection, nullptr, nullptr, nullptr);
+-	gtk_tree_selection_unselect_all(selection);
+-	GtkTreeIter iter;
+-	bool valid = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(model), &iter);
+-	while (valid) {
+-		ColorObject *colorObject;
+-		gtk_tree_model_get(GTK_TREE_MODEL(model), &iter, 0, &colorObject, -1);
+-		if (colorObject->isSelected()) {
+-			gtk_tree_selection_select_iter(selection, &iter);
+-		}
+-		valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(model), &iter);
+-	}
+-	update_counts(args);
+-	return 0;
+-}
+-static int set_color_object_at(struct DragDrop* dd, ColorObject* color_object, int x, int y, bool move, bool sameWidget) {
+-	ListPaletteArgs* args = (ListPaletteArgs*)dd->userdata;
+-	color_list_set_selected(args->gs->getColorList(), false);
+-	remove_scroll_timeout(args);
+-	auto model = gtk_tree_view_get_model(GTK_TREE_VIEW(dd->widget));
+-	boost::optional<GtkTreeIter> insertIterator;
+-	GtkTreePath* path;
+-	GtkTreeViewDropPosition pos;
+-	if (getPathAt(GTK_TREE_VIEW(dd->widget), x, y, path, pos)) {
+-		GtkTreeIter iter;
+-		gtk_tree_model_get_iter(model, &iter, path);
+-		gtk_tree_path_free(path);
+-		insertIterator = iter;
+-	}
+-	if (sameWidget && move) {
+-		ColorObject *reference_color_object = nullptr;
+-		if (insertIterator) {
+-			gtk_tree_model_get(GTK_TREE_MODEL(model), &*insertIterator, 0, &reference_color_object, -1);
+-		}
+-		if (reference_color_object == color_object){
+-			// Reference item is going to be removed, so any further inserts
+-			// will fail if the same iterator is used. Iterator is moved forward
+-			// to avoid that.
+-			GtkTreeIter iter = *insertIterator;
+-			if (pos == GTK_TREE_VIEW_DROP_BEFORE || pos == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE) {
+-				if (gtk_tree_model_iter_next(GTK_TREE_MODEL(model), &iter)){
+-					insertIterator = iter;
+-				} else {
+-					insertIterator.reset();
+-				}
+-			}else if (pos == GTK_TREE_VIEW_DROP_AFTER || pos == GTK_TREE_VIEW_DROP_INTO_OR_AFTER) {
+-				GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(model), &iter);
+-				if (gtk_tree_path_prev(path)) {
+-					if (gtk_tree_model_get_iter(GTK_TREE_MODEL(model), &iter, path)){
+-						insertIterator = iter;
+-					} else {
+-						insertIterator.reset();
+-					}
+-				}else{
+-					insertIterator.reset();
+-				}
+-				gtk_tree_path_free(path);
+-			}
+-		}
+-		color_list_remove_color_object(args->gs->getColorList(), color_object);
+-		color_object->setSelected(true);
+-		if (insertIterator) {
+-			GtkTreeIter iter;
+-			if (pos == GTK_TREE_VIEW_DROP_BEFORE || pos == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE) {
+-				gtk_list_store_insert_before(GTK_LIST_STORE(model), &iter, &*insertIterator);
+-			} else {
+-				gtk_list_store_insert_after(GTK_LIST_STORE(model), &iter, &*insertIterator);
+-			}
+-			palette_list_entry_fill(GTK_LIST_STORE(model), &iter, color_object, args);
+-			color_list_add_color_object(args->gs->getColorList(), color_object, false);
+-		}else{
+-			color_list_add_color_object(args->gs->getColorList(), color_object, true);
+-		}
+-	} else {
+-		color_object = color_object->copy();
+-		color_object->setSelected(true);
+-		if (insertIterator) {
+-			GtkTreeIter iter;
+-			if (pos == GTK_TREE_VIEW_DROP_BEFORE || pos == GTK_TREE_VIEW_DROP_INTO_OR_BEFORE) {
+-				gtk_list_store_insert_before(GTK_LIST_STORE(model), &iter, &*insertIterator);
+-			} else {
+-				gtk_list_store_insert_after(GTK_LIST_STORE(model), &iter, &*insertIterator);
+-			}
+-			palette_list_entry_fill(GTK_LIST_STORE(model), &iter, color_object, args);
+-			color_list_add_color_object(args->gs->getColorList(), color_object, false);
+-		}else{
+-			color_list_add_color_object(args->gs->getColorList(), color_object, true);
+-			color_object->release();
+-		}
+-	}
+-	auto *selection = gtk_tree_view_get_selection(GTK_TREE_VIEW(dd->widget));
+-	gtk_tree_selection_set_select_function(selection, nullptr, nullptr, nullptr);
+-	gtk_tree_selection_unselect_all(selection);
+-	GtkTreeIter iter;
+-	bool valid = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(model), &iter);
+-	while (valid) {
+-		ColorObject *colorObject;
+-		gtk_tree_model_get(GTK_TREE_MODEL(model), &iter, 0, &colorObject, -1);
+-		if (colorObject->isSelected()) {
+-			gtk_tree_selection_select_iter(selection, &iter);
+-		}
+-		valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(model), &iter);
+-	}
+-	update_counts(args);
+-	return 0;
+-}
+-static bool test_at(struct DragDrop* dd, int x, int y) {
+-	GtkTreePath* path;
+-	GtkTreeViewDropPosition pos;
+-	if (getPathAt(GTK_TREE_VIEW(dd->widget), x, y, path, pos)) {
+-		gtk_tree_view_set_drag_dest_row(GTK_TREE_VIEW(dd->widget), path, pos);
+-		gtk_tree_path_free(path);
+-	} else {
+-		gtk_tree_view_set_drag_dest_row(GTK_TREE_VIEW(dd->widget), nullptr, pos);
+-	}
+-	add_scroll_timeout((ListPaletteArgs*)dd->userdata);
+-	return true;
+-}
+-
+ static void destroy_arguments(gpointer data){
+ 	ListPaletteArgs* args = (ListPaletteArgs*)data;
+ 	delete args;
+ }
+-
+ static gboolean on_palette_button_press(GtkTreeView *treeView, GdkEventButton *event, ListPaletteArgs *args) {
+ 	disablePaletteSelection(treeView, true, -1, -1, args);
+ 	if (event->button != 1)
+@@ -782,7 +577,7 @@ static gboolean on_palette_button_press(GtkTreeView *treeView, GdkEventButton *e
+ 	}
+ 	if (path)
+ 		gtk_tree_path_free(path);
+-	update_counts(args);
++	args->updateCounts();
+ 	return false;
+ }
+ 
+@@ -800,30 +595,27 @@ static gboolean on_palette_button_release(GtkTreeView *treeView, GdkEventButton
+ 				gtk_tree_path_free(path);
+ 		}
+ 	}
+-	update_counts(args);
++	args->updateCounts();
+ 	return false;
+ }
+ 
+ 
+ static void on_palette_cursor_changed(GtkTreeView *treeview, ListPaletteArgs *args){
+-	update_counts(args);
++	args->updateCounts();
+ }
+ 
+ static gboolean on_palette_select_all(GtkTreeView *treeview, ListPaletteArgs *args){
+-	update_counts(args);
+-	return FALSE;
++	args->updateCounts();
++	return false;
+ }
+ 
+ static gboolean on_palette_unselect_all(GtkTreeView *treeview, ListPaletteArgs *args){
+-	update_counts(args);
+-	return FALSE;
++	args->updateCounts();
++	return false;
+ }
+ 
+-GtkWidget* palette_list_new(GlobalState* gs, GtkWidget* count_label) {
+-	auto args = new ListPaletteArgs;
+-	args->gs = gs;
+-	args->count_label = count_label;
+-	args->scroll_timeout = 0;
++GtkWidget* palette_list_new(GlobalState* gs, GtkWidget* countLabel) {
++	auto args = new ListPaletteArgs(gs, countLabel);
+ 	auto view = args->treeview = gtk_tree_view_new();
+ 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), true);
+ 	gtk_tree_view_set_fixed_height_mode(GTK_TREE_VIEW(view), true);
+@@ -874,25 +666,13 @@ GtkWidget* palette_list_new(GlobalState* gs, GtkWidget* count_label) {
+ 	gtk_drag_dest_set( view, GtkDestDefaults(GTK_DEST_DEFAULT_MOTION | GTK_DEST_DEFAULT_HIGHLIGHT), 0, 0, GdkDragAction(GDK_ACTION_COPY | GDK_ACTION_MOVE | GDK_ACTION_ASK));
+ 	gtk_drag_source_set( view, GDK_BUTTON1_MASK, 0, 0, GdkDragAction(GDK_ACTION_COPY | GDK_ACTION_MOVE | GDK_ACTION_ASK));
+ 
+-	struct DragDrop dd;
+-	dragdrop_init(&dd, gs);
+-	dd.get_color_object = get_color_object;
+-	dd.get_color_object_list = get_color_object_list;
+-	dd.set_color_object_at = set_color_object_at;
+-	dd.set_color_object_list_at = set_color_object_list_at;
+-	dd.test_at = test_at;
+-	dd.drag_end = drag_end;
+-	dd.converterType = Converters::Type::colorList;
+-	dd.userdata = args;
+-	dragdrop_widget_attach(view, DragDropFlags(DRAGDROP_SOURCE | DRAGDROP_DESTINATION), &dd);
+-
+ 	g_object_set_data_full(G_OBJECT(view), "arguments", args, destroy_arguments);
+ 	g_signal_connect(G_OBJECT(view), "destroy", G_CALLBACK(destroy_cb), args);
++	StandardDragDropHandler::forWidget(view, args->gs, args, StandardDragDropHandler::Options().supportsMove(true).converterType(Converters::Type::colorList));
+ 
+-	if (count_label){
+-		update_counts(args);
++	if (countLabel){
++		args->updateCounts();
+ 	}
+-
+ 	return view;
+ }
+ 
+@@ -911,10 +691,8 @@ void palette_list_remove_all_entries(GtkWidget* widget) {
+ 		c->release();
+ 		valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+ 	}
+-
+ 	gtk_list_store_clear(GTK_LIST_STORE(store));
+-
+-	update_counts(args);
++	args->updateCounts();
+ }
+ 
+ gint32 palette_list_get_selected_count(GtkWidget* widget) {
+@@ -967,7 +745,7 @@ void palette_list_remove_selected_entries(GtkWidget* widget)
+ 			valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+ 		}
+ 	}
+-	update_counts(args);
++	args->updateCounts();
+ }
+ 
+ void palette_list_add_entry(GtkWidget* widget, ColorObject* color_object)
+@@ -978,7 +756,7 @@ void palette_list_add_entry(GtkWidget* widget, ColorObject* color_object)
+ 	store = GTK_LIST_STORE(gtk_tree_view_get_model(GTK_TREE_VIEW(widget)));
+ 	gtk_list_store_append(store, &iter1);
+ 	palette_list_entry_fill(store, &iter1, color_object, args);
+-	update_counts(args);
++	args->updateCounts();
+ }
+ int palette_list_remove_entry(GtkWidget* widget, ColorObject* r_color_object)
+ {
+@@ -998,7 +776,7 @@ int palette_list_remove_entry(GtkWidget* widget, ColorObject* r_color_object)
+ 		}
+ 		valid = gtk_tree_model_iter_next(GTK_TREE_MODEL(store), &iter);
+ 	}
+-	update_counts(args);
++	args->updateCounts();
+ 	return -1;
+ }
+ static void execute_callback(GtkListStore *store, GtkTreeIter *iter, ListPaletteArgs* args, PaletteListCallback callback, void *userdata)

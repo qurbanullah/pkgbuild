@@ -1,0 +1,36 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=coin-or-coinutils
+_realname=CoinUtils
+pkgver=2.11.4
+pkgrel=1
+pkgdesc="COIN-OR collection of utility classes"
+arch=(x86_64)
+groups=(coin-or)
+url="https://projects.coin-or.org/CoinUtils"
+license=(EPL)
+depends=(zlib bzip2 glpk lapack)
+makedepends=(gcc-fortran doxygen)
+source=("https://www.coin-or.org/download/source/CoinUtils/CoinUtils-$pkgver.tgz")
+sha256sums=('1b24f8f6057661b3225d24f4e671527f53bf13aff66e06cbbbd4f20cc7d31dce')
+
+build() {
+  cd CoinUtils-$pkgver
+
+  ./configure --prefix=/usr --with-blas-lib='-lblas' --with-lapack-lib='-llapack' --with-glpk-lib='-lglpk' --enable-dependency-linking
+  make ${MAKEFLAGS}
+}
+
+check() {
+  cd CoinUtils-$pkgver
+  make test
+}
+
+package() {
+  cd CoinUtils-$pkgver
+  PKG_CONFIG_LIBDIR="$pkgdir"/usr/lib/pkgconfig/ \
+  make DESTDIR="$pkgdir" install
+}

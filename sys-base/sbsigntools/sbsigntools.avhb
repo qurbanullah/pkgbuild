@@ -1,0 +1,51 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname="sbsigntools"
+pkgver=0.9.4
+pkgrel=1
+pkgdesc="Tools to add signatures to EFI binaries and Drivers"
+arch=('x86_64')
+groups=('sys-base')
+url="https://build.opensuse.org/package/show/home:jejb1:UEFI/sbsigntools"
+license=('GPL3')
+makedepends=('gnu-efi-libs' 'help2man' 'git') 
+depends=('libutil-linux' 'openssl')
+source=("git+https://git.kernel.org/pub/scm/linux/kernel/git/jejb/sbsigntools.git#tag=v${pkgver}"
+	"git://git.ozlabs.org/~ccan/ccan")
+
+getsrc() {
+	cd "${srcdir}"
+	# git clone https://git.kernel.org/pub/scm/linux/kernel/git/jejb/sbsigntools.git
+	# git clone https://git.ozlabs.org/ccan
+}
+
+prepare() {
+  bsdtar -xf $srcarchivedir/ccan.tar.xz
+  cd ${pkgname}
+  git submodule init
+  git config submodule."lib/ccan.git".url "${srcdir}/ccan"
+  git submodule update
+  ./autogen.sh
+}
+
+build() {
+  cd "${pkgname}"
+  ./configure --prefix="/usr" \
+              --bindir="/usr/bin" \
+              --sbindir="/usr/bin" \
+              --libexecdir="/usr/lib" \
+              --mandir="/usr/share/man" \
+              --sysconfdir="/etc"
+  make
+}
+
+package() {
+  depends+=('libuuid.so')
+  cd "${pkgname}"
+  make DESTDIR="${pkgdir}" install
+  install -vDm 644 {AUTHORS,ChangeLog,NEWS,README} \
+    -t "${pkgdir}/usr/share/doc/${pkgname}"
+}

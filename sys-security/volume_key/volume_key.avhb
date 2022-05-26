@@ -1,0 +1,38 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=volume_key
+pkgver=0.3.12
+pkgrel=1
+pkgdesc="A library for manipulating storage volume encryption keys and storing them separately from volumes to handle forgotten passphrases"
+arch=('x86_64')
+groups=('sys-security')
+url="https://pagure.io/volume_key"
+license=('GPL')
+depends=('cryptsetup' 'nss' 'gpgme')
+makedepends=('python' 'swig')
+optdepends=('python: for python bindings')
+source=("https://github.com/felixonmars/volume_key/archive/volume_key-$pkgver.tar.gz")
+sha512sums=('594995cda12562a6beb6a404e2d6a152fcca6c08c1c6eae4d3c7ded8b4a55d43ddef1e45956075c7168c5f4919e38c87f79caf1af4e9cbc371eabc5228259f07')
+
+prepare() {
+  cd $pkgname-$pkgname-$pkgver
+  
+  find . -name ".pyc" -delete
+  autoreconf -vif
+}
+
+build() {
+  cd $pkgname-$pkgname-$pkgver
+  export CFLAGS+=" $(python3-config --includes)"
+  ./configure --prefix=/usr
+  make
+}
+
+package() {
+  cd $pkgname-$pkgname-$pkgver
+  make DESTDIR="$pkgdir" install
+  sed -i '/#include <config.h>/d' "$pkgdir"/usr/include/volume_key/libvolume_key.h
+}

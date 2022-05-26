@@ -1,0 +1,49 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=lib32-glib2
+_realname=glib
+pkgver=2.72.0
+pkgrel=1
+pkgdesc="Low level core library (32-bit)"
+url="https://wiki.gnome.org/Projects/GLib"
+license=(LGPL2.1)
+arch=(x86_64)
+depends=(lib32-pcre lib32-libffi lib32-util-linux lib32-zlib glib2)
+makedepends=(gettext gtk-doc shared-mime-info python lib32-libelf git util-linux meson lib32-dbus)
+checkdepends=(desktop-file-utils lib32-glib2)
+options=(!emptydirs)
+_commit=0a63daa96426715498b55318f68a67baee40c509  # tags/2.60.6^0
+source=("git+https://gitlab.gnome.org/GNOME/glib.git#commit=$_commit"
+        multilib.diff)
+
+prepare() {
+  cd glib-$pkgver
+  patch -Np1 -i ../multilib.diff
+}
+
+build() {
+  export CC="gcc -m32"
+  export CXX="g++ -m32"
+  export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+
+  CFLAGS+=" -DG_DISABLE_CAST_CHECKS"
+  avouch-meson glib-$pkgver build \
+    -D selinux=disabled \
+    --libdir=/usr/lib32
+  ninja -C build
+}
+
+# check() {
+#   meson test -C build --no-suite flaky --no-suite slow --print-errorlogs
+# }
+
+package() {
+  DESTDIR="$pkgdir" meson install -C build
+
+  rm -r "$pkgdir"/usr/{share,include}
+  find "$pkgdir/usr/bin" -type f -not -name gio-querymodules -printf 'Removing %P\n' -delete
+  mv "$pkgdir"/usr/bin/gio-querymodules{,-32}
+}

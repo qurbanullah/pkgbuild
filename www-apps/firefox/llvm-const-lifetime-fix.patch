@@ -1,0 +1,56 @@
+--- third_party/rust/packed_simd/src/codegen/llvm.rs	2021-09-27 22:48:38.000000000 +0000
++++ ../llvm.rs	2021-10-31 02:00:28.083125911 +0000
+@@ -17,7 +17,7 @@
+ 
+ #[allow(clippy::missing_safety_doc)]
+ #[inline]
+-pub unsafe fn __shuffle_vector2<const IDX: [u32; 2], T, U>(x: T, y: T) -> U
++pub unsafe fn __shuffle_vector2<T, U, const IDX: [u32; 2]>(x: T, y: T) -> U
+ where
+     T: Simd,
+     <T as Simd>::Element: Shuffle<[u32; 2], Output = U>,
+@@ -27,7 +27,7 @@
+ 
+ #[allow(clippy::missing_safety_doc)]
+ #[inline]
+-pub unsafe fn __shuffle_vector4<const IDX: [u32; 4], T, U>(x: T, y: T) -> U
++pub unsafe fn __shuffle_vector4<T, U, const IDX: [u32; 4]>(x: T, y: T) -> U
+ where
+     T: Simd,
+     <T as Simd>::Element: Shuffle<[u32; 4], Output = U>,
+@@ -37,7 +37,7 @@
+ 
+ #[allow(clippy::missing_safety_doc)]
+ #[inline]
+-pub unsafe fn __shuffle_vector8<const IDX: [u32; 8], T, U>(x: T, y: T) -> U
++pub unsafe fn __shuffle_vector8<T, U, const IDX: [u32; 8]>(x: T, y: T) -> U
+ where
+     T: Simd,
+     <T as Simd>::Element: Shuffle<[u32; 8], Output = U>,
+@@ -47,7 +47,7 @@
+ 
+ #[allow(clippy::missing_safety_doc)]
+ #[inline]
+-pub unsafe fn __shuffle_vector16<const IDX: [u32; 16], T, U>(x: T, y: T) -> U
++pub unsafe fn __shuffle_vector16<T, U, const IDX: [u32; 16]>(x: T, y: T) -> U
+ where
+     T: Simd,
+     <T as Simd>::Element: Shuffle<[u32; 16], Output = U>,
+@@ -57,7 +57,7 @@
+ 
+ #[allow(clippy::missing_safety_doc)]
+ #[inline]
+-pub unsafe fn __shuffle_vector32<const IDX: [u32; 32], T, U>(x: T, y: T) -> U
++pub unsafe fn __shuffle_vector32<T, U, const IDX: [u32; 32]>(x: T, y: T) -> U
+ where
+     T: Simd,
+     <T as Simd>::Element: Shuffle<[u32; 32], Output = U>,
+@@ -67,7 +67,7 @@
+ 
+ #[allow(clippy::missing_safety_doc)]
+ #[inline]
+-pub unsafe fn __shuffle_vector64<const IDX: [u32; 64], T, U>(x: T, y: T) -> U
++pub unsafe fn __shuffle_vector64<T, U, const IDX: [u32; 64]>(x: T, y: T) -> U
+ where
+     T: Simd,
+     <T as Simd>::Element: Shuffle<[u32; 64], Output = U>,

@@ -1,0 +1,39 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=perl-encode-locale
+_realname=Encode-Locale
+pkgver=1.05
+pkgrel=1
+pkgdesc="Determine the locale encoding"
+arch=(any)
+license=(PerlArtistic GPL)
+options=('!emptydirs')
+depends=('perl')
+makedepends=()
+checkdepends=()
+conflicts=('perl-libwww<6')
+url=http://search.cpan.org/dist/Encode-Locale
+source=(http://search.cpan.org/CPAN/authors/id/G/GA/GAAS/Encode-Locale-1.02.tar.gz)
+
+build() {
+	cd "${srcdir}/${_realname}-${pkgver}"
+	perl Makefile.PL INSTALLDIRS=vendor
+	make
+}
+
+check() {
+	cd "${srcdir}/${_realname}-${pkgver}"
+	make test
+}
+
+package() {
+	cd "${srcdir}/${_realname}-${pkgver}"
+	make DESTDIR="${pkgdir}" install
+
+	find $pkgdir -name '.packlist' -delete
+	find $pkgdir -name '*.pod' -delete
+}
+

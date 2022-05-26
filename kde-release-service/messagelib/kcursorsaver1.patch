@@ -1,0 +1,20 @@
+--- messagecomposer/src/composer/keyresolver.cpp	2021-02-12 09:14:20.000000000 +0000
++++ ../keyresolver.cpp	2021-03-21 13:39:01.025315496 +0000
+@@ -1549,7 +1549,7 @@
+     std::copy(d->mSMIMEEncryptToSelfKeys.begin(), d->mSMIMEEncryptToSelfKeys.end(),
+               std::back_inserter(senderKeys));
+ 
+-    KCursorSaver saver(Qt::WaitCursor);
++    KPIM::KCursorSaver saver(Qt::WaitCursor);
+ 
+     QPointer<Kleo::KeyApprovalDialog> dlg = new Kleo::KeyApprovalDialog(items, senderKeys);
+ 
+@@ -1631,7 +1631,7 @@
+                             : i18n("You did not select encryption keys for some of "
+                                    "the recipients: these persons will not be able to "
+                                    "decrypt the message if you encrypt it.");
+-        KCursorSaver saver(Qt::WaitCursor);
++        KPIM::KCursorSaver saver(Qt::WaitCursor);
+         if (KMessageBox::warningContinueCancel(nullptr, msg,
+                                                i18n("Missing Key Warning"),
+                                                KGuiItem(i18n("&Encrypt")))

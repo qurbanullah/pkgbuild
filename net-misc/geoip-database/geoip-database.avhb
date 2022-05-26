@@ -1,0 +1,81 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=('geoip-database' 'geoip-database-extra')
+_realname=GeoIP
+pkgver=20210427
+pkgrel=1
+arch=('any')
+groups=('net-misc')
+url="https://mailfud.org/geoip-legacy/"
+license=('CCPL:by-sa')
+checkdepends=('geoip')
+_source_base=https://sources.archlinux.org/other/packages/$pkgname/$pkgver
+source=(GeoIP-$pkgver.dat.gz::$_source_base/GeoIP.dat.gz
+        GeoIPv6-$pkgver.dat.gz::$_source_base/GeoIPv6.dat.gz
+        GeoIPCity-$pkgver.dat.gz::$_source_base/GeoIPCity.dat.gz
+        GeoIPCityv6-$pkgver.dat.gz::$_source_base/GeoIPCityv6.dat.gz
+        GeoIPASNum-$pkgver.dat.gz::$_source_base/GeoIPASNum.dat.gz
+        GeoIPASNumv6-$pkgver.dat.gz::$_source_base/GeoIPASNumv6.dat.gz)
+
+prepare() {
+  cd "$srcdir"
+
+  for _database_name in GeoIP GeoIPv6 GeoIPCity GeoIPCityv6 GeoIPASNum GeoIPASNumv6; do
+    gunzip $_database_name.dat.gz
+  done
+}
+
+# check() {
+#   cd "$srcdir"
+
+#   if [[ $(geoiplookup -f GeoIP.dat 8.8.8.8) != *'US, United States' ]]; then
+#     error 'Unable to resolve IPv4 address to country.'
+#     return 1
+#   fi
+
+#   if [[ $(geoiplookup6 -f GeoIPv6.dat 2001:4860:4860::8888) != *'US, United States' ]]; then
+#     error 'Unable to resolve IPv6 address to country.'
+#     return 1
+#   fi
+
+#   if [[ $(geoiplookup -f GeoIPCity.dat 8.8.8.8) != *'US, N/A, N/A'* ]]; then
+#     error 'Unable to resolve IPv4 address to city.'
+#     return 1
+#   fi
+
+#   if [[ $(geoiplookup6 -f GeoIPCityv6.dat 2001:4860:4860::8888) != *'US, N/A, N/A'* ]]; then
+#     error 'Unable to resolve IPv6 address to city.'
+#     return 1
+#   fi
+
+#   if [[ $(geoiplookup -f GeoIPASNum.dat 8.8.8.8) != *'AS15169 Google Inc.' ]]; then
+#     error 'Unable to resolve IPv4 address to ASN.'
+#     return 1
+#   fi
+
+#   if [[ $(geoiplookup6 -f GeoIPASNumv6.dat 2001:4860:4860::8888) != *'AS15169 Google Inc.' ]]; then
+#     error 'Unable to resolve IPv6 address to ASN.'
+#     return 1
+#   fi
+# }
+
+package_geoip-database() {
+  pkgdesc="GeoLite country geolocation database compiled by MaxMind"
+
+  cd "$srcdir"
+
+  install -d "$pkgdir/usr/share/GeoIP"
+  install -m644 -t "$pkgdir/usr/share/GeoIP" GeoIP{,v6}.dat
+}
+
+package_geoip-database-extra() {
+  pkgdesc="GeoLite city/ASN geolocation databases compiled by MaxMind"
+
+  cd "$srcdir"
+
+  install -d "$pkgdir/usr/share/GeoIP"
+  install -m644 -t "$pkgdir/usr/share/GeoIP" GeoIPCity{,v6}.dat GeoIPASNum{,v6}.dat
+}

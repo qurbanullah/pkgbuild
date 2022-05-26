@@ -1,0 +1,80 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=krb5
+_pkgvermajor=1.19
+pkgver=1.19.1
+pkgrel=1
+pkgdesc="The Kerberos network authentication system"
+arch=('x86_64')
+groups=('sys-security')
+url="http://web.mit.edu/kerberos/"
+license=('custom')
+depends=('e2fsprogs' 'libldap' 'keyutils')
+makedepends=('perl')
+backup=('etc/krb5.conf' 'var/lib/krb5kdc/kdc.conf')
+options=('')
+source=(https://web.mit.edu/kerberos/dist/krb5/${_pkgvermajor}/${pkgname}-${pkgver}.tar.gz{,.asc}
+        krb5-config_LDFLAGS.patch
+        krb5-kadmind.service
+        krb5-kdc.service
+        krb5-kpropd.service
+        krb5-kpropd@.service
+        krb5-kpropd.socket)
+validpgpkeys=('2C732B1C0DBEF678AB3AF606A32F17FD0055C305'  # Tom Yu <tlyu@mit.edu>
+              'C4493CB739F4A89F9852CBC20CBA08575F8372DF') # Greg Hudson <ghudson@mit.edu>
+
+prepare() {
+	cd "${srcdir}/${pkgname}-${pkgver}/src"
+
+	# cf https://bugs.gentoo.org/show_bug.cgi?id=448778
+	patch -Np2 -i "${srcdir}"/krb5-config_LDFLAGS.patch
+	
+	sed -i "/KRB5ROOT=/s/\/local//" util/ac_check_krb5.m4
+}
+
+build() { 
+	cd "${srcdir}/${pkgname}-${pkgver}/src"
+	export CFLAGS+=" -fPIC -fno-strict-aliasing -fstack-protector-all"
+	export CPPFLAGS+=" -I/usr/include/et"
+	./configure --prefix=/usr \
+		--sbindir=/usr/bin \
+		--sysconfdir=/etc \
+		--localstatedir=/var/lib \
+		--enable-shared \
+		--with-system-et \
+		--with-system-ss \
+		--disable-rpath \
+		--without-tcl \
+		--enable-dns-for-realm \
+		--with-ldap \
+		--without-system-verto
+	make ${MAKEFLAGS}
+}
+
+package() {
+	cd "${srcdir}/${pkgname}-${pkgver}/src"
+	make DESTDIR="${pkgdir}" EXAMPLEDIR=/usr/share/doc/${pkgname}/examples install
+
+	install -m 644 plugins/kdb/ldap/libkdb_ldap/kerberos.{ldif,schema} "${pkgdir}"/usr/share/doc/${pkgname}/examples
+
+	# Sample KDC config file
+	install -dm 755 "${pkgdir}"/var/lib/krb5kdc
+	install -pm 644 config-files/kdc.conf "${pkgdir}"/var/lib/krb5kdc/kdc.conf
+
+	# Default configuration file
+	install -dm 755 "${pkgdir}"/etc
+	install -pm 644 config-files/krb5.conf "${pkgdir}"/etc/krb5.conf
+
+	install -dm 755 "${pkgdir}"/usr/share/aclocal
+	install -m 644 util/ac_check_krb5.m4 "${pkgdir}"/usr/share/aclocal
+
+	install -Dm644 "${srcdir}"/${pkgname}-${pkgver}/NOTICE "${pkgdir}"/usr/share/licenses/${pkgname}/LICENSE
+
+	# systemd stuff
+	install -dm 755 "${pkgdir}"/usr/lib/systemd/system
+	install -m 644 ../../krb5-{kadmind.service,kdc.service,kpropd.service,kpropd@.service,kpropd.socket} \
+	"${pkgdir}"/usr/lib/systemd/system
+}

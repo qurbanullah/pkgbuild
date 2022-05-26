@@ -1,0 +1,32 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=fwupd-efi
+pkgver=1.2
+pkgrel=1
+pkgdesc='EFI Application used by uefi-capsule plugin in fwupd'
+arch=('x86_64')
+groups=('dev-utils')
+url='https://github.com/fwupd/fwupd-efi'
+license=('LGPL')
+makedepends=('meson' 'gnu-efi')
+source=("https://people.freedesktop.org/~hughsient/releases/${pkgname}-${pkgver}.tar.xz"{,.asc})
+sha256sums=('691c77f11c2101048d8dabaf63c6d0fe22cfad0e5d4322041c9babcebafceb3f'
+            'SKIP')
+validpgpkeys=('163EB50119225DB3DF8F49EA17ACBA8DFA970E17') # Richard Hughes <richard@hughsie.com>
+
+build() {
+  avouch-meson ${pkgname}-${pkgver} build  \
+    -D efi_sbat_distro_id='avouch' \
+    -D efi_sbat_distro_summary='Avouch Linux' \
+    -D efi_sbat_distro_pkgname=${pkgname} \
+    -D efi_sbat_distro_version=${pkgver} \
+    -D efi_sbat_distro_url="https://avouch.org/packages/${pkgname}/"
+  ninja -C build
+}
+
+package() {
+  DESTDIR="${pkgdir}" meson install -C build
+}

@@ -1,0 +1,74 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=qt6-base
+_qtver=6.0.2
+pkgver=${_qtver/-/}
+_realname="${pkgname/6-/}-everywhere-src-${_qtver}"
+pkgrel=1
+arch=('x86_64')
+groups=('dev-qt6')
+url='https://www.qt.io'
+license=(GPL3 LGPL3 FDL custom)
+pkgdesc='A cross-platform application and UI framework'
+depends=(libjpeg-turbo xcb-util-keysyms xcb-util-cursor libgl fontconfig xdg-utils
+         shared-mime-info xcb-util-wm libxrender libxi sqlite mesa
+         tslib libinput libxkbcommon-x11 libproxy libcups double-conversion brotli libb2) # md4c - not supported yet
+makedepends=(cmake libfbclient mariadb-libs unixodbc postgresql alsa-lib gst-plugins-base-libs
+             gtk3 libpulse cups freetds vulkan-headers xmlstarlet)
+optdepends=('postgresql-libs: PostgreSQL driver'
+            'mariadb-libs: MariaDB driver'
+            'unixodbc: ODBC driver'
+            'libfbclient: Firebird/iBase driver'
+            'freetds: MS SQL driver'
+            'gtk3: GTK platform plugin'
+            'perl: for syncqt')
+source=("https://download.qt.io/official_releases/qt/${pkgver%.*}/$_qtver/submodules/$_realname.tar.xz"
+         qt6-base-cflags.patch
+         qt6-base-nostrip.patch)
+sha256sums=('991a0e4e123104e76563067fcfa58602050c03aba8c8bb0c6198347c707817f1'
+            'cf707cd970650f8b60f8897692b36708ded9ba116723ec8fcd885576783fe85c'
+            '4b93f6a79039e676a56f9d6990a324a64a36f143916065973ded89adc621e094')
+
+prepare() {
+  cd ${_realname}
+  # Build qmake using Avouch {C,LD}FLAGS
+  patch -p1 -i ../qt6-base-cflags.patch # Use system CFLAGS
+  patch -p1 -i ../qt6-base-nostrip.patch # Don't strip binaries with qmake
+  patch -p0 -i ../limits.patch # add limits to header files fix build errors
+}
+
+build() {
+  cmake -B build -S $_realname -G Ninja \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DINSTALL_BINDIR=lib/qt6/bin \
+    -DINSTALL_DOCDIR=share/doc/qt6 \
+    -DINSTALL_ARCHDATADIR=lib/qt6 \
+    -DINSTALL_DATADIR=share/qt6 \
+    -DINSTALL_INCLUDEDIR=include/qt6 \
+    -DINSTALL_MKSPECSDIR=lib/qt6/mkspecs \
+    -DINSTALL_EXAMPLESDIR=share/doc/qt6/examples \
+    -DQT_FEATURE_journald=ON \
+    -DQT_FEATURE_openssl_linked=ON \
+    -DQT_FEATURE_system_sqlite=ON
+  ninja -C build
+
+}
+
+package() {
+  DESTDIR="${pkgdir}" ninja -C build install
+
+  install -Dm644 $_realname/LICENSE* -t "$pkgdir"/usr/share/licenses/$pkgbase
+
+  # Symlinks for backwards compatibility
+  mkdir -p "$pkgdir"/usr/bin
+  for _b in $(ls "$pkgdir"/usr/lib/qt6/bin); do
+    ln -rs "$pkgdir"/usr/lib/qt6/bin/$_b "$pkgdir"/usr/bin/$_b-qt6
+  done
+
+  # for _b in $(ls "$pkgdir"/usr/lib/qt6/bin); do
+  #   ln -rs "$pkgdir"/usr/lib/qt6/bin/$_b "$pkgdir"/usr/bin/$_b
+  # done
+}

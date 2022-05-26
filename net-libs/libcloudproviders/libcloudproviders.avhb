@@ -1,0 +1,27 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libcloudproviders
+pkgver=0.3.1
+pkgrel=1
+pkgdesc="DBus API that allows cloud storage sync clients to expose their services"
+arch=('x86_64')
+groups=('net-libs')
+url="https://gitlab.gnome.org/World/libcloudproviders"
+arch=(x86_64)
+license=(LGPL3)
+depends=(glib2)
+makedepends=(git gobject-introspection meson vala gtk-doc)
+source=("https://gitlab.gnome.org/World/$pkgname/-/archive/$pkgver/$pkgname-$pkgver.tar.bz2")
+
+build() {
+    avouch-meson ${pkgname}-${pkgver} build \
+        -D enable-gtk-doc=true
+    ninja -C build
+}
+
+package() {
+    DESTDIR="$pkgdir" ninja -C build install
+}

@@ -1,0 +1,39 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=cairo
+pkgver=1.17.6
+pkgrel=1
+pkgdesc="Cairo vector graphics library"
+arch=('x86_64')
+groups=('x11-libs')
+license=('LGPL' 'MPL')
+url="https://cairographics.org/"
+license=(LGPL MPL)
+depends=(libpng libxrender libxext fontconfig pixman glib2 lzo)
+makedepends=(librsvg gtk2 poppler-glib libspectre gtk-doc valgrind git)
+checkdepends=(ttf-dejavu gsfonts)
+source=("https://gitlab.freedesktop.org/cairo/cairo/-/archive/$pkgver/cairo-$pkgver.tar.bz2")
+
+prepare() {
+	cd "${pkgname}-${pkgver}"
+	# FS#74354
+	patch -Np1 -i ../0001-Fix-type1-subset-indexing.patch
+
+}
+
+build() {
+  avouch-meson $pkgname-$pkgver build \
+    -D spectre=disabled \
+    -D tee=enabled \
+    -D tests=disabled \
+    -D symbol-lookup=disabled \
+    -D gtk_doc=true
+  meson compile -C build
+}
+
+package() {
+  DESTDIR="$pkgdir" meson install -C build
+}

@@ -1,0 +1,82 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgbase=gobject-introspection
+pkgname=('gobject-introspection' 'gobject-introspection-runtime')
+pkgver=1.72.0
+pkgrel=1
+arch=('x86_64')
+groups=('sys-libs')
+pkgdesc="Introspection system for GObject-based libraries"
+url="https://wiki.gnome.org/Projects/GObjectIntrospection"
+license=(LGPL GPL)
+depends=(python3-mako python3-markdown)
+makedepends=(cairo gtk-doc python3-sphinx meson)
+options=(!emptydirs)
+_commit=4502dd33da995e5e9e6d73aa996cf42e92c9e217  # tags/1.70.0^0
+source=("https://gitlab.gnome.org/GNOME/$realname/-/archive/$pkgver/$realname-$pkgver.tar.bz2"
+        "https://gitlab.gnome.org/GNOME/glib/-/archive/$_glibver/glib-$_glibver.tar.bz2")
+
+_glibver=2.72.0
+
+# getsrc() {
+#   git clone https://gitlab.gnome.org/GNOME/gobject-introspection.git
+# }
+
+
+# pkgver() {
+#   cd $pkgbase
+#   git checkout $_commit
+#   # Fix build with meson 0.61.0
+#   git cherry-pick -n 827494d6415b696a effb1e09dee263cd  
+#   git describe --tags | sed 's/-/+/g'
+# }
+
+prepare() {  
+  bsdtar -xf $srcarchivedir/glib-$_glibver.tar.xz
+}
+
+build() {
+  avouch-meson $pkgbase-$pkgver build \
+    -D gtk_doc=true \
+    -D glib_src_dir="$srcdir/glib-$_glibver"
+  meson compile -C build
+}
+
+# check() {
+#   meson test -C build
+# }
+
+_pick() {
+  local p="$1" f d; shift
+  for f; do
+    d="$srcdir/$p/${f#$pkgdir/}"
+    mkdir -p "$(dirname "$d")"
+    mv "$f" "$d"
+    rmdir -p --ignore-fail-on-non-empty "$(dirname "$f")"
+  done
+}
+
+package_gobject-introspection() {
+  depends+=("gobject-introspection-runtime=$pkgver-$pkgrel")
+
+  meson install -C build --destdir "$pkgdir"
+
+  cd "$pkgdir"
+
+  python -m compileall -d /usr/lib/$pkgbase usr/lib/$pkgbase
+  python -O -m compileall -d /usr/lib/$pkgbase usr/lib/$pkgbase
+
+  _pick runtime usr/lib/lib*
+  _pick runtime usr/lib/girepository-*
+}
+
+package_gobject-introspection-runtime() {
+  pkgdesc+=" (runtime library)"
+  depends=(glib2)
+  provides+=(libgirepository-1.0.so)
+
+  mv runtime/* "$pkgdir"
+}

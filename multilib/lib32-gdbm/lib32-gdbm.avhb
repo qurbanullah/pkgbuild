@@ -1,0 +1,44 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=lib32-gdbm
+_realname=gdbm
+pkgver=1.19
+pkgrel=1
+pkgdesc='GNU database library (32-bit)'
+arch=('x86_64')
+groups=('multilib')
+repo=('extra')
+url='http://www.gnu.org/software/gdbm/gdbm.html'
+license=('GPL')
+depends=('gdbm' 'lib32-glibc')
+makedepends=('gcc-multilib' 'lib32-gcc-libs')
+source=("ftp://ftp.gnu.org/gnu/gdbm/gdbm-${pkgver}.tar.gz")
+options=('!makeflags')
+
+prepare() {
+	cd "${srcdir}/gdbm-${pkgver}"
+}
+
+build() {
+  cd gdbm-${pkgver}
+
+  export CC='gcc -m32'
+  export CXX='g++ -m32'
+  export PKG_CONFIG_PATH='/usr/lib32/pkgconfig'
+
+  ./configure \
+    --prefix='/usr' \
+    --libdir='/usr/lib32' \
+    --enable-libgdbm-compat
+  make ${MAKEFLAGS}
+}
+
+package() {
+  cd gdbm-${pkgver}
+
+  make DESTDIR="${pkgdir}" install
+  rm -rf "${pkgdir}"/usr/{bin,share,include}
+}

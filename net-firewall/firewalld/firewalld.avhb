@@ -1,0 +1,69 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=firewalld
+pkgver=1.1.0
+pkgrel=1
+pkgdesc='Firewall daemon with D-Bus interface'
+arch=(any)
+groups=('net-firewall')
+url=https://firewalld.org/
+license=(GPL2)
+depends=(
+  dbus-python
+  dconf
+  glib2
+  hicolor-icon-theme
+  nftables
+  python-gobject
+)
+makedepends=(
+  docbook-xsl
+  git
+  intltool
+  podman
+)
+optdepends=(
+  'bash-completion: bash completion'
+  'gtk3: firewall-config'
+  'libnotify: firewall-applet'
+  'nm-connection-editor: firewalld-applet'
+  'python-capng: drop daemon capabilities'
+  'python-pyqt5: firewall-applet'
+)
+backup=(
+  etc/conf.d/firewalld
+  etc/firewalld/firewalld.conf
+)
+_tag=b36cd7384eef067a0154ed535bcb80acffe59786
+source=(
+  https://github.com/firewalld/firewalld/releases/download/v$pkgver/firewalld-$pkgver.tar.gz
+  firewalld-sysconfigdir.patch
+)
+
+prepare() {
+  cd firewalld-$pkgver
+  patch -Np1 -i ../firewalld-sysconfigdir.patch
+  NOCONFIGURE=true ./autogen.sh
+}
+
+build() {
+  cd firewalld-$pkgver
+  ./configure \
+    --prefix=/usr \
+    --localstatedir=/var \
+    --sbindir=/usr/bin \
+    --sysconfdir=/etc \
+    --disable-schemas-compile \
+    --disable-sysconfig
+  make
+}
+
+package() {
+  cd firewalld-$pkgver
+  make DESTDIR="${pkgdir}" install
+  python -m compileall -d /usr/lib "$pkgdir/usr/lib"
+  python -O -m compileall -d /usr/lib "$pkgdir/usr/lib"
+}

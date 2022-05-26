@@ -1,0 +1,32 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=faudio
+_realname=FAudio
+pkgver=21.01
+pkgrel=1
+pkgdesc="XAudio2 reimplementation"
+arch=(x86_64)
+groups=('app-emulation')
+url="https://github.com/FNA-XNA/FAudio/"
+license=('custom:zlib')
+depends=('sdl2' 'gst-libav')
+makedepends=('cmake' 'ninja')
+source=("$pkgname-$pkgver.tar.gz::https://github.com/FNA-XNA/FAudio/archive/$pkgver.tar.gz")
+
+build() {
+  cmake -S FAudio-$pkgver -B build -G Ninja \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_LIBDIR=lib \
+    -DGSTREAMER=ON
+  ninja -C build
+}
+
+package() {
+  DESTDIR="$pkgdir" ninja -C build install
+
+  install -Dm644 FAudio-$pkgver/LICENSE -t "$pkgdir"/usr/share/licenses/$pkgname
+}

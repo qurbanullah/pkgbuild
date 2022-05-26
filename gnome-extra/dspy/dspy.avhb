@@ -1,0 +1,29 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=dspy
+pkgver=1.2.0
+pkgrel=1
+pkgdesc="D-Spy is a tool to explore and test end-points and interfaces on the System or Session D-Bus."
+arch=('any')
+groups=('gnome-extra')
+url="https://wiki.gnome.org/Apps/DFeet"
+license=('GPL2')
+depends=('gtk3' 'python-gobject' 'hicolor-icon-theme')
+makedepends=()
+source=(https://download.gnome.org/sources/$pkgname/${pkgver%.*}/$pkgname-$pkgver.tar.xz)
+
+build() {
+    avouch-meson ${pkgname}-${pkgver} build
+    ninja -C build
+}
+
+check() {
+    meson test -C build
+}
+
+package() {
+    DESTDIR="$pkgdir" ninja -C build install
+}

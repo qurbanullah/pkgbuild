@@ -1,0 +1,20 @@
+--- src/smartbookmark.c	2020-12-24 16:01:51.000000000 +0000
++++ ../smartbookmark.c	2021-03-21 23:45:42.387326047 +0000
+@@ -173,7 +173,7 @@
+     gtk_widget_set_valign(GTK_WIDGET(search->box), GTK_ALIGN_CENTER);
+ 
+     /* default options */
+-    search->url = "https://bugs.debian.org/";
++    search->url = "https://bugs.avouch.org/";
+     search->label_text = "BTS";
+     search->size = 5;
+     search->hide_label = FALSE;
+@@ -209,7 +209,7 @@
+     if( (rcfile = xfce_rc_simple_open(filename, TRUE) ))
+     {
+         xfce_rc_set_group(rcfile, NULL);
+-        search->url = g_strdup(xfce_rc_read_entry(rcfile,"url","https://bugs.debian.org/"));
++        search->url = g_strdup(xfce_rc_read_entry(rcfile,"url","https://bugs.avouch.org/"));
+         search->label_text = g_strdup(xfce_rc_read_entry(rcfile,"value","DBS"));
+         search->size = xfce_rc_read_int_entry(rcfile, "size", 5);
+         search->hide_label = xfce_rc_read_bool_entry(rcfile, "hidelabel", FALSE);

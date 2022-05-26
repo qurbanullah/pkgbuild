@@ -1,0 +1,52 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libteam
+pkgver=1.30
+pkgrel=1
+pkgdesc="Library for controlling team network device"
+arch=('x86_64')
+groups=('net-libs')
+url="http://libteam.org/"
+license=(LGPL)
+depends=(libnl libdaemon jansson libdbus bash zeromq)
+makedepends=(python swig git doxygen graphviz)
+source=("https://github.com/jpirko/libteam/archive/v$pkgver.tar.gz")
+
+prepare() {
+  cd $pkgname-$pkgver
+
+  NOCONFIGURE=1 ./autogen.sh
+}
+
+build() {
+  cd $pkgname-$pkgver
+  ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var \
+    --disable-static --libexecdir=/usr/lib
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+  make all html
+
+  cd binding/python
+  python setup.py build
+}
+
+check() {
+  cd $pkgname-$pkgver
+  make check
+}
+
+package() {
+  cd $pkgname-$pkgver
+  make DESTDIR="$pkgdir" install
+
+  install -Dt "$pkgdir/usr/lib/systemd/system" -m644 teamd/redhat/systemd/teamd@.service
+  install -Dt "$pkgdir/usr/share/dbus-1/system.d" -m644 teamd/dbus/teamd.conf
+
+  mkdir -p "$pkgdir/usr/share/doc/$pkgname"
+  cp -a doc/api "$pkgdir/usr/share/doc/$pkgname"
+
+  cd binding/python
+  python setup.py install --root="$pkgdir" --optimize=1 --skip-build
+}

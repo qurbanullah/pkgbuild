@@ -1,0 +1,26 @@
+From 4848dad32e7622d47f9eb2b61952a1153a06ea19 Mon Sep 17 00:00:00 2001
+From: Thomas Deutschmann <whissi@gentoo.org>
+Date: Tue, 2 Mar 2021 17:49:59 +0100
+Subject: [PATCH 7/7] cmake: Fix flow control statement in libmariadb
+
+Signed-off-by: Thomas Deutschmann <whissi@gentoo.org>
+---
+ libmariadb/cmake/ConnectorName.cmake | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/libmariadb/cmake/ConnectorName.cmake b/libmariadb/cmake/ConnectorName.cmake
+index b7bbbad8..357b8ac0 100644
+--- a/libmariadb/cmake/ConnectorName.cmake
++++ b/libmariadb/cmake/ConnectorName.cmake
+@@ -22,7 +22,7 @@ IF(CMAKE_SYSTEM_NAME MATCHES "Windows")
+     SET(MACHINE_NAME "x64")
+   ELSE()
+     SET(MACHINE_NAME "32")
+-  END()
++  ENDIF()
+ ENDIF()
+ 
+ SET(product_name "mysql-connector-c-${CPACK_PACKAGE_VERSION}-${PLATFORM_NAME}${CONCAT_SIGN}${MACHINE_NAME}")
+-- 
+2.30.1
+

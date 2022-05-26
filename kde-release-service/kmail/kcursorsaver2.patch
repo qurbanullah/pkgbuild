@@ -1,0 +1,11 @@
+--- src/editor/kmcomposerwin.cpp	2021-02-24 23:31:19.000000000 +0000
++++ ../kmcomposerwin.cpp	2021-03-21 20:50:35.453353882 +0000
+@@ -2769,7 +2769,7 @@
+ 
+ void KMComposerWin::doDelayedSend(MessageComposer::MessageSender::SendMethod method, MessageComposer::MessageSender::SaveIn saveIn)
+ {
+-    KCursorSaver saver(Qt::WaitCursor);
++    KPIM::KCursorSaver saver(Qt::WaitCursor);
+     applyComposerSetting(mComposerBase);
+     if (mForceDisableHtml) {
+         disableHtml(MessageComposer::ComposerViewBase::NoConfirmationNeeded);

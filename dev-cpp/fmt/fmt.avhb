@@ -1,0 +1,49 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=fmt
+pkgver=8.1.1
+pkgrel=1
+pkgdesc='Open-source formatting library for C++'
+arch=('x86_64')
+groups=('dev-cpp')
+url=https://fmt.dev
+license=(BSD)
+depends=(gcc-libs)
+makedepends=(
+  cmake
+  doxygen
+  git
+  ninja
+  npm
+  python-pip
+  python-virtualenv
+)
+provides=(libfmt.so)
+source=(https://github.com/fmtlib/fmt/archive/refs/tags/$pkgver.tar.gz)
+
+prepare() {
+  npm install less less-plugin-clean-css
+  sed "s/'lessc',/'npx', 'lessc',/" -i fmt-$pkgver/doc/build.py
+}
+
+build() {
+  cmake -S fmt-$pkgver -B build -G Ninja \
+    -DCMAKE_BUILD_TYPE=None \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_INSTALL_LIBDIR=/usr/lib \
+    -DBUILD_SHARED_LIBS=ON
+  cmake --build build
+  # cmake --build build --target doc
+}
+
+check() {
+  cmake --build build --target test
+}
+
+package() {
+  DESTDIR="${pkgdir}" cmake --build build --target install
+  install -Dm 644 fmt-$pkgver/LICENSE.rst -t "${pkgdir}"/usr/share/licenses/fmt/
+}

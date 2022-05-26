@@ -1,0 +1,31 @@
+# fix for error "Apache is running a threaded MPM, but your PHP Module is not compiled to be threadsafe."
+# you need to replace mpm_event_module with mpm_prefork_module: 
+
+sed -i "s|LoadModule mpm_event_module modules/mod_mpm_event.so|#LoadModule mpm_event_module modules/mod_mpm_event.so|g" /etc/httpd/conf/httpd.conf
+sed -i "s|#LoadModule mpm_prefork_module modules/mod_mpm_prefork.so|LoadModule mpm_prefork_module modules/mod_mpm_prefork.so|g" /etc/httpd/conf/httpd.conf
+
+# enable cgi support
+sed -i "s|#LoadModule cgi_module modules/mod_cgi.so|LoadModule cgi_module modules/mod_cgi.so|g" /etc/httpd/conf/httpd.conf
+
+# include it in /etc/httpd/conf/httpd.conf:
+# php configuration
+echo "LoadModule php_module modules/libphp.so" >> /etc/httpd/conf/httpd.conf
+echo "AddHandler php-script .php" >> /etc/httpd/conf/httpd.conf
+echo "Include conf/extra/php_module.conf" >> /etc/httpd/conf/httpd.conf
+
+# required
+sed -i "s:;extension=exif:extension=exif:g" /etc/php/php.ini
+sed -i "s:;extension=gd:extension=gd:g" /etc/php/php.ini
+sed -i "s:;extension=pgsql:extension=pgsql:g" /etc/php/php.ini
+sed -i "s:;extension=intl:extension=intl:g" /etc/php/php.ini
+sed -i "s:;extension=mysqli:extension=mysqli:g" /etc/php/php.ini
+sed -i "s:;extension=pdo_mysql:extension=pdo_mysql:g" /etc/php/php.ini
+sed -i "s:;extension=pdo_pgsql:extension=pdo_pgsql:g" /etc/php/php.ini
+sed -i "s:;extension=pdo_sqlite:extension=pdo_sqlite:g" /etc/php/php.ini
+sed -i "s:;extension=curl:extension=curl:g" /etc/php/php.ini
+sed -i "s:;extension=iconv:extension=iconv:g" /etc/php/php.ini
+sed -i "s:;extension=bz2:extension=bz2:g" /etc/php/php.ini
+sed -i "s:;extension=sqlite3:extension=sqlite3:g" /etc/php/php.ini
+
+
+

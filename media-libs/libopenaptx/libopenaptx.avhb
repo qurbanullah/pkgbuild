@@ -1,0 +1,37 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libopenaptx
+pkgver=0.2.0
+pkgrel=1
+pkgdesc="Open Source aptX codec library"
+url="https://github.com/pali/libopenaptx"
+arch=(x86_64)
+groups=('media-libs')
+license=(LGPL)
+depends=(glibc)
+makedepends=(git)
+provides=(libopenaptx.so)
+source=("https://github.com/pali/$pkgname/releases/download/$pkgver/$pkgname-$pkgver.tar.gz")
+
+
+prepare() {
+  cd $pkgname-$pkgver
+}
+
+_make() {
+  make CPPFLAGS="$CPPFLAGS" CFLAGS="$CFLAGS" LDFLAGS="$LDFLAGS" \
+    PREFIX=/usr "$@"
+}
+
+build() {
+  cd $pkgname-$pkgver
+  _make
+}
+
+package() {
+  cd $pkgname-$pkgver
+  _make DESTDIR="$pkgdir" install
+}

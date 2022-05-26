@@ -1,0 +1,32 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=perl-text-charwidth
+pkgver=0.04
+_realname=Text-CharWidth
+pkgrel=1
+pkgdesc="Perl/CPAN Module Text::CharWidth"
+arch=("x86_64")
+url="https://search.cpan.org/dist/Text-CharWidth"
+license=("GPL" "PerlArtistic")
+options=('!emptydirs')
+source=("https://www.cpan.org/authors/id/K/KU/KUBOTA/Text-CharWidth-${pkgver}.tar.gz")
+
+build() {
+  cd Text-CharWidth-${pkgver}
+
+  PERL_MM_USE_DEFAULT=1 perl Makefile.PL INSTALLDIRS=vendor
+
+  make
+}
+
+package() {
+  cd Text-CharWidth-${pkgver}
+
+  make install DESTDIR="$pkgdir"
+
+  find "$pkgdir" -name '.packlist' -delete
+  find "$pkgdir" -name '*.pod' -delete
+}

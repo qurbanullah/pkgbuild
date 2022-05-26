@@ -1,0 +1,24 @@
+From 8ece134217a3efaf61383e060353f105ab1a4b21 Mon Sep 17 00:00:00 2001
+From: Michael Lugmair <3483342-luciocarreras@users.noreply.gitlab.com>
+Date: Wed, 1 Jul 2020 10:27:30 +0000
+Subject: [PATCH] Update Slider.cpp
+
+---
+ src/Gui/Utils/Widgets/Slider.cpp | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/src/Gui/Utils/Widgets/Slider.cpp b/src/Gui/Utils/Widgets/Slider.cpp
+index 36256ba6..547fe098 100644
+--- a/src/Gui/Utils/Widgets/Slider.cpp
++++ b/src/Gui/Utils/Widgets/Slider.cpp
+@@ -24,6 +24,7 @@
+ #include "Utils/Logger/Logger.h"
+ 
+ #include <QPainter>
++#include <QPainterPath>
+ #include <QMouseEvent>
+ 
+ using Gui::Slider;
+-- 
+GitLab
+

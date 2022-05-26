@@ -1,0 +1,30 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=socat
+pkgver=1.7.4.1
+pkgrel=1
+pkgdesc='Multipurpose relay'
+url='http://www.dest-unreach.org/socat/'
+license=('GPL2')
+arch=('x86_64')
+groups=('net-misc')
+depends=('readline' 'openssl')
+source=("http://www.dest-unreach.org/socat/download/${pkgname}-${pkgver}.tar.gz")
+
+prepare() {
+	cd "${srcdir}/${pkgname}-${pkgver}"
+}
+
+build() {
+	cd "${srcdir}/${pkgname}-${pkgver}"
+	./configure --prefix=/usr --mandir=/usr/share/man
+	make
+}
+
+package() {
+	cd "${srcdir}/${pkgname}-${pkgver}"
+	make DESTDIR="${pkgdir}" install
+}

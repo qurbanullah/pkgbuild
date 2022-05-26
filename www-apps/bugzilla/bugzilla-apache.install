@@ -1,0 +1,4 @@
+# include it in /etc/httpd/conf/httpd.conf:
+# phpmyadmin configuration
+echo "Include conf/extra/bugzilla.conf" >> /etc/httpd/conf/httpd.conf
+

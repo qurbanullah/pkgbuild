@@ -1,0 +1,35 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=smpeg
+pkgver=2.0.0
+pkgrel=1
+_realname=smpeg-release_${pkgver//./_}
+pkgdesc="SDL MPEG Player Library"
+arch=('x86_64')
+groups=('media-libs')
+url="https://icculus.org/smpeg/"
+license=(LGPL)
+depends=(sdl)
+makedepends=(mesa glu subversion)
+optdepends=('glu: to use glmovie')
+source=("https://github.com/icculus/smpeg/archive/refs/tags/release_${pkgver//./_}.tar.gz")
+
+prepare() {
+  cd $_realname
+  ./autogen.sh
+}
+
+build() {
+  cd $_realname
+  export CFLAGS+=" -Wno-error=narrowing"
+  ./configure --prefix=/usr --mandir=/usr/share/man --disable-static
+  make
+}
+
+package() {
+  cd $_realname
+  make DESTDIR="$pkgdir" install
+}

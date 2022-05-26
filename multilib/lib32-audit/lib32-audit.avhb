@@ -1,0 +1,39 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=lib32-audit
+pkgbase=audit
+pkgver=2.8.5
+pkgrel=1
+pkgdesc='Userspace components of the audit framework'
+url='http://people.redhat.com/sgrubb/audit'
+arch=('x86_64')
+groups=('multilib')
+url='https://people.redhat.com/sgrubb/audit'
+makedepends=('krb5' 'libcap-ng' 'libldap' 'swig' 'linux-headers' 'python' 'python2')
+license=('GPL')
+options=('emptydirs')
+source=(${pkgbase}-${pkgver}.tar.gz::https://people.redhat.com/sgrubb/audit/${pkgbase}-${pkgver}.tar.gz)
+
+build() {
+	cd ${srcdir}/${pkgbase}-${pkgver}/lib
+
+	export CC="gcc -m32"
+	export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+
+	# GCC 10 fix 
+	export CFLAGS+=' -fcommon'
+	
+	./configure --prefix=/usr \
+	--libdir=/usr/lib32 --libexecdir=/usr/lib32
+	make ${MAKEFLAGS}
+}
+
+package() {
+	cd ${srcdir}/${pkgbase}-${pkgver}/lib
+	make DESTDIR="${pkgdir}" install
+	rm -rf ${pkgdir}/usr/{bin,include,share}
+}
+

@@ -1,0 +1,58 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname='libstoragemgmt'
+pkgver='1.9.4'
+pkgrel='1'
+pkgdesc='A library for storage management'
+arch=('any')
+groups=('sys-block')
+url="https://github.com/libstorage/${pkgname}"
+license=('GPL')
+depends=('libxml2' 'icu' 'sqlite' 'openssl' 'libconfig')
+makedepends=('check' 'chrpath' 'valgrind' 'python3-pywbem')
+optdepends=('arcconf: support for Microsemi (Adaptec) controllers')
+source=("${url}/releases/download/${pkgver}/${pkgname}-${pkgver}.tar.gz")
+
+prepare() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+
+  # change legacy directory in systemd
+  sed -i 's/\/var//' packaging/daemon/libstoragemgmt.conf
+
+  ./autogen.sh
+
+}
+
+build() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+    PYTHON="/usr/bin/python3" ./configure \
+    --prefix=/usr \
+    --bindir=/usr/bin \
+    --sbindir=/usr/bin \
+    --sysconfdir=/etc \
+    --localstatedir=/var \
+    --libdir=/usr/lib \
+    --datarootdir=/usr/share \
+    --datadir=/usr/share \
+    --with-python3 \
+    --without-mem-leak-test
+  make ${MAKEFLAGS}
+}
+
+# check() {
+#   cd "${srcdir}/${pkgname}-${pkgver}/test"
+#   ./runtests.sh
+# }
+
+package() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+  make DESTDIR="${pkgdir}" install
+
+  install -Dm644 /dev/stdin "$pkgdir/usr/lib/sysusers.d/${pkgname}.conf" <<END
+g libstoragemgmt - -
+END
+    #
+}

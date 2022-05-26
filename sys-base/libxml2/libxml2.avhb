@@ -1,0 +1,71 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libxml2
+pkgver=2.9.13
+pkgrel=1
+pkgdesc='XML parsing library, version 2'
+url='http://www.xmlsoft.org/'
+arch=(x86_64)
+groups=('sys-base')
+license=(MIT)
+depends=(zlib readline ncurses xz icu)
+makedepends=(python3)
+optdepends=('python3: Python3 bindings')
+provides=(libxml2.so)
+_commit=a075d256fd9ff15590b86d981b75a50ead124fca  # tags/v2.9.13^0
+source=("git+https://gitlab.gnome.org/GNOME/libxml2.git#commit=$_commit"
+        libxml2-2.9.8-python3-unicode-errors.patch
+        no-fuzz.diff
+        https://www.w3.org/XML/Test/xmlts20130923.tar.gz)
+sha256sums=('SKIP'
+            '37eb81a8ec6929eed1514e891bff2dd05b450bcf0c712153880c485b7366c17c'
+            '3fc010d8c42b93e6d6f1fca6b598a561e9d2c8780ff3ca0c76a31efabaea404f'
+            '9b61db9f5dbffa545f4b8d78422167083a8568c59bd1129f94138f936cf6fc1f')
+
+prepare() {
+  mkdir build
+
+  # Use xmlconf from conformance test suite
+  ln -s xmlconf build/xmlconf
+
+  cd $pkgname-v$pkgver
+
+  # https://src.fedoraproject.org/rpms/libxml2/tree/rawhide
+  patch -Np1 -i ../libxml2-2.9.8-python3-unicode-errors.patch
+
+  # Do not run fuzzing tests
+  patch -Np1 -i ../no-fuzz.diff
+
+  autoreconf -fiv
+}
+
+build() (
+  cd build
+
+  ../$pkgname-v$pkgver/configure \
+    --prefix=/usr \
+    --with-threads \
+    --with-history \
+    --with-python=/usr/bin/python \
+    --with-icu
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0 /g' libtool
+  make
+
+  find doc -type f -exec chmod -c 0644 {} +
+)
+
+check() {
+  make -C build check
+}
+
+package() {
+  make -C build DESTDIR="$pkgdir" install
+  
+  python -m compileall -d /usr/lib "$pkgdir/usr/lib"
+  python -O -m compileall -d /usr/lib "$pkgdir/usr/lib" 
+
+  install -Dm 644 build/COPYING -t "$pkgdir/usr/share/licenses/$pkgname"
+}

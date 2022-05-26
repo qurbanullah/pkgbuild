@@ -1,0 +1,21 @@
+From d4b7e77e895f57bf5dfee3cf4f0ad0258ec303bf Mon Sep 17 00:00:00 2001
+From: "Robin M. B" <robin@broda.me>
+Date: Thu, 27 May 2021 23:19:15 +0200
+Subject: [PATCH] Update SConscript
+
+---
+ SConscript | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/SConscript b/SConscript
+index 88f9fde..180e7eb 100644
+--- a/SConscript
++++ b/SConscript
+@@ -2,6 +2,7 @@
+ # coding: utf-8
+ import os, string, sys, shutil, math
+ from tools import *
++import SCons.Util
+ 
+ env = GpickEnvironment(ENV = os.environ, BUILDERS = {'WriteNsisVersion': Builder(action = WriteNsisVersion, suffix = ".nsi")})
+ 

@@ -1,0 +1,80 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgbase=lib32-poppler
+_pkgbase=poppler
+pkgname=('lib32-poppler' 'lib32-poppler-glib')
+pkgver=21.05.0
+pkgrel=1
+arch=('x86_64')
+groups=('multilib')
+repo=('extra')
+license=('GPL')
+makedepends=('libjpeg' 'gcc-libs' 'cairo' 'fontconfig' 'openjpeg' 'gtk2' 'qt4' 'pkgconfig' 'lcms2' 'gobject-introspection' 'icu' 'qt5-base')
+options=('!emptydirs')
+url="http://poppler.freedesktop.org/"
+_testtag=0d2bfd4af4c76a3bac27ccaff793d9129df7b57a
+source=(http://poppler.freedesktop.org/${pkgbase}-${pkgver}.tar.xz
+        http://cgit.freedesktop.org/poppler/test/snapshot/test-${_testtag}.tar.bz2)
+
+prepare() {
+  mkdir -p build
+}
+
+build() {
+  export CC="gcc -m32"
+  export CXX="g++ -m32"
+  export CCFLAGS="-m32 ${CCFLAGS}"
+  export CFLAGS="-m32 ${CFLAGS}"
+  export CXXFLAGS="-m32 ${CXXFLAGS}"
+  export LDFLAGS="-m32 ${LDFLAGS}"
+  cd build
+  cmake ../${_pkgbase}-${pkgver} \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX:PATH=/usr \
+    -DCMAKE_INSTALL_LIBDIR="/usr/lib32" \
+    -DPKG_CONFIG_EXECUTABLE="$srcdir/pkgconf32" \
+    -DENABLE_LIBOPENJPEG="unmaintained" \
+    -DENABLE_UNSTABLE_API_ABI_HEADERS=ON \
+    -DENABLE_GTK_DOC=OFF \
+    -DENABLE_QT5=OFF
+  make
+}
+
+check() {
+  cd build
+  #LANG=en_US.UTF8 make test
+}
+
+package_lib32-poppler() {
+  pkgdesc="PDF rendering library based on xpdf 3.0 (32-bit)"
+  depends=('lib32-libjpeg' 'lib32-gcc-libs' 'lib32-cairo'
+           'lib32-fontconfig' 'lib32-openjpeg2' 'lib32-lcms2'
+           "poppler=${pkgver}" 'lib32-nss' 'curl')
+  optdepends=('poppler-data: encoding data to display PDF documents containing CJK characters')
+
+  cd build
+  make DESTDIR="${pkgdir}" install
+
+  # cleanup for splitted build
+  rm -r "${pkgdir}/usr/"{bin,include,share}
+  rm -vf "${pkgdir}"/usr/lib32/libpoppler-glib.*
+  rm -vf "${pkgdir}"/usr/lib32/pkgconfig/poppler-glib.pc
+  rm -vrf "${pkgdir}"/usr/lib32/gir*
+}
+
+package_lib32-poppler-glib() {
+  pkgdesc="Poppler glib bindings (32-bit)"
+  depends=("lib32-poppler=${pkgver}" 'lib32-glib2'
+           "poppler-glib=${pkgver}")
+
+  cd build
+
+  make -C glib DESTDIR="${pkgdir}" install
+  install -m755 -d "${pkgdir}/usr/lib32/pkgconfig"
+  install -m644 poppler-glib.pc "${pkgdir}/usr/lib32/pkgconfig/"
+  rm -r "${pkgdir}/usr/include"
+  rm -vf "${pkgdir}"/usr/lib32/libpoppler.*
+}

@@ -1,0 +1,32 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=qt6-quicktimeline
+_qtver=6.0.2
+pkgver=${_qtver/-/}
+pkgrel=1
+_realname="${pkgname/6-/}-everywhere-src-${_qtver}"
+arch=('x86_64')
+groups=('dev-qt6')
+url='https://www.qt.io'
+license=(GPL3 LGPL3 FDL custom)
+pkgdesc='Qt module for keyframe-based timeline construction'
+depends=(qt6-declarative)
+makedepends=(cmake vulkan-headers)
+source=("https://download.qt.io/official_releases/qt/${pkgver%.*}/$_qtver/submodules/$_pkgfn.tar.xz")
+sha256sums=('7a2c01567d95ba1048ad44edfae9322bbef47fc268e92c50c0619078056d4df1')
+
+build() {
+  cmake -B build -S $_realname -G Ninja
+  ninja -C build
+}
+
+package() {
+  DESTDIR="${pkgdir}" ninja -C build install
+
+  install -d "$pkgdir"/usr/share/licenses
+  ln -s /usr/share/licenses/qt6-base "$pkgdir"/usr/share/licenses/$pkgname
+}
+

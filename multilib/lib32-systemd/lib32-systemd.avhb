@@ -1,0 +1,180 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgbase=systemd
+pkgname=lib32-systemd
+_realname=$pkgbase-stable
+pkgver=248.2
+pkgrel=1
+pkgdesc="system and service manager (32-bit)"
+arch=('x86_64')
+groups=('multilib')
+repo=('extra')
+url='https://www.github.com/systemd/systemd'
+license=('GPL2' 'LGPL2.1')
+depends=('lib32-gcc-libs' 'lib32-libcap' 'lib32-libgcrypt' 'lib32-xz' 'systemd')
+makedepends=('gcc-multilib' 'git' 'gperf' 'intltool' 'lib32-acl' 'lib32-bzip2'
+             'lib32-curl' 'lib32-dbus' 'lib32-gcc-libs' 'lib32-glib2'
+             'lib32-gnutls' 'lib32-libelf' 'lib32-libidn2' 'lib32-pcre2'
+             'libxslt' 'meson')
+options=('strip')
+validpgpkeys=('63CDA1E5D3FC22B998D20DD6327F26951A015CC4'  # Lennart Poettering <lennart@poettering.net>
+              '5C251B5FC54EB2F80F407AAAC54CA336CFEB557E') # Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl>
+source=('git://github.com/systemd/systemd-stable.git'
+        'git://github.com/systemd/systemd.git') # pull in for tags, backports & reverts
+sha256sums=('SKIP'
+         'SKIP')
+
+#_comit=7a6d834c0104304f506852eddc25b22e1ce65e3b
+_gitbranch=246
+
+if [ -n "${_gitbranch}" ]; then	
+	_basedir=${_realname}-${pkgver}
+else
+	#_basedir=${pkgname}-${pkgver}
+  _basedir=systemd-stable-$pkgver
+fi
+
+#getsrc() {
+#	cd ${srcdir}
+#	git clone git://github.com/systemd/systemd.git
+#}
+
+pkgver() {
+	cd ${_basedir}
+	echo "$(git describe --tags)" | sed -e 's|v||g'
+}
+
+prepare() {
+	cd ${_basedir}
+    # Replace cdrom/dialout/tape groups with optical/uucp/storage
+    patch -Np1 -i ../0001-Use-Avouch-Linux-device-access-groups.patch
+    # Make homed/userdbd/repart services installable (to allow uninstalling)
+    #patch -Np1 -i ../0002-make-homed-userdbd-repart-services-installable.patch
+    # It causes flooding of dmesg and syslog, suppressing actually important messages.
+    patch -Np1 -i ../gentoo-journald-audit.patch
+
+  # https://bugs.archlinux.org/task/70264
+  # https://github.com/systemd/systemd/issues/19191
+  patch -Np1 -i ../0003-PARTIAL-REVERT-commit-tree-wide-replace-strverscmp-and-str_verscmp-with-strverscmp_improved.patch
+}
+
+build() {
+	
+	cd "${srcdir}"
+
+    local _timeservers=({0..3}.arch.pool.ntp.org)
+    local _nameservers=(
+    # We use these public name services, ordered by their
+    # privacy policy (hopefully):
+    #  * Cloudflare (https://1.1.1.1/)
+    #  * Quad9 without filtering (https://www.quad9.net/)
+    #  * Google (https://developers.google.com/speed/public-dns/)
+    1.1.1.1
+    9.9.9.10
+    8.8.8.8
+    2606:4700:4700::1111
+    2620:fe::10
+    2001:4860:4860::8888
+  )
+  
+  export CC='gcc -m32'
+  export CXX='g++ -m32'
+  export PKG_CONFIG_PATH='/usr/lib32/pkgconfig'
+
+    local _meson_options=(
+    --prefix '/usr'
+    --libdir '/usr/lib32'
+    --libexecdir '/usr/lib32'
+
+    -Dmode=release
+    # features
+    -Daudit=false
+    -Dblkid=false
+    -Dgnu-efi=false
+    -Dima=false
+    -Dkmod=false
+    -Dlibcryptsetup=false
+    -Dlibidn2=true
+    -Dlibiptc=false
+    -Dlz4=false
+    -Dmicrohttpd=false
+    -Dpam=false
+    -Dpython=false
+    -Dseccomp=false
+
+    # components
+    -Dutmp=false
+    -Dhibernate=false
+    -Dldconfig=false
+    -Dresolve=true
+    -Defi=false
+    -Dtpm=false
+    -Denvironment-d=false
+    -Dbinfmt=false
+    -Drepart=false
+    -Dcoredump=false
+    -Dpstore=false
+    -Doomd=false
+    -Dlogind=false
+    -Dhostnamed=false
+    -Dlocaled=false
+    -Dmachined=true
+    -Dportabled=false
+    -Dsysext=false
+    -Duserdb=false
+    -Dhomed=false
+    -Dnetworkd=false
+    -Dtimedated=false
+    -Dtimesyncd=false
+    -Dremote=false
+    -Dcreate-log-dirs=false
+    -Dnss-myhostname=true
+    -Dnss-mymachines=true
+    -Dnss-resolve=true
+    -Dnss-systemd=true
+    -Dfirstboot=false
+    -Drandomseed=false
+    -Dbacklight=false
+    -Dvconsole=false
+    -Dquotacheck=false
+    -Dsysusers=false
+    -Dtmpfiles=false
+    -Dimportd=false
+    -Dhwdb=false
+    -Drfkill=false
+    -Dxdg-autostart=false
+    -Dman=false
+    -Dhtml=false
+    -Dtranslations=false
+
+    -Ddbuspolicydir=/usr/share/dbus-1/system.d
+    -Ddefault-hierarchy=unified
+    -Ddefault-kill-user-processes=false
+    -Ddefault-locale=C
+    -Dfallback-hostname='avouch'
+    -Dnologin-path=/usr/bin/nologin
+    -Dntp-servers="${_timeservers[*]}"
+    -Ddns-servers="${_nameservers[*]}"
+    -Drpmmacrosdir=no
+    -Dsysvinit-path=
+    -Dsysvrcnd-path=
+  )
+
+    avouch-meson ${_basedir} build "${_meson_options[@]}"
+
+    ninja -C build
+}
+
+
+
+package() {
+    cd "${srcdir}"
+    DESTDIR="$pkgdir" ninja -C build install
+    
+    rm -rf "${pkgdir}"/{etc,var}
+    rm -rf "${pkgdir}"/usr/{bin,include,lib,share}
+}
+

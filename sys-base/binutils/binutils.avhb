@@ -1,0 +1,133 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+# toolchain build order: linux-api-headers->glibc->binutils->gcc->binutils->glibc
+
+pkgname=binutils
+pkgver=2.38
+pkgrel=1
+pkgdesc="A set of programs to assemble and manipulate binary and object files"
+arch=('x86_64')
+groups=('sys-base')
+url="http://www.gnu.org/software/binutils/"
+license=('GPL3' 'GPL' 'FDL1.3' 'custom:FSFAP')
+depends=('glibc' 'zlib')
+makedepends=('git')
+checkdepends=('dejagnu' 'bc')
+options=('staticlibs' '!distcc' '!ccache')
+source=(https://ftp.gnu.org/gnu/binutils/binutils-$pkgver.tar.xz{,.sig})
+validpgpkeys=(3A24BC1E8FB409FA9F14371813FCEF89DD9E3C4F)
+
+#_gitbranch=2.38
+
+if [ -n "${_gitbranch}" ]; then	
+	_basedir=${pkgname}
+else
+	_basedir=${pkgname}-${pkgver}
+fi
+
+getsrc() {
+	cd ${srcdir}
+	# TO LIST ALL THE BRANCHES AT REMOTE SITE
+	# git ls-remote --heads https://sourceware.org/git/binutils-gdb.git
+	
+	# Always clone the stable branch with latest patches	
+	#git clone https://sourceware.org/git/binutils-gdb.git --branch "binutils-${pkgver//./_}-branch" --single-branch "${pkgname}"
+}
+
+prepare() {
+  mkdir -p binutils-build
+
+  #cd binutils-gdb
+  cd ${_basedir}
+
+# Turn off development mode (-Werror, gas run-time checks, date in sonames)
+  sed -i '/^development=/s/true/false/' bfd/development.sh
+
+  # hack! - libiberty configure tests for header files using "$CPP $CPPFLAGS"
+  sed -i "/ac_cpp=/s/\$CPPFLAGS/\$CPPFLAGS -O2/" libiberty/configure
+
+  # Creds @Fedora
+  # Change the gold configuration script to only warn about
+  # unsupported targets.  This allows the binutils to be built with
+  # BPF support enabled.
+  patch -Np1 -i "${srcdir}"/gold-warn-unsupported.patch
+
+  # fix incorrect "undefined reference" errors
+  # https://sourceware.org/bugzilla/show_bug.cgi?id=28879
+  patch -Np1 -i "${srcdir}"/fix-incorrect-undefined-symbol.patch
+
+# remove one test that prevents the tests from running to completion
+  sed -i '/@\tincremental_copy/d' gold/testsuite/Makefile.in
+
+}
+
+build() {
+  cd ${srcdir}/binutils-build
+
+  ../${_basedir}/configure \
+    --prefix=/usr \
+    --with-lib-path=/usr/lib:/usr/local/lib \
+    --with-bugurl=https://bugs.avouch.org/ \
+    --enable-cet \
+    --enable-deterministic-archives \
+    --enable-ld \
+    --enable-install-libiberty \
+    --enable-gold=default \
+    --enable-pgo-build=lto \
+    --enable-plugins \
+    --enable-relro \
+    --enable-shared \
+    --enable-targets=x86_64-pep,bpf-unknown-none \
+    --enable-threads \
+    --disable-gdb \
+    --disable-gdbserver \
+    --disable-libdecnumber \
+    --disable-readline \
+    --disable-sim \
+    --disable-werror \
+    --with-debuginfod \
+    --with-pic \
+    --with-system-zlib
+
+  make -O ${MAKEFLAGS} tooldir=/usr
+
+  # Extract the FSF All Permissive License
+  # <https://www.gnu.org/prep/maintain/html_node/License-Notices-for-Other-Files.html>
+  # used for some linker scripts.
+  tail -n 5 "${srcdir}"/binutils-${pkgver}/ld/scripttempl/README > FSFAP
+}
+
+check() {
+  cd binutils-build
+  
+ # Use minimal flags for testsuite
+  # ld testsuite uses CFLAGS_FOR_TARGET and requires -g
+  # gold testsuite requires CXXFLAGS/CFLAGS with default PIE/PIC disabled
+  make -O ${MAKEFLAGS} CFLAGS_FOR_TARGET="-O2 -g" \
+          CXXFLAGS="-O2 -no-pie -fno-PIC" \
+          CFLAGS="-O2 -no-pie" \
+          LDFLAGS="" \
+          check
+}
+
+package() {
+  cd binutils-build
+  make -j1 prefix=${pkgdir}/usr tooldir=${pkgdir}/usr install
+
+# install PIC version of libiberty
+  install -m644 libiberty/pic/libiberty.a "$pkgdir/usr/lib"
+
+  # Remove unwanted files
+  rm ${pkgdir}/usr/share/man/man1/{dlltool,windres,windmc}*
+
+  # No shared linking to these files outside binutils
+  rm ${pkgdir}/usr/lib/lib{bfd,opcodes}.so
+  echo "INPUT ( /usr/lib/libbfd.a -liberty -lz -ldl )" > "$pkgdir"/usr/lib/libbfd.so
+  echo "INPUT ( /usr/lib/libopcodes.a -lbfd )" > "$pkgdir"/usr/lib/libopcodes.so
+  
+  # install FSF All Permissive License
+  install -Dm644 -t "${pkgdir}"/usr/share/licenses/${pkgname}/ FSFAP
+}

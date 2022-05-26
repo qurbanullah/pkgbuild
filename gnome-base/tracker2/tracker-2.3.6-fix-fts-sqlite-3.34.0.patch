@@ -1,0 +1,26 @@
+diff --git a/src/libtracker-data/tracker-data-update.c b/src/libtracker-data/tracker-data-update.c
+index e2f46685e..19cae25f9 100644
+--- a/src/libtracker-data/tracker-data-update.c
++++ b/src/libtracker-data/tracker-data-update.c
+@@ -2244,6 +2244,7 @@ cache_delete_resource_type_full (TrackerData  *data,
+ 		    g_hash_table_size (data->resource_buffer->tables) == 0) {
+ #if HAVE_TRACKER_FTS
+ 			tracker_db_interface_sqlite_fts_delete_id (iface, data->resource_buffer->id);
++			data->resource_buffer->fts_updated = TRUE;
+ #endif
+ 			/* skip subclass query when deleting whole resource
+ 			   to improve performance */
+diff --git a/src/libtracker-data/tracker-db-interface-sqlite.c b/src/libtracker-data/tracker-db-interface-sqlite.c
+index da88080ed..cdeb960e7 100644
+--- a/src/libtracker-data/tracker-db-interface-sqlite.c
++++ b/src/libtracker-data/tracker-db-interface-sqlite.c
+@@ -1770,7 +1770,8 @@ tracker_db_interface_sqlite_fts_create_delete_all_query (TrackerDBInterface *db_
+ 	g_string_append_printf (insert_str,
+ 	                        "INSERT INTO fts5 (fts5, rowid %s) "
+ 	                        "SELECT 'delete', rowid %s FROM fts_view "
+-	                        "WHERE rowid = ?",
++	                        "WHERE rowid = ? AND COALESCE(NULL %s) IS NOT NULL",
++	                        db_interface->fts_properties,
+ 	                        db_interface->fts_properties,
+ 	                        db_interface->fts_properties);
+ 	return g_string_free (insert_str, FALSE);

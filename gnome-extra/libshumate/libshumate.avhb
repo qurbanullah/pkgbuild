@@ -1,0 +1,35 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libshumate
+pkgver=1.0.0.alpha.1
+pkgrel=1
+pkgdesc="GTK4 widget to display maps (git version)"
+arch=(x86_64)
+groups=('gnome-extra')
+url="https://wiki.gnome.org/Projects/libshumate"
+license=(LGPL)
+depends=(gtk4 libsoup sqlite protobuf-c)
+makedepends=(git gobject-introspection gtk-doc gi-docgen meson vala)
+checkdepends=(xorg-server-xvfb)
+provides=(libshumate)
+
+source=("git+https://gitlab.gnome.org/GNOME/${_pkgname}.git")
+sha256sums=('SKIP')
+
+build() {
+  avouch-meson ${pkgname}-${pkgver} build -D gtk_doc=true
+  ninja -C build
+}
+
+
+check() {
+    # Run tests with headless x11 server.
+    xvfb-run meson test -C build --print-errorlogs
+}
+
+package() {
+  DESTDIR="$pkgdir" meson install -C build
+}

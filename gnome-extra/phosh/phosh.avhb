@@ -1,0 +1,39 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=phosh
+pkgver=0.17.0
+pkgrel=1
+pkgdesc='A pure Wayland shell prototype for GNOME on mobile devices'
+arch=(x86_64 aarch64 armv7h)
+url='https://gitlab.gnome.org/World/Phosh/phosh'
+license=(GPL3)
+depends=(
+	callaudiod
+	feedbackd
+	libhandy
+	phoc
+)
+makedepends=(
+	ctags
+	git
+	meson
+	vala
+	wayland-protocols
+)
+source=(
+	"git+${url}.git#tag=v${pkgver}"
+	"git+https://gitlab.gnome.org/GNOME/libgnome-volume-control.git"
+)
+b2sums=('SKIP' 'SKIP')
+
+build() {
+	avouch-meson phosh-$pkgver build
+	meson compile -C build
+}
+
+package() {
+	DESTDIR="${pkgdir}" meson install -C build
+}

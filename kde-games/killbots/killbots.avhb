@@ -1,0 +1,29 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=killbots
+pkgver=22.04.0
+pkgrel=1
+pkgdesc="A simple game of evading killer robots"
+url="http://kde.org/applications/games/killbots/"
+arch=('x86_64')
+groups=('kde-games')
+license=('GPL' 'LGPL' 'FDL')
+depends=('libkdegames' 'hicolor-icon-theme')
+makedepends=('extra-cmake-modules' 'python' 'kdoctools')
+source=("http://download.kde.org/stable/applications/${pkgver}/src/killbots-${pkgver}.tar.xz")
+sha1sums=('68c80ff618da0550822330575ec2015302a87207')
+
+build() {
+  cmake -B build -S $pkgname-$pkgver \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DLIB_INSTALL_DIR=lib \
+    -DBUILD_TESTING=OFF
+  cmake --build build
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+}

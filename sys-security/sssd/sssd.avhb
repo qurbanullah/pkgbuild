@@ -1,0 +1,106 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=sssd
+pkgver=2.4.2
+pkgrel=1
+pkgdesc="System Security Services Daemon"
+arch=('x86_64')
+groups=('sys-security')
+url="https://pagure.io/SSSD/sssd"
+license=('GPL3')
+depends=(
+  'bind'          # for nsupdate
+  'c-ares'
+  'cyrus-sasl-gssapi'
+  'ding-libs'
+  'libnl'
+  'libunistring'
+  'smbclient'     # for libndr-nbt
+  'nfsidmap'
+  'jansson'
+  'libtevent.so'
+  'libldb.so'
+)
+makedepends=(
+  'docbook-xsl'
+  'doxygen'
+  'python'
+  'samba'         # for libndr-nbt headers
+  'systemd'
+  'tevent'
+  'ldb'
+)
+checkdepends=(
+  'check'
+  'cmocka'
+  'libfaketime'
+  'openssh'
+  'softhsm'
+)
+source=("https://github.com/SSSD/$pkgname/releases/download/$pkgname-${pkgver//./_}/$pkgname-$pkgver.tar.gz"{,.asc})
+validpgpkeys=('E4E366758CA0716AAB8048671EC6AB7532E7BC25')
+
+prepare() {
+  cd "$srcdir/$pkgname-$pkgver"
+  for f in "${source[@]}"; do
+    if [[ $f == *.patch ]]; then
+      msg2 "Applying $f"
+      patch -p1 < "$srcdir/$f"
+    fi
+  done
+
+# Fix issue with autoconf 2.70+
+  sed '/AM_PROG_CC_C_O/ i AC_PROG_CPP' -i configure.ac
+  
+  sed -i 's#/var/run/#/run/#' src/examples/logrotate
+
+  # dbus policy files in /usr/share/dbus-1
+  sed -i 's/^dbuspolicydir = $(sysconfdir)/dbuspolicydir = $(datadir)/' Makefile.in
+
+  # fix search path for libsofthsm2.so
+  # see: https://github.com/SSSD/sssd/issues/5329
+  sed -i 's#/usr/lib64/pkcs11/libsofthsm2.so ##' src/external/test_ca.m4
+
+  # remove flaky network test
+  sed '/fail_over-tests/d' -i Makefile.am
+  autoreconf -fiv
+}
+
+build() {
+  cd "$srcdir/$pkgname-$pkgver"
+  ./configure \
+    --prefix=/usr                                 \
+    --sbindir=/usr/bin                            \
+    --sysconfdir=/etc                             \
+    --localstatedir=/var                          \
+    --libexecdir=/usr/lib/sssd                    \
+    --datadir=/usr/share                          \
+    --enable-pammoddir=/usr/lib/security          \
+    --with-initscript=systemd                     \
+    --with-os=fedora                              \
+    --with-pid-path=/run                          \
+    --with-python3-bindings                       \
+    --with-syslog=journald                        \
+    --with-selinux                             \
+    --with-semanage                            \
+    --with-systemdunitdir=/usr/lib/systemd/system
+  sed -i '/\<HAVE_KRB5_SET_TRACE_CALLBACK\>/d' config.h
+  make ${MAKEFLAGS}
+}
+
+package() {
+  cd "$srcdir/$pkgname-$pkgver"
+  make -j1 DESTDIR="$pkgdir/" install
+  rm -rf "$pkgdir"/etc/rc.d
+  rm -rf "$pkgdir"/lib
+  rm -rf "$pkgdir"/run
+  rm -f "$pkgdir"/usr/lib/ldb/modules/ldb/memberof.la
+  find "$pkgdir"/usr -depth -type d \
+    -exec rmdir --ignore-fail-on-non-empty {} \;
+
+  cd "$srcdir"
+  rm -rf "$pkgdir/etc/systemd" # remove the drop-in
+}

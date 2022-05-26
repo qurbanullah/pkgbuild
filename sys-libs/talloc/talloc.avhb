@@ -1,0 +1,43 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=talloc
+pkgver=2.3.3
+pkgrel=1
+pkgdesc="Hierarchical pool based memory allocator with destructors"
+arch=('x86_64')
+groups=('sys-libs')
+license=('GPL3')
+url="https://talloc.samba.org/"
+depends=('glibc')
+makedepends=('python3' 'docbook-xsl')
+optdepends=('python3: for python3 bindings')
+source=(https://www.samba.org/ftp/talloc/talloc-$pkgver.tar.gz)
+validpgpkeys=(9147A339719518EE9011BCB54793916113084025) # samba-bugs@samba.org
+
+prepare() {
+   cd "${srcdir}/${pkgname}-${pkgver}"
+}
+
+build() {
+   cd "${srcdir}/${pkgname}-${pkgver}"
+   ./configure --prefix=/usr \
+     --sysconfdir=/etc/samba \
+     --localstatedir=/var \
+     --bundled-libraries=NONE \
+     --builtin-libraries=replace \
+     --enable-talloc-compat1
+   make ${MAKEFLAGS}
+}
+
+check() {
+  cd "${srcdir}/${pkgname}-${pkgver}"
+  make ${MAKEFLAGS} check
+}
+
+package() {
+   cd "${srcdir}/${pkgname}-${pkgver}"
+   make DESTDIR="${pkgdir}" install
+}

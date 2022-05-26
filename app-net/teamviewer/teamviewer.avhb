@@ -1,0 +1,73 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=teamviewer
+pkgver=15.25.5
+pkgrel=1
+pkgdesc='All-In-One Software for Remote Support and Online Meetings'
+arch=('x86_64')
+groups=('app-net')
+url='http://www.teamviewer.com'
+license=('custom')
+options=('!strip')
+provides=('teamviewer')
+conflicts=('teamviewer-beta')
+depends_x86_64=(
+	'lib32-fontconfig'
+	'lib32-libpng12'
+	'lib32-libsm'
+	'lib32-libxinerama'
+	'lib32-libxrender'
+	'lib32-libjpeg6-turbo'
+  'lib32-libxtst'
+  'libxtst')
+depends_i686=(
+	'fontconfig'
+	'libpng12'
+	'libsm'
+	'libxinerama'
+	'libxrender'
+	'libjpeg6-turbo'
+  'libxtst')
+install=teamviewer.install
+source_x86_64=("https://download.teamviewer.com/download/version_${pkgver%%.*}x/teamviewer_${pkgver}_amd64.rpm")
+
+
+prepare() {
+	warning "If the install fails, you need to uninstall previous major version of Teamviewer"
+	[ -d data ] && rm -rf data
+	mkdir data
+	cd data
+	for datatar in ../data.tar.*; do
+		message "Unpacking $datatar"
+		tar -xf $datatar
+	done
+	sed -i '/function CheckQtQuickControls()/{N;a ls /usr/lib/qt/qml/QtQuick/Controls/qmldir &>/dev/null && return # ArchLinux
+}' ./opt/teamviewer/tv_bin/script/teamviewer_setup || msg2 "Patching CheckQtQuickControls failed! Contact maintainer"
+	message "Running teamviewer_setup checklibs"
+	./opt/teamviewer/tv_bin/script/teamviewer_setup checklibs \
+    || message "teamviewer_setup checklibs failed, contact maintainer with /tmp/teamviewerTARLibCheck/DependencyCheck.log" # Currently it always exits 0
+}
+
+package() {
+	# Install
+	warning "If the install fails, you need to uninstall previous major version of Teamviewer"
+	cp -dr --no-preserve=ownership ./data/{etc,opt,usr,var} "${pkgdir}"/
+
+	# Additional files
+	rm "${pkgdir}"/opt/teamviewer/tv_bin/xdg-utils/xdg-email
+	rm -rf "${pkgdir}"/etc/apt
+	install -D -m0644 "${pkgdir}"/opt/teamviewer/tv_bin/script/teamviewerd.service \
+		"${pkgdir}"/usr/lib/systemd/system/teamviewerd.service
+	install -d -m0755 "${pkgdir}"/usr/{share/applications,share/licenses/teamviewer}
+	ln -s /opt/teamviewer/License.txt \
+		"${pkgdir}"/usr/share/licenses/teamviewer/LICENSE
+	if [ "$CARCH" = "x86_64" ] && [ -f "${pkgdir}/opt/teamviewer/tv_bin/script/libdepend" ]; then
+		message "Removing libdepend to ditch lib32 dependencies"
+		rm "${pkgdir}/opt/teamviewer/tv_bin/script/libdepend"
+	fi
+	# Uncomment to use system's native libraries. This can save around 150MiB of disk space
+	#rm -rf "${pkgdir}"/opt/teamviewer/tv_bin/RTlib
+}

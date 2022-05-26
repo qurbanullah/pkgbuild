@@ -1,0 +1,26 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=kapidox
+pkgver=5.93.0
+pkgrel=1
+pkgdesc='Frameworks API Documentation Tools'
+arch=('x86_64')
+groups=('kde-frameworks')
+url='https://projects.kde.org/projects/frameworks/kapidox'
+license=('LGPL')
+depends=(python3-jinja python3-yaml)
+makedepends=(python3-build python3-installer python3-wheel qt5-base)
+source=("http://download.kde.org/stable/frameworks/${pkgver%.*}/${pkgname}-${pkgver}.tar.xz")
+
+build() {
+  cd $pkgname-$pkgver
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  cd $pkgname-$pkgver
+  python -m installer --destdir="$pkgdir" dist/*.whl
+}

@@ -1,0 +1,54 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=mingw-w64-binutils
+_realname=binutils
+pkgver=2.36.1
+pkgrel=1
+pkgdesc="Cross binutils for the MinGW-w64 cross-compiler"
+arch=('x86_64')
+url="http://www.gnu.org/software/binutils"
+license=('GPL')
+groups=('dev-mingww64')
+depends=('zlib')
+options=('!libtool' '!emptydirs')
+# Nick Clifton (Chief Binutils Maintainer) <nickc@redhat.com>
+validpgpkeys=('3A24BC1E8FB409FA9F14371813FCEF89DD9E3C4F')
+source=("https://ftp.gnu.org/gnu/binutils/binutils-${pkgver}.tar.gz"{,.sig})
+
+_targets="i686-w64-mingw32 x86_64-w64-mingw32"
+
+prepare() {
+  cd "$srcdir"/binutils-${pkgver}
+  #do not install libiberty
+  sed -i 's/install_to_$(INSTALL_DEST) //' libiberty/Makefile.in
+  # hack! - libiberty configure tests for header files using "$CPP $CPPFLAGS"
+  sed -i "/ac_cpp=/s/\$CPPFLAGS/\$CPPFLAGS -O2/" libiberty/configure
+}
+
+build() {
+  for _target in $_targets; do
+    echo "Building ${_target} cross binutils"
+    mkdir -p "$srcdir"/binutils-${_target} && cd "${srcdir}/binutils-${_target}"
+    "$srcdir"/binutils-${pkgver}/configure --prefix=/usr \
+        --target=${_target} \
+        --infodir=/usr/share/info/${_target} \
+        --enable-lto --enable-plugins \
+        --enable-deterministic-archives \
+        --disable-multilib --disable-nls \
+        --disable-werror
+     make ${MAKEFLAGS}
+  done
+}
+
+package() {
+  for _target in ${_targets}; do
+    echo "Installing ${_target} cross binutils"
+    cd "$srcdir"/binutils-${_target}
+    make DESTDIR="$pkgdir" install
+
+    rm "$pkgdir"/usr/lib/bfd-plugins/libdep.so
+  done
+}

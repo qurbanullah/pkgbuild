@@ -1,0 +1,45 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=gnome-todo
+pkgver=41.0
+pkgrel=1
+pkgdesc="Task manager for GNOME"
+url="https://wiki.gnome.org/Apps/Todo"
+arch=('x86_64')
+groups=('gnome-extra')
+license=(GPL)
+depends=(evolution-data-server libpeas python)
+makedepends=(gobject-introspection appstream-glib git meson gtk-doc)
+source=("https://gitlab.gnome.org/GNOME/$pkgname/-/archive/$pkgver/$pkgname-$pkgver.tar.bz2")
+
+getsrc() {
+	git clone https://gitlab.gnome.org/GNOME/gnome-todo.git
+}
+pkgver() {
+  cd $pkgname
+  git describe --tags | sed 's/^GNOME_TODO_//;s/_/./g;s/[^-]*-g/r&/;s/-/+/g'
+
+}
+
+prepare() {
+  cd $pkgname
+}
+
+build() {
+  arch-meson $pkgname build
+  meson compile -C build
+}
+
+check() (
+  glib-compile-schemas "${GSETTINGS_SCHEMA_DIR:=$PWD/$pkgname/data}"
+  export GSETTINGS_SCHEMA_DIR
+
+  meson test -C build --print-errorlogs
+)
+
+package() {
+  meson install -C build --destdir "$pkgdir"
+}

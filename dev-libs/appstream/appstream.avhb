@@ -1,0 +1,53 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgbase=appstream
+pkgname=(appstream appstream-qt)
+_realname=AppStream
+pkgver=0.15.1
+pkgrel=1
+pkgdesc="Provides a standard for creating app stores across distributions"
+arch=('x86_64')
+groups=('dev-libs')
+url="https://distributions.freedesktop.org/wiki/AppStream"
+license=(GPL)
+depends=(libyaml libxml2 libstemmer glib2 lmdb libsoup)
+makedepends=(meson xmlto gobject-introspection gtk-doc qt5-tools itstool vala gperf)
+source=("https://www.freedesktop.org/software/appstream/releases/AppStream-$pkgver.tar.xz")
+validpgpkeys=(D33A3F0CA16B0ACC51A60738494C8A5FBF4DECEB) # Matthias Klumpp <matthias@tenstral.net>
+
+prepare() {
+  cd AppStream-$pkgver
+
+  # https://github.com/ximion/appstream/pull/376
+  patch -Np1 -i ../0001-compose-Fix-SVG-scaling-with-librsvg-2.52.patch
+}
+
+build() {
+  meson build AppStream-$pkgver \
+    --prefix=/usr \
+    --libexecdir=lib \
+    -Dqt=true \
+    -Dvapi=true \
+    -Dcompose=true
+  meson compile -C build
+}
+
+package_appstream() {
+  DESTDIR="$pkgdir" ninja install -C build
+
+# provided by -qt subpackage
+  rm -r "$pkgdir"/usr/{include/AppStreamQt,lib/cmake,lib/libAppStreamQt.*}
+}
+
+package_appstream-qt() {
+  pkgdesc='Qt5 interface for AppStream'
+  depends=(appstream qt5-base)
+
+  DESTDIR="$pkgdir" ninja install -C build
+
+# provided by appstream
+  rm -r "$pkgdir"{/etc,/usr/{bin,include/appstream{,-compose},lib/{girepository-1.0,libappstream*,pkgconfig},share}}
+}

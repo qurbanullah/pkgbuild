@@ -1,0 +1,33 @@
+# $Id$
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=lib32-orc
+pkgbase=orc
+pkgver=0.4.31
+pkgrel=1
+pkgdesc="The Oild Runtime Compiler"
+arch=('x86_64')
+groups=('multilib')
+repo=('extra')
+license=('custom')
+url="http://code.entropywave.com/projects/orc/"
+depends=('lib32-glibc' "${pkgname#*-}")
+makedepends=('valgrind')
+options=('!libtool')
+source=("http://code.entropywave.com/download/${pkgname#*-}/${pkgname#*-}-${pkgver}.tar.gz")
+
+build () {
+	export CC='gcc -m32'
+	export CXX='g++ -m32'
+	export PKG_CONFIG_PATH='/usr/lib32/pkgconfig'
+
+	avouch-meson $pkgbase-$pkgver build --libdir=/usr/lib32
+	ninja -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install -C build
+	rm -rf "${pkgdir}"/usr/{bin,include,share}
+}
+

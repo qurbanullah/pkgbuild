@@ -1,0 +1,37 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=asio
+pkgver=1.18.1
+pkgrel=1
+pkgdesc='Cross-platform C++ library for ASynchronous network I/O'
+url='https://think-async.com/Asio/'
+arch=('any')
+groups=('dev-libs')
+license=('custom:boost')
+makedepends=('boost')
+source=(https://sourceforge.net/projects/asio/files/asio/${pkgver}%20%28Stable%29/asio-${pkgver}.tar.bz2)
+
+prepare() {
+  cd ${pkgname}-${pkgver}
+  autoreconf -fiv
+}
+
+build() {
+  cd ${pkgname}-${pkgver}
+  ./configure --prefix=/usr
+  make ${MAKEFLAGS}
+}
+
+check() {
+  cd ${pkgname}-${pkgver}
+  make check
+}
+
+package() {
+  cd ${pkgname}-${pkgver}
+  make DESTDIR="${pkgdir}" install
+  install -Dm 644 COPYING LICENSE_1_0.txt -t "${pkgdir}/usr/share/licenses/${pkgname}"
+}

@@ -1,0 +1,66 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=nagios-plugins
+pkgver=2.3.3
+pkgrel=1
+pkgdesc="Plugins for Nagios."
+license=('GPL')
+arch=('x86_64')
+groups=('app-admin')
+url="http://www.nagios.org"
+depends=('nagios')
+makedepends=('unzip')
+optdepends=('monitoring-plugins: a bundle of standard plugins'
+            'apache' 'php-apache' 'nginx' 'php' 'php-fpm' 'fcgiwrap')
+source=("http://downloads.sourceforge.net/nagios/$pkgname-$pkgver.tar.gz"
+        "nagios.install")
+install='nagios.install'
+
+_nagios_user="nagios"
+_nagios_group="nagios"
+_instdir="usr/share/nagios"
+_bindir="usr/bin"
+_vardir="var/nagios"
+_confdir="etc/nagios"
+_httpdconfdir="etc/webapps/$pkgname/"
+_checkresultdir="var/nagios/spool/checkresults"
+_perldir="$_instdir/bin"
+
+getent group $_nagios_group > /dev/null || _nagios_group=30
+getent passwd $_nagios_user > /dev/null || _nagios_user=30
+
+build() {
+	cd $srcdir/$pkgname-$pkgver
+
+	./configure \
+		--with-nagios-user=$_nagios_user \
+		--with-nagios-group=$_nagios_group \
+		--prefix="/$_instdir" \
+		--bindir="/$_bindir" \
+		--localstatedir="/$_vardir" \
+		--sysconfdir="/$_confdir"
+
+	make all
+}
+
+package() {
+	cd $srcdir/$pkgname-$pkgver
+
+	DESTDIR="$pkgdir/" make \
+		prefix=$_instdir \
+		BINDIR=$_bindir \
+		LOGDIR=$_vardir \
+		CFGDIR=$_confdir \
+		HTTPD_CONF=$_httpdconfdir \
+		CHECKRESULTDIR=$_checkresultdir \
+		install
+}
+
+md5sums=('ba849e9487e13859381eb117127bfee2'
+         'e11fa7de430ed858269f82e179fc87ca')
+sha1sums=('d52e26d6a17ac70f01d87e9329b20436fff1f1a7'
+          '04008cee208226e60b099550bd9ec7dc78cb1457')
+

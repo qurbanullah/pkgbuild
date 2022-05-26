@@ -1,0 +1,31 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=gnome-commander
+pkgver=1.14.2
+pkgrel=1
+pkgdesc='Graphical two-pane filemanager for Gnome'
+arch=('x86_64')
+groups=('gnome-extra')
+url='http://gcmd.github.io/'
+license=('GPL')
+depends=('python2' 'libgsf' 'exiv2' 'taglib' 'poppler-glib' 'libunique' )
+makedepends=('perl-xml-parser' 'itstool' 'yelp-tools')
+source=(https://download.gnome.org/sources/gnome-commander/${pkgver%.*}/$pkgname-$pkgver.tar.xz)
+sha256sums=('ef130851058d63194f790bfbba27b6be2b6f2906d923ccec847b9cc595193a2e')
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  ./configure --prefix=/usr --libdir=/usr/lib --sysconfdir=/etc \
+	      --localstatedir=/var --enable-python \
+	      --with-help-dir=/usr/share/doc/$pkgname
+  make ${MAKEFLAGS}
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+  make GCONF_DISABLE_MAKEFILE_SCHEMA_INSTALL=1 DESTDIR="$pkgdir"  install
+ }

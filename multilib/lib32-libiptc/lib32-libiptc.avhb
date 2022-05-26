@@ -1,0 +1,56 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgbase=iptables
+pkgname=lib32-libiptc
+pkgver=1.8.4
+pkgrel=1
+pkgdesc="Linux kernel packet control tool (32-bit)"
+arch=('x86_64')
+groups=('multilib')
+license=(GPL2)
+url='https://www.netfilter.org/projects/iptables/index.html'
+depends=(libnftnl libpcap libnfnetlink libnetfilter_conntrack bash)
+makedepends=(linux-api-headers)
+backup=(etc/ethertypes etc/iptables/{ip,ip6}tables.rules)
+source=(https://www.netfilter.org/projects/iptables/files/$pkgbase-$pkgver.tar.bz2{,.sig}
+        empty.rules simple_firewall.rules empty-{filter,mangle,nat,raw,security}.rules
+        {arp,eb,ip,ip6}tables.service iptables-{legacy,nft}-flush)
+validpgpkeys=('C09DB2063F1D7034BA6152ADAB4655A126D292E4') # Netfilter Core Team
+
+prepare() {
+  cd $pkgbase-$pkgver
+
+  # use system one
+  rm include/linux/types.h
+}
+
+build() {
+	cd "${pkgbase}-${pkgver}"
+
+	export CC="gcc -m32"
+	export CXX="g++ -m32"
+	export PKG_CONFIG_PATH="/usr/lib32/pkgconfig"
+
+	./configure --prefix=/usr \
+        --libdir=/usr/lib32 \
+        --sysconfdir=/etc \
+        --localstatedir=/var \
+        --disable-static \
+		--enable-bpf-compiler \
+		--enable-devel \
+		--enable-libipq \
+		--enable-shared
+  	sed -e 's/ -shared / -Wl,-O1,--as-needed\0/g' -i libtool
+	make ${MAKEFLAGS}
+
+}
+
+package() {
+	cd "${pkgbase}-${pkgver}"
+	make DESTDIR="${pkgdir}" install
+	rm -r "$pkgdir"/etc
+	rm -r "$pkgdir"/usr/{include,bin,sbin,share}
+}

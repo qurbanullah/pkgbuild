@@ -1,0 +1,48 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname="libspf2"
+pkgver=1.2.11
+pkgrel=1
+pkgdesc="Sender Policy Framework record checking library"
+arch=('x86_64')
+groups=('net-libs')
+url="https://www.libspf2.org/"
+license=('LGPL')
+depends=('glibc' 'libnsl')
+makedepends=('libmilter' 'glibc' 'libnsl')
+source=("source=("$pkgname::git+https://github.com/shevek/libspf2#commit=8131fe140704eaae695e76b5cd09e39bd1dd220b")"
+        'fix-variadic-macros.patch')
+
+getsrc() {
+    git clone https://github.com/shevek/libspf2.git
+}
+
+prepare() {
+    cd "$pkgname"
+    patch -Np1 -i ../0001-remove-libreplace-unneeded-on-Linux.patch
+    autoreconf -vif
+}
+
+build() {
+    export CFLAGS=""
+    export LDFLAGS=""
+    cd "$pkgname"
+    ./configure --prefix='/usr'
+    make
+}
+
+check() {
+  cd "$pkgname"
+  make check
+}
+
+package() {
+  cd "$pkgname"
+  make DESTDIR="$pkgdir" install
+
+  # remove unused binaries
+  rm -v "${pkgdir}"/usr/bin/*_static "${pkgdir}/usr/bin/spfd" "${pkgdir}/usr/bin/spf_example" "${pkgdir}/usr/bin/spftest"
+}

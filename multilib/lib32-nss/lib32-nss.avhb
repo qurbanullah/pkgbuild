@@ -1,0 +1,72 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=lib32-nss
+pkgbase=nss
+pkgver=3.64
+pkgrel=1
+pkgdesc="Mozilla Network Security Services (32-bit)"
+arch=('x86_64')
+groups=('multilib')
+repo=('extra')
+url="http://www.mozilla.org/projects/security/pki/nss/"
+
+#download_url=ftp://ftp.mozilla.org/pub/security/nss/releases/
+#alternative download link
+#ftp://ftp.mozilla.org/pub/mozilla.org/security/nss/releases/NSS_${pkgver//./_}_RTM/src/${_pkgbasename}-${pkgver}.tar.gz
+
+license=('MPL' 'GPL')
+_nsprver=4.12
+depends=("lib32-nspr>=${_nsprver}" 'lib32-sqlite>=3.6.17' "${_pkgbasename}" 'lib32-zlib' 'lib32-p11-kit')
+makedepends=('gcc-multilib' 'perl')
+options=('!strip' '!makeflags' staticlibs)
+source=(ftp://ftp.mozilla.org/pub/security/nss/releases/NSS_${pkgver//./_}_RTM/src/${_pkgbasename}-${pkgver}.tar.gz
+        nss.pc.in
+        ssl-renegotiate-transitional.patch)
+     
+
+prepare() {
+  cd nss-$pkgver
+
+  # https://bugzilla.mozilla.org/show_bug.cgi?id=1382942
+  patch -Np2 -i ../no-plt.diff
+}
+
+build() {
+  cd nss-$pkgver/nss
+  ./build.sh \
+    --target ia32 \
+    --opt \
+    --system-sqlite \
+    --system-nspr \
+    --enable-libpkix \
+    --disable-tests
+}
+
+package() {
+  depends+=(nss)
+
+  cd nss-$pkgver
+
+  local libdir=/usr/lib32 nsprver="$(i686-pc-linux-gnu-pkg-config --modversion nspr)"
+  sed nss/pkg/pkg-config/nss.pc.in \
+    -e "s,%libdir%,$libdir,g" \
+    -e "s,%prefix%,/usr,g" \
+    -e "s,%exec_prefix%,/usr/bin,g" \
+    -e "s,%includedir%,/usr/include/nss,g" \
+    -e "s,%NSPR_VERSION%,$nsprver,g" \
+    -e "s,%NSS_VERSION%,$pkgver,g" |
+    install -Dm644 /dev/stdin "$pkgdir$libdir/pkgconfig/nss.pc"
+
+  ln -s nss.pc "$pkgdir$libdir/pkgconfig/mozilla-nss.pc"
+
+  install -Dt "$pkgdir$libdir" dist/Release/lib/*.so
+  install -Dt "$pkgdir$libdir" -m644 dist/Release/lib/*.chk
+
+
+  # Replace built-in trust with p11-kit connection
+  ln -s pkcs11/p11-kit-trust.so "$pkgdir$libdir/p11-kit-trust.so"
+  ln -sf p11-kit-trust.so "$pkgdir$libdir/libnssckbi.so"
+}

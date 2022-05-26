@@ -1,0 +1,30 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libhandy
+pkgver=1.6.1
+pkgrel=1
+pkgdesc="Library full of GTK+ widgets for mobile phones"
+arch=('x86_64')
+groups=('sys-libs')
+url="https://gitlab.gnome.org/GNOME/libhandy"
+arch=(x86_64)
+license=(LGPL)
+depends=(glib2 gtk3)
+makedepends=(git gobject-introspection meson vala glade)
+checkdepends=(xorg-server-xvfb)
+source=("https://gitlab.gnome.org/GNOME/$pkgname/-/archive/$pkgver/$pkgname-$pkgver.tar.bz2")
+
+build() {
+  avouch-meson $pkgname-$pkgver build \
+    -D gtk_doc=false \
+    -D examples=false \
+    -D glade_catalog=disabled
+  ninja -C build
+}
+
+package() {
+  DESTDIR="$pkgdir" meson install -C build
+}

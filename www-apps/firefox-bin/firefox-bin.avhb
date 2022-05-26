@@ -1,0 +1,89 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgbase=firefox
+pkgname=firefox-bin
+pkgver=88.0
+pkgrel=1
+pkgdesc="Standalone web browser from mozilla.org"
+arch=('x86_64')
+groups=('www')
+license=(MPL GPL LGPL)
+url="https://www.mozilla.org/firefox/"
+depends=(gtk3 libxt mime-types dbus-glib ffmpeg nss ttf-font libpulse)
+makedepends=(unzip zip diffutils yasm mesa imake inetutils xorg-server-xvfb
+             autoconf2.13 rust clang llvm jack gtk2 nodejs cbindgen nasm
+             python-setuptools python-psutil python-zstandard lld)
+optdepends=('networkmanager: Location detection via available WiFi networks'
+            'libnotify: Notification integration'
+            'pulseaudio: Audio support'
+            'speech-dispatcher: Text-to-Speech'
+            'hunspell-en_US: Spell checking, American English')
+options=(!emptydirs !makeflags)
+source=(https://archive.mozilla.org/pub/firefox/releases/$pkgver/source/firefox-$pkgver.source.tar.xz{,.asc}
+        0001-Use-remoting-name-for-GDK-application-names.patch
+        $pkgname.desktop 
+        firefox-symbolic.svg)
+validpgpkeys=('14F26682D0916CDD81E37B6D61B7B526D98F0353') # Mozilla Software Releases <release@mozilla.com>
+
+# Google API keys (see http://www.chromium.org/developers/how-tos/api-keys)
+# Note: These are for Avouch Linux use ONLY. For your own distribution, please
+# get your own set of keys. Feel free to contact info@avouch.org for more information.
+_google_api_key=AIzaSyCm8I84pz4zSvrzQGpYiJTaMVgzGSxz8Z4
+_google_default_client_id=1062054956701.apps.googleusercontent.com
+_google_default_client_secret=vNghxOz1TWXC7uE9-p4uTUPk
+
+# Mozilla API keys (see https://location.services.mozilla.com/api)
+# Note: These are for Avouch Linux use ONLY. For your own distribution, please
+# get your own set of keys. Feel free to contact info@avouch.org for
+# more information.
+_mozilla_api_key=7dca4b7b-6085-4ebb-9633-d566ed2de0fd
+
+
+package() {
+  echo "Extracting the file..."
+  mkdir -p "$pkgdir/usr/lib"
+  mkdir -p "$pkgdir/usr/bin"
+	mv $pkgbase "$pkgdir/usr/lib/"
+
+
+  _vendorjs="$pkgdir/usr/lib/$pkgbase/browser/defaults/preferences/vendor.js"
+  install -Dm644 /dev/stdin "$_vendorjs" <<END
+// Use LANG environment variable to choose locale
+pref("intl.locale.requested", "");
+
+// Use system-provided dictionaries
+pref("spellchecker.dictionary_path", "/usr/share/hunspell");
+
+// Disable default browser checking.
+pref("browser.shell.checkDefaultBrowser", false);
+
+// Don't disable our bundled extensions in the application directory
+pref("extensions.autoDisableScopes", 11);
+pref("extensions.shownSelectionUI", true);
+
+pref("browser.startup.homepage",            	"data:text/plain,browser.startup.homepage=about:newtab");
+pref("browser.newtabpage.pinned",           	'[{"url":"https://avouch.org/","title":"Avouch Linux - Home Page"}]');
+END
+
+  local _distini="$pkgdir/usr/lib/$pkgbase/distribution/distribution.ini"
+  install -Dm644 /dev/stdin "$_distini" <<END
+[Global]
+id=avouch
+version=0.2.0
+about=Mozilla Firefox for Avouch Linux
+
+[Preferences]
+app.distributor=avouch
+app.distributor.channel=$pkgname
+app.partner.avouch=avouch
+END
+
+
+  # Replace duplicate binary with wrapper
+  # https://bugzilla.mozilla.org/show_bug.cgi?id=658850
+  ln -srfv "$pkgdir/usr/lib/$pkgbase/firefox-bin" "$pkgdir/usr/bin/$pkgbase" 
+
+}

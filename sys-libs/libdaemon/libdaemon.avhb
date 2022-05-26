@@ -1,0 +1,26 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libdaemon
+pkgver=0.14
+pkgrel=1
+pkgdesc='Lightweight C library that eases the writing of UNIX daemons'
+arch=('x86_64')
+groups=('sys-libs')
+url='http://0pointer.de/lennart/projects/libdaemon/'
+license=('LGPL')
+makedepends=('git')
+source=('git://git.0pointer.net/libdaemon.git#commit=9fcc28e0e8f84968d1fb8b6d544a42efb13803ec')
+
+build() {
+	cd ${pkgname}-${pkgver}
+	./configure --prefix=/usr --localstatedir=/var --disable-lynx
+	make ${MAKEFLAGS}
+}
+
+package() {
+	cd ${pkgname}-${pkgver}
+	make DESTDIR="${pkgdir}" install
+}

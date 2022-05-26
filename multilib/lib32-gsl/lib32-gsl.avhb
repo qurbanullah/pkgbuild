@@ -1,0 +1,41 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=lib32-gsl
+_realname=gsl
+pkgver=2.6
+pkgrel=1
+pkgdesc="The GNU Scientific Library (GSL) is a modern numerical library for C and C++ programmers"
+arch=('x86_64')
+groups=('science')
+url="http://www.gnu.org/software/gsl/gsl.html"
+install=gsl.install 
+license=('GPL')
+depends=('glibc' 'bash')
+source=("http://ftp.gnu.org/gnu/gsl/$pkgname-$pkgver.tar.gz")
+
+prepare() {
+	cd ${srcdir}/${_realname}-${pkgver}
+	patch -Np1 -i ${srcdir}/gsl-1.10-lib64.patch
+}
+
+build() {
+	cd "${srcdir}/${_realname}-${pkgver}"
+
+		
+	export CC='gcc -m32'
+ 	export CXX='g++ -m32'
+	export PKG_CONFIG_PATH='/usr/lib32/pkgconfig'
+
+	./configure --prefix=/usr --enable-static=no --libdir=/usr/lib32
+	make ${MAKEFLAGS}
+}
+
+package() {
+	cd "${srcdir}/${_realname}-${pkgver}"
+	make DESTDIR="${pkgdir}" install
+	rm -rf "${pkgdir}"/usr/{bin,include,share}
+}
+

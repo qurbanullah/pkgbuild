@@ -1,0 +1,387 @@
+From bdebaf91575fa837697b694219a18c46b5af3f83 Mon Sep 17 00:00:00 2001
+From: "L. E. Segovia" <amy@amyspark.me>
+Date: Mon, 16 Nov 2020 00:44:57 +0000
+Subject: [PATCH] SeExpr: rebrand library
+
+(cherry picked from commit c429f4f82408b5ff33883e04642ab1b912df3996)
+(cherry picked from commit 96ab15bffb4b047b8455cf78ed5ad03fc2a666bf)
+(cherry picked from commit 22e4ecedfacb7d28d16ff57227ee9f8816b6a4bf)
+---
+ ...specific-data-directory-for-translat.patch | 34 --------------
+ .../0002-Remove-static-library-support.patch  | 46 -------------------
+ 3rdparty/ext_seexpr/CMakeLists.txt            |  9 ++--
+ CMakeLists.txt                                | 15 ++++--
+ config-seexpr.h.cmake                         |  2 +-
+ krita/data/aboutdata/libraries.txt            |  2 +-
+ libs/flake/CMakeLists.txt                     |  2 +-
+ libs/ui/CMakeLists.txt                        |  2 +-
+ packaging/android/androidbuild.sh             |  1 +
+ plugins/generators/CMakeLists.txt             |  2 +-
+ plugins/generators/seexpr/CMakeLists.txt      |  2 +-
+ .../seexpr/SeExprExpressionContext.cpp        |  4 +-
+ .../seexpr/SeExprExpressionContext.h          |  6 +--
+ plugins/generators/seexpr/SeExprVariable.cpp  |  4 +-
+ plugins/generators/seexpr/SeExprVariable.h    |  4 +-
+ plugins/generators/seexpr/kis_wdg_seexpr.cpp  |  4 +-
+ plugins/generators/seexpr/wdgseexpr.ui        |  4 +-
+ 17 files changed, 33 insertions(+), 110 deletions(-)
+ delete mode 100644 3rdparty/ext_seexpr/0001-Use-application-specific-data-directory-for-translat.patch
+ delete mode 100644 3rdparty/ext_seexpr/0002-Remove-static-library-support.patch
+
+diff --git a/3rdparty/ext_seexpr/0001-Use-application-specific-data-directory-for-translat.patch b/3rdparty/ext_seexpr/0001-Use-application-specific-data-directory-for-translat.patch
+deleted file mode 100644
+index c5dfc4a695..0000000000
+--- a/3rdparty/ext_seexpr/0001-Use-application-specific-data-directory-for-translat.patch
++++ /dev/null
+@@ -1,34 +0,0 @@
+-From 6e1bb4fa407b6be69a2c2a5a1a0a596cdcae9926 Mon Sep 17 00:00:00 2001
+-From: "L. E. Segovia" <amy@amyspark.me>
+-Date: Thu, 3 Sep 2020 21:56:57 +0000
+-Subject: [PATCH] Use application-specific data directory for translations
+-
+----
+- src/SeExpr2/UI/ECMQmLoader-seexpr2_qt.cpp | 4 ++--
+- 1 file changed, 2 insertions(+), 2 deletions(-)
+-
+-diff --git a/src/SeExpr2/UI/ECMQmLoader-seexpr2_qt.cpp b/src/SeExpr2/UI/ECMQmLoader-seexpr2_qt.cpp
+-index 5f4c3e2..21730a5 100644
+---- a/src/SeExpr2/UI/ECMQmLoader-seexpr2_qt.cpp
+-+++ b/src/SeExpr2/UI/ECMQmLoader-seexpr2_qt.cpp
+-@@ -35,7 +35,7 @@ namespace {
+-             return false;
+-         }
+- #else
+--        const QString fullPath = QStandardPaths::locate(QStandardPaths::GenericDataLocation, subPath);
+-+        const QString fullPath = QStandardPaths::locate(QStandardPaths::DataLocation, subPath);
+-         if (fullPath.isEmpty()) {
+-             return false;
+-         }
+-@@ -61,7 +61,7 @@ namespace {
+- #if defined(Q_OS_ANDROID)
+-         const auto paths = QStringLiteral("assets:/share/");
+- #else
+--        const auto paths = QStandardPaths::standardLocations(QStandardPaths::GenericDataLocation);
+-+        const auto paths = QStandardPaths::standardLocations(QStandardPaths::DataLocation);
+- #endif
+-         dbgSeExpr << "Base paths for translations: " << paths;
+- 
+--- 
+-2.28.0
+-
+diff --git a/3rdparty/ext_seexpr/0002-Remove-static-library-support.patch b/3rdparty/ext_seexpr/0002-Remove-static-library-support.patch
+deleted file mode 100644
+index 714e551a7e..0000000000
+--- a/3rdparty/ext_seexpr/0002-Remove-static-library-support.patch
++++ /dev/null
+@@ -1,46 +0,0 @@
+-From 21c0cc198c994be76d38b6378c93340e1d7bbc59 Mon Sep 17 00:00:00 2001
+-From: "L. E. Segovia" <amy@amyspark.me>
+-Date: Thu, 3 Sep 2020 23:00:04 -0300
+-Subject: [PATCH] Remove static library support
+-
+-Q_COREAPP_STARTUP_FUNCTION, which is used by ECM's generated translation
+-loader, gets automatically stripped when using a static library.
+-
+-See
+-https://doc.qt.io/qt-5/qcoreapplication.html#Q_COREAPP_STARTUP_FUNCTION
+-.
+----
+- src/SeExpr2/UI/CMakeLists.txt | 17 +++--------------
+- 1 file changed, 3 insertions(+), 14 deletions(-)
+-
+-diff --git a/src/SeExpr2/UI/CMakeLists.txt b/src/SeExpr2/UI/CMakeLists.txt
+-index 3274a41..919b79e 100644
+---- a/src/SeExpr2/UI/CMakeLists.txt
+-+++ b/src/SeExpr2/UI/CMakeLists.txt
+-@@ -160,20 +160,9 @@ if (Qt5_FOUND OR QT4_FOUND)
+-             ${SeExpr2Editor_QM_LOADER})
+-     endif()
+- 
+--    if (WIN32)
+--        add_library(SeExpr2Editor ${EDITOR_CPPS} ${EDITOR_MOC_SRCS}
+--                    ${ANIMLIB_SRCS}
+--                    ${editor_parser_cpp})
+--        generate_export_header(SeExpr2Editor
+--                               BASE_NAME SeExpr2Editor
+--                               EXPORT_MACRO_NAME SeExpr2Editor
+--                               EXPORT_FILE_NAME SeExpr2Editor_Export.h
+--                               STATIC_DEFINE SeExpr2Editor_BUILT_AS_STATIC )
+--    else()
+--        add_library(SeExpr2Editor SHARED ${EDITOR_CPPS} ${EDITOR_MOC_SRCS}
+--                    ${ANIMLIB_SRCS}
+--                    ${editor_parser_cpp})
+--    endif()
+-+    add_library(SeExpr2Editor SHARED ${EDITOR_CPPS} ${EDITOR_MOC_SRCS}
+-+                ${ANIMLIB_SRCS}
+-+                ${editor_parser_cpp})
+- 
+-     set_property(TARGET SeExpr2Editor PROPERTY VERSION ${SeExpr2_VERSION})
+-     set_property(TARGET SeExpr2Editor PROPERTY SOVERSION 3)
+--- 
+-2.27.0.windows.1
+-
+diff --git a/3rdparty/ext_seexpr/CMakeLists.txt b/3rdparty/ext_seexpr/CMakeLists.txt
+index 2dc2583066..206c883456 100644
+--- a/3rdparty/ext_seexpr/CMakeLists.txt
++++ b/3rdparty/ext_seexpr/CMakeLists.txt
+@@ -2,13 +2,10 @@ SET(PREFIX_ext_seexpr "${EXTPREFIX}" )
+ ExternalProject_Add(
+     ext_seexpr
+     DOWNLOAD_DIR ${EXTERNALS_DOWNLOAD_DIR}
+-    URL https://files.kde.org/krita/build/dependencies/seexpr-3.4.4.0-alpha.1.tar.gz
+-    URL_MD5 35b415bcbd278ccd5ef5220b8b0595fe
++    URL https://download.kde.org/stable/kseexpr/4.0.0/kseexpr-4.0.0.0.tar.gz
++    URL_MD5 52264980708826d4c38469d6571236e4
+ 
+-    PATCH_COMMAND ${PATCH_COMMAND} -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/0001-Use-application-specific-data-directory-for-translat.patch
+-        COMMAND ${PATCH_COMMAND} -p1 -i ${CMAKE_CURRENT_SOURCE_DIR}/0002-Remove-static-library-support.patch
+-
+-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${PREFIX_ext_seexpr} -DCMAKE_BUILD_TYPE=${GLOBAL_BUILD_TYPE} -DFLAVOR=${GLOBAL_BUILD_TYPE} ${GLOBAL_PROFILE} -DBOOST_INCLUDE_DIR=${PREFIX_ext_seexpr}/include -DBOOST_ROOT=${PREFIX_ext_seexpr} -DBOOST_LIB_DIR=${PREFIX_ext_seexpr}/lib -DENABLE_LLVM_BACKEND=OFF -DENABLE_SSE4=OFF -DBUILD_DOC=OFF -DBUILD_TESTS=OFF -DBUILD_UTILS=OFF -DUSE_PYTHON=OFF
++    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${PREFIX_ext_seexpr} -DCMAKE_BUILD_TYPE=${GLOBAL_BUILD_TYPE} -DFLAVOR=${GLOBAL_BUILD_TYPE} ${GLOBAL_PROFILE} -DENABLE_LLVM_BACKEND=OFF -DBUILD_DOC=OFF -DBUILD_TESTS=OFF -DBUILD_UTILS=OFF
+ 
+     UPDATE_COMMAND ""
+     DEPENDS ext_qt ext_extra_cmake_modules
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 2b87075833..3dd31f3468 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -589,16 +589,21 @@ endif()
+ ###########################
+ 
+ ##
+-## Test for SeExpr
++## Test for KSeExpr
+ ##
+-find_package(SeExpr2)
+-set_package_properties(SeExpr2 PROPERTIES
+-    URL "https://wdas.github.io/SeExpr/"
++find_package(KSeExpr 4.0.0.0)
++set_package_properties(KSeExpr PROPERTIES
++    URL "https://invent.kde.org/graphics/kseexpr"
+     TYPE OPTIONAL
+     PURPOSE "Required by the SeExpr generator layer"
+ )
+-macro_bool_to_01(SeExpr2_FOUND HAVE_SEEXPR)
++macro_bool_to_01(KSeExpr_FOUND HAVE_SEEXPR)
+ configure_file(config-seexpr.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-seexpr.h )
++if(KSeExpr_FOUND)
++    get_target_property(KSeExpr_LIBRARY KSeExpr::KSeExpr "LOCATION")
++    get_target_property(KSeExprUI_LIBRARY KSeExpr::KSeExprUI "LOCATION") 
++    list (APPEND ANDROID_EXTRA_LIBS ${KSeExpr_LIBRARY} ${KSeExprUI_LIBRARY})
++endif()
+ 
+ find_package(ZLIB)
+ set_package_properties(ZLIB PROPERTIES
+diff --git a/config-seexpr.h.cmake b/config-seexpr.h.cmake
+index 639849d179..e96f759b9a 100644
+--- a/config-seexpr.h.cmake
++++ b/config-seexpr.h.cmake
+@@ -1,4 +1,4 @@
+ /* config-seexpr.h.  Generated by cmake from config-seexpr.h.cmake */
+ 
+-/* Define if you have SeExpr, Disney Animation's expression language library */
++/* Define if you have KSeExpr */
+ #cmakedefine HAVE_SEEXPR 1
+diff --git a/krita/data/aboutdata/libraries.txt b/krita/data/aboutdata/libraries.txt
+index 6f3b6803e9..b5e1d55599 100644
+--- a/krita/data/aboutdata/libraries.txt
++++ b/krita/data/aboutdata/libraries.txt
+@@ -27,7 +27,7 @@ PyQt,https://www.riverbankcomputing.com/software/pyqt/download5,GPLv3
+ Python,http://www.python.org,Python Software Foundation License v2
+ Qt,https://www.qt.io,GPLv2 + GPLv3 + LGPLv2.1 + LGPLv3
+ Quazip,https://github.com/stachenov/quazip,LGPLv2.1
+-SeExpr,https://wdas.github.io/SeExpr,Apache License Version 2.0
++KSeExpr,https://invent.kde.org/graphics/KSeExpr,Apache License Version 2.0
+ SIP,https://www.riverbankcomputing.com/software/sip/download,GPLv3
+ Vc,https://github.com/VcDevel/Vc,BSD
+ zlib,http://www.zlib.net/,BSD
+diff --git a/libs/flake/CMakeLists.txt b/libs/flake/CMakeLists.txt
+index 0a7acf8ca8..e878422869 100644
+--- a/libs/flake/CMakeLists.txt
++++ b/libs/flake/CMakeLists.txt
+@@ -226,7 +226,7 @@ set(kritaflake_SRCS
+     tests/MockShapes.cpp
+ )
+ 
+-if (SeExpr2_FOUND)
++if (KSeExpr_FOUND)
+     set(kritaflake_SRCS ${kritaflake_SRCS}
+         resources/KisSeExprScript.cpp
+     )
+diff --git a/libs/ui/CMakeLists.txt b/libs/ui/CMakeLists.txt
+index 823bb10ba6..b576250065 100644
+--- a/libs/ui/CMakeLists.txt
++++ b/libs/ui/CMakeLists.txt
+@@ -417,7 +417,7 @@ set(kritaui_LIB_SRCS
+     KisDecorationsWrapperLayer.cpp
+ )
+ 
+-if (SeExpr2_FOUND)
++if (KSeExpr_FOUND)
+     set(kritaui_LIB_SRCS ${kritaui_LIB_SRCS}
+         widgets/kis_seexpr_script_chooser.cpp
+     )
+diff --git a/packaging/android/androidbuild.sh b/packaging/android/androidbuild.sh
+index d0f01a897d..8bb4d70e52 100755
+--- a/packaging/android/androidbuild.sh
++++ b/packaging/android/androidbuild.sh
+@@ -94,6 +94,7 @@ build_ext() {
+     cmake --build . --config $BUILD_TYPE --target ext_jpeg -- -j$PROC_COUNT
+     cmake --build . --config $BUILD_TYPE --target ext_giflib -- -j$PROC_COUNT
+     cmake --build . --config $BUILD_TYPE --target ext_eigen3 -- -j$PROC_COUNT
++    cmake --build . --config $BUILD_TYPE --target ext_seexpr -- -j$PROC_COUNT
+ 
+     cd $BUILD_ROOT
+ }
+diff --git a/plugins/generators/CMakeLists.txt b/plugins/generators/CMakeLists.txt
+index dca07bd02f..16854b46c3 100644
+--- a/plugins/generators/CMakeLists.txt
++++ b/plugins/generators/CMakeLists.txt
+@@ -2,7 +2,7 @@ add_subdirectory(solid)
+ add_subdirectory(pattern)
+ add_subdirectory(simplexnoise)
+ add_subdirectory(screentone)
+-if(SeExpr2_FOUND)
++if(KSeExpr_FOUND)
+   add_subdirectory(seexpr)
+ endif()
+ add_subdirectory(multigridpattern)
+diff --git a/plugins/generators/seexpr/CMakeLists.txt b/plugins/generators/seexpr/CMakeLists.txt
+index 6cef25102a..d61c5d5c5f 100644
+--- a/plugins/generators/seexpr/CMakeLists.txt
++++ b/plugins/generators/seexpr/CMakeLists.txt
+@@ -14,7 +14,7 @@ ki18n_wrap_ui(kritaseexprgenerator_SOURCES
+ 
+ add_library(kritaseexprgenerator MODULE ${kritaseexprgenerator_SOURCES})
+ 
+-target_link_libraries(kritaseexprgenerator kritaui SeExpr2::SeExpr2 SeExpr2::SeExpr2Editor)
++target_link_libraries(kritaseexprgenerator kritaui KSeExpr::KSeExpr KSeExpr::KSeExprUI)
+ 
+ install(TARGETS kritaseexprgenerator  DESTINATION ${KRITA_PLUGIN_INSTALL_DIR})
+ 
+diff --git a/plugins/generators/seexpr/SeExprExpressionContext.cpp b/plugins/generators/seexpr/SeExprExpressionContext.cpp
+index a35fb44382..066071250c 100644
+--- a/plugins/generators/seexpr/SeExprExpressionContext.cpp
++++ b/plugins/generators/seexpr/SeExprExpressionContext.cpp
+@@ -21,12 +21,12 @@
+ #include "SeExprExpressionContext.h"
+ 
+ SeExprExpressionContext::SeExprExpressionContext(const QString &expr)
+-    : SeExpr2::Expression(expr.toStdString())
++    : KSeExpr::Expression(expr.toStdString())
+     , m_vars(VariableMap())
+ {
+ }
+ 
+-SeExpr2::ExprVarRef *SeExprExpressionContext::resolveVar(const std::string &name) const
++KSeExpr::ExprVarRef *SeExprExpressionContext::resolveVar(const std::string &name) const
+ {
+     return m_vars.value(name, nullptr);
+ }
+diff --git a/plugins/generators/seexpr/SeExprExpressionContext.h b/plugins/generators/seexpr/SeExprExpressionContext.h
+index 1f0f318297..8f70acbe31 100644
+--- a/plugins/generators/seexpr/SeExprExpressionContext.h
++++ b/plugins/generators/seexpr/SeExprExpressionContext.h
+@@ -20,12 +20,12 @@
+ 
+ #include <QMap>
+ #include <QString>
+-#include <SeExpr2/Expression.h>
++#include <KSeExpr/Expression.h>
+ #include <cstring>
+ 
+ #include "SeExprVariable.h"
+ 
+-class SeExprExpressionContext : public SeExpr2::Expression
++class SeExprExpressionContext : public KSeExpr::Expression
+ {
+ public:
+     typedef QMap<std::string, SeExprVariable *> VariableMap;
+@@ -34,5 +34,5 @@ public:
+ 
+     SeExprExpressionContext(const QString &expr);
+ 
+-    virtual SeExpr2::ExprVarRef *resolveVar(const std::string &name) const override;
++    virtual KSeExpr::ExprVarRef *resolveVar(const std::string &name) const override;
+ };
+diff --git a/plugins/generators/seexpr/SeExprVariable.cpp b/plugins/generators/seexpr/SeExprVariable.cpp
+index 77c997bcee..64dba39a8b 100644
+--- a/plugins/generators/seexpr/SeExprVariable.cpp
++++ b/plugins/generators/seexpr/SeExprVariable.cpp
+@@ -21,13 +21,13 @@
+ #include "SeExprVariable.h"
+ 
+ SeExprVariable::SeExprVariable()
+-    : SeExpr2::ExprVarRef(SeExpr2::ExprType().FP(1).Varying())
++    : KSeExpr::ExprVarRef(KSeExpr::ExprType().FP(1).Varying())
+     , m_value(0)
+ {
+ }
+ 
+ SeExprVariable::SeExprVariable(const double v)
+-    : SeExpr2::ExprVarRef(SeExpr2::ExprType().FP(1).Varying())
++    : KSeExpr::ExprVarRef(KSeExpr::ExprType().FP(1).Varying())
+     , m_value(v)
+ {
+ }
+diff --git a/plugins/generators/seexpr/SeExprVariable.h b/plugins/generators/seexpr/SeExprVariable.h
+index 21a808ab39..ad3f3169af 100644
+--- a/plugins/generators/seexpr/SeExprVariable.h
++++ b/plugins/generators/seexpr/SeExprVariable.h
+@@ -20,9 +20,9 @@
+ 
+ #include <QMap>
+ #include <QString>
+-#include <SeExpr2/Expression.h>
++#include <KSeExpr/Expression.h>
+ 
+-class SeExprVariable : public SeExpr2::ExprVarRef
++class SeExprVariable : public KSeExpr::ExprVarRef
+ {
+ public:
+     double m_value;
+diff --git a/plugins/generators/seexpr/kis_wdg_seexpr.cpp b/plugins/generators/seexpr/kis_wdg_seexpr.cpp
+index 7e5864584e..675356fd19 100644
+--- a/plugins/generators/seexpr/kis_wdg_seexpr.cpp
++++ b/plugins/generators/seexpr/kis_wdg_seexpr.cpp
+@@ -22,7 +22,7 @@
+ #include <KoColor.h>
+ #include <KoResourceServer.h>
+ #include <KoResourceServerProvider.h>
+-#include <SeExpr2/UI/ErrorMessages.h>
++#include <KSeExprUI/ErrorMessages.h>
+ #include <filter/kis_filter_configuration.h>
+ #include <kis_icon.h>
+ #include <kis_config.h>
+@@ -312,7 +312,7 @@ void KisWdgSeExpr::isValid()
+     QString script = m_widget->txtEditor->getExpr();
+     SeExprExpressionContext expression(script);
+ 
+-    expression.setDesiredReturnType(SeExpr2::ExprType().FP(3));
++    expression.setDesiredReturnType(KSeExpr::ExprType().FP(3));
+ 
+     expression.m_vars["u"] = new SeExprVariable();
+     expression.m_vars["v"] = new SeExprVariable();
+diff --git a/plugins/generators/seexpr/wdgseexpr.ui b/plugins/generators/seexpr/wdgseexpr.ui
+index d778a1ba11..27067e3028 100644
+--- a/plugins/generators/seexpr/wdgseexpr.ui
++++ b/plugins/generators/seexpr/wdgseexpr.ui
+@@ -414,13 +414,13 @@
+   <customwidget>
+    <class>ExprControlCollection</class>
+    <extends>QWidget</extends>
+-   <header location="global">SeExpr2/UI/ExprControlCollection.h</header>
++   <header location="global">KSeExprUI/ExprControlCollection.h</header>
+    <container>1</container>
+   </customwidget>
+   <customwidget>
+    <class>ExprEditor</class>
+    <extends>QWidget</extends>
+-   <header location="global">SeExpr2/UI/ExprEditor.h</header>
++   <header location="global">KSeExprUI/ExprEditor.h</header>
+    <container>1</container>
+   </customwidget>
+  </customwidgets>
+-- 
+GitLab
+

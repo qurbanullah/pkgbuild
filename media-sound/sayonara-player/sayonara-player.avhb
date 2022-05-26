@@ -1,0 +1,32 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=sayonara-player
+pkgver=1.7.0
+_stablerel=stable3
+pkgrel=1
+pkgdesc="Small, clear and fast audio player for Linux written in C++, supported by the Qt framework. It uses Gstreamer as audio backend."
+arch=('x86_64')
+groups=('media-sound')
+url="http://sayonara-player.com"
+license=('GPL3')
+depends=(qt5-base taglib gst-plugins-base gst-plugins-good)
+makedepends=(cmake qt5-tools gst-plugins-bad)
+optdepends=('gst-libav: additional codecs'
+            'gst-plugins-bad: additional codecs'
+            'gst-plugins-ugly: additional codecs')
+source=("https://gitlab.com/luciocarreras/sayonara-player/-/archive/$pkgver-stable3/sayonara-player-$pkgver-stable3.tar.bz2")
+
+build() {
+    cmake -S $pkgname-$pkgver-$_stablerel -B build -G Ninja \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_INSTALL_LIBDIR=lib \
+        -DCMAKE_BUILD_TYPE="Release"
+    cmake --build build
+}
+ 
+package() {
+    DESTDIR="$pkgdir" cmake --install build
+}

@@ -1,0 +1,25 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=gupnp-tools
+pkgver=0.10.2
+pkgrel=1
+pkgdesc="Utilities and demos to work with UPnP"
+arch=('x86_64')
+groups=('net-misc')
+url="https://wiki.gnome.org/Projects/GUPnP"
+license=('GPL')
+depends=('gtksourceview4' 'gupnp' 'gupnp-av')
+makedepends=('meson')
+source=("https://download.gnome.org/sources/$pkgname/${pkgver%.*}/$pkgname-$pkgver.tar.xz")
+
+build() {
+  avouch-meson $pkgname-$pkgver build
+  ninja -C build
+}
+
+package() {
+  DESTDIR="$pkgdir" meson install -C build
+}

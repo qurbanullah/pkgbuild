@@ -1,0 +1,36 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=c-ares
+pkgver=1.17.1
+pkgrel=1
+pkgdesc='C library that performs DNS requests and name resolves asynchronously'
+arch=('x86_64')
+groups=('net-dns')
+url="https://c-ares.haxx.se/"
+license=('MIT')
+depends=('glibc')
+makedepends=('cmake')
+provides=('libcares.so')
+source=("https://github.com/${pkgname}/${pkgname}/releases/download/${pkgname//-}-${pkgver//./_}/${pkgname}-${pkgver}.tar.gz"{,.asc})
+validpgpkeys=('27EDEAF22F3ABCEB50DB9A125CC908FDB71E12C2') # Daniel Stenberg <daniel@haxx.se>
+
+build() {
+  cd "$pkgname-$pkgver"
+  cmake -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_BUILD_TYPE='None' \
+        -Wno-dev \
+        -B build \
+        -S .
+  make ${MAKEFLAGS} VERBOSE=1 -C build
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+  make DESTDIR="${pkgdir}" install -C build
+  install -vDm 644 "LICENSE.md" -t "${pkgdir}/usr/share/licenses/${pkgname}/"
+  install -vDm 644 {AUTHORS,CHANGES,{CONTRIBUTING,README}.md,RELEASE-NOTES} \
+    -t "${pkgdir}/usr/share/doc/${pkgname}/"
+}

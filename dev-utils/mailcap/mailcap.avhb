@@ -1,0 +1,39 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=mailcap
+pkgver=2.1.53
+pkgrel=1
+pkgdesc="Helper application and MIME type associations for file types"
+url="https://pagure.io/mailcap"
+arch=(any)
+groups=('dev-utils')
+license=(MIT)
+makedepends=(git)
+checkdepends=(python)
+provides=(mime-types)
+backup=(
+  etc/mailcap
+  etc/mime.types
+  etc/nginx/mime.types
+)
+source=("https://pagure.io/mailcap/archive/r2-1-53/mailcap-r2-1-53.tar.gz")
+sha256sums=('SKIP')
+
+build() {
+  cd $pkgname-r2-1-53
+  make
+}
+
+check() {
+  cd $pkgname-r2-1-53
+  make check
+}
+
+package() {
+  cd $pkgname-r2-1-53
+  make DESTDIR="$pkgdir" install
+  install -Dt "$pkgdir/usr/share/licenses/$pkgname" -m644 COPYING
+}

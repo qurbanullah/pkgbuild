@@ -1,0 +1,38 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=kmail
+pkgver=22.04.0
+pkgrel=1
+pkgdesc="KDE mail client"
+arch=('x86_64')
+groups=('kde-apps')
+url="https://community.kde.org/KDE_PIM"
+license=(GPL2)
+depends=(kdepim-runtime kmail-account-wizard akonadi-import-wizard mbox-importer pim-sieve-editor
+         pim-storage-service-manager kontactinterface libktnef)
+makedepends=(extra-cmake-modules kdoctools kdesignerplugin boost python)
+optdepends=('kleopatra: mail encryption support' 'kdepim-addons: additional plugins')
+conflicts=(ktnef)
+replaces=(ktnef)
+source=("https://download.kde.org/stable/release-service/$pkgver/src/$pkgname-$pkgver.tar.xz"{,.sig})
+validpgpkeys=(CA262C6C83DE4D2FB28A332A3A6A4DB839EAA6D7) # Albert Astals Cid <aacid@kde.org>
+
+prepare() {
+	cd ${pkgname}-${pkgver}
+	# patch -Np0 -i ../kcursorsaver.patch
+}
+
+build() {
+	cmake -S ${pkgname}-${pkgver} -B build -G Ninja \
+		-DCMAKE_INSTALL_PREFIX=/usr \
+		-DLIB_INSTALL_DIR=lib \
+		-DBUILD_TESTING=OFF
+	ninja -C build
+}
+
+package() {
+    DESTDIR="${pkgdir}" ninja -C build install
+}

@@ -1,0 +1,29 @@
+Index: samba-4.12.3-abi_x86_64.amd64/examples/winexe/wscript_build
+===================================================================
+--- samba-4.12.3-abi_x86_64.amd64.orig/examples/winexe/wscript_build
++++ samba-4.12.3-abi_x86_64.amd64/examples/winexe/wscript_build
+@@ -65,7 +65,7 @@ const DATA_BLOB *%s(void)
+ 
+ winexesvc_binaries = ''
+ 
+-if bld.env.WINEXE_CC_WIN32:
++if bld.env.build_winexe and bld.env.WINEXE_CC_WIN32:
+     bld.SAMBA_GENERATOR(
+         'winexesvc32_exe',
+         source='winexesvc.c',
+@@ -81,7 +81,7 @@ if bld.env.WINEXE_CC_WIN32:
+         rule=generate_winexesvc_c_from_exe)
+     winexesvc_binaries += ' winexesvc32_exe_binary.c'
+ 
+-if bld.env.WINEXE_CC_WIN64:
++if bld.env.build_winexe and bld.env.WINEXE_CC_WIN64:
+     bld.SAMBA_GENERATOR(
+         'winexesvc64_exe',
+         source='winexesvc.c',
+@@ -106,5 +106,4 @@ if winexesvc_binaries != '':
+                           LOADPARM_CTX
+                           libsmb
+                           msrpc3
+-                      ''',
+-                      enabled=bld.env.build_winexe)
++                      ''')

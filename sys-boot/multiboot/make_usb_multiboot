@@ -1,0 +1,369 @@
+#!/bin/bash
+
+# set umask to 022 so that the files created by root will be with 644 permission
+# and directory will be created with permission 750
+# our default mask in profile is 027 (moderate security)
+umask 022
+
+if [ -f "/tmp/alum.conf" ]; then
+    source "/tmp/alum.conf"
+fi
+
+# DRIVE=${1}
+
+# DISK=${DRIVE%?}
+# echo "Drive is : $DRIVE "
+# echo "Disk is : $DISK "
+# check if the drive exists
+# if [ $(ls ${1}) == ${1} ]; then
+#     DRIVE=${1}
+#     DISK=${1%?}
+#     echo "Drive is : $DRIVE "
+#     echo "Disk is : $DISK "
+#     if [ $(cat /sys/block/${DISK}/removable) == 1 ]
+#         echo "Disk is removeable"
+#     else
+#         echo "Disk is not removeable"
+#         exit0
+#     fi
+# elif [ $(ls ${1}) != ${1} && $(ls ${1}) == ${1%?} ]; then
+#     DRIVE=${1%?}
+#     DISK=${1%?}
+# else
+#     echo "Please specify correct usb disk drive."
+#     exit 0
+# fi
+
+avaialable_disks=$(ls /sys/block )
+# echo "All disks are : $avaialable_disks"
+for disks in ${avaialable_disks[@]}; do
+    # echo "Disk is $disks"
+    if [ $(cat /sys/block/${disks}/removable) == 1 ]; then
+            echo "Removeable disks are : $disks"
+            # var[${#var}]="$disks";
+        fi
+done
+
+ISOFILE=${2}
+USB_MOUNT_POINT="/mnt/usb"
+ISO_MOUNT_POINT="/mnt/iso"
+FILESYSTEM="vfat"
+
+### check for root
+check_root () {	
+	if test "x`id -u`" != "x0"; then
+		echo "Root privileges are required. Try sudo or run as root user."	
+		exit 1
+	fi
+}
+
+get_iso_filename() {
+    echo ${1} | sed 's@.*/@@'
+}
+
+# get the size of the disk
+# disk should be in the formate of sdx without /dev
+# return size size in GB
+get_size_of_disk_gb() {
+    local disk_sector_num=$(cat /sys/block/${1}/size)
+    local disk_size_gb=$(expr $disk_sector_num / 2097152)
+    echo ${disk_size_gb}
+}
+
+
+# if [ $(cat /sys/block/${DISK#/dev/}/size) -gt 4294967296 ]; then
+#     echo "$DISK is over 2TB size, MBR will not work on it."
+#     exit 1
+# fi
+
+unmount_usb() {    
+    if grep -qs ${DRIVE} /proc/mounts; then
+        echo "Filesystem is mounted, unmounting ..."
+        umount -l ${DRIVE} || exit 1
+    else
+        echo "Filesystem is not mounted."
+        # check if mountpoit exist then unmount it
+        if [ -d ${USB_MOUNT_POINT} ]; then
+            umount -l ${USB_MOUNT_POINT}
+        fi
+    fi    
+}
+
+format_usb() {
+    # formate partition
+    echo "Formating USB DISK..."
+    echo y | mkfs.${FILESYSTEM} -n "AVOUCH_LIVE" "${DRIVE}"  || exit 1
+
+    # sleep for 2 seconds so that the system detect and mount with new UUID
+    sleep 2
+}
+
+# getuuid()
+# converts /dev/[hs]d?[0-9] devices to UUIDs
+#
+# parameters: device file
+# outputs:    UUID on success
+#             nothing on failure
+# returns:    nothing
+getuuid() {
+    if [ "${DISK%%/[hs]d?[0-9]}" != "${1}" ]; then
+        echo "$(blkid -s UUID -o value ${1})"
+    fi
+}
+
+mount_usb() {
+    # [ -e "${MOUNTPOINT}/boot/grub" ] || mkdir -p "${MOUNTPOINT}/boot/grub"
+    if [ ! -d ${USB_MOUNT_POINT} ]; then
+        mkdir -p ${USB_MOUNT_POINT}
+    fi
+    mount -t vfat /dev/disk/by-uuid/"$(getuuid ${DRIVE})" ${USB_MOUNT_POINT} || exit 1
+}
+
+# mount_iso() {
+#     # [ -e "${MOUNTPOINT}/boot/iso" ] || mkdir -p "${MOUNTPOINT}/boot/iso"
+#     if [ ! -d ${ISO_MOUNT_POINT} ]; then
+#         mkdir -p ${ISO_MOUNT_POINT}
+#     fi
+#     mount -o loop ${ISOFILE} ${ISO_MOUNT_POINT}
+# }
+
+cp_p()
+{
+   strace -q -ewrite cp -- "${1}" "${2}" 2>&1 \
+      | awk '{
+        count += $NF
+            if (count % 10 == 0) {
+               percent = count / total_size * 100
+               printf "%3d%% [", percent
+               for (i=0;i<=percent;i++)
+                  printf "="
+               printf ">"
+               for (i=percent;i<100;i++)
+                  printf " "
+               printf "]\r"
+            }
+         }
+         END { print "" }' total_size=$(stat -c '%s' "${1}") count=0
+}
+
+copy_files(){
+    echo "Extracting files..."
+    # bsdtar -xf "${ISOFILE}" -C "${USB_MOUNT_POINT}" || exit 1
+
+    if [ ! -d ${USB_MOUNT_POINT} ]; then
+        mkdir -p ${USB_MOUNT_POINT}
+    fi
+    cp "${ISOFILE}" "${USB_MOUNT_POINT}" || exit 1
+}
+
+# copy_files(){
+#     echo "Copying files..."
+#     rsync -a -P \
+# 	--exclude=boot/grub/* \
+# 	--exclude=efi/boot/* \
+#     --exclude=System \
+#     --exclude=boot.catalog \
+#     --exclude=efi.img \
+#     --exclude=mach_kernel \
+# 	--exclude=${ISO_MOUNT_POINT} ${ISO_MOUNT_POINT}/ ${USB_MOUNT_POINT}
+# }
+
+# copy_files(){
+#     echo "Copying files..."
+#     isoinfo -XR -i ${ISOFILE} ${USB_MOUNT_POINT}
+# }
+
+grub_bios() {
+	# extract the base DISK from ${DISK}
+	# local grub_DISK="${DISK%?}"			
+	# echo "Installing Grub boot loader for BIOS"
+    grub-install --target=i386-pc --boot-directory=${USB_MOUNT_POINT}/boot --recheck ${DISK} || exit 1
+}
+
+grub_uefi() {
+	# echo "Installing Grub boot loader for UEFI"	
+	grub-install --target=x86_64-efi --efi-directory=${USB_MOUNT_POINT} --boot-directory=${USB_MOUNT_POINT}/boot  --removable --recheck  || exit 1
+}
+
+install_grub() {
+    # remove every thing from /boot/grub. we will install grub
+    if [ -d ${USB_MOUNT_POINT}/boot/grub/ ]; then
+	     rm -rf ${USB_MOUNT_POINT}/boot/grub/*
+	fi
+    if [ -d ${USB_MOUNT_POINT}/efi/boot ]; then
+	     rm -rf ${USB_MOUNT_POINT}/efi/boot/*
+	fi
+	if [[ -d /sys/firmware/efi ]];then
+		grub_uefi
+        grub_bios
+	else 
+		grub_bios
+	fi
+}
+
+grub_config() {
+    local DISK_uuid="$(getuuid ${DRIVE})"
+    # add root line with uuid
+
+    if [ ! -f ${USB_MOUNT_POINT}/boot/grub/grub.cfg ]; then
+    cat > ${USB_MOUNT_POINT}/boot/grub/grub.cfg << "EOF"
+set default="0"
+
+function load_video {
+	insmod vbe
+	insmod vga
+    insmod video_bochs
+    insmod video_cirrus
+    insmod all_video
+}
+
+load_video
+set gfxpayload=keep
+insmod gzio
+insmod part_msdos
+insmod fat
+
+set timeout=10
+### END /etc/grub.d/00_header ###
+
+search --no-floppy --set=root #uuid
+
+### BEGIN /etc/grub.d/10_linux ###
+menuentry "Avouch Linux 64-bit ISO" {
+    set gfxpayload=keep
+	linux /isolinux/vmlinuz root=live:UUID=#uuid rd.live.image quiet
+	initrd /isolinux/initramfs.img
+}
+menuentry "Avouch Linux 64-bit ISO (basic graphics mode)" {
+	set gfxpayload=keep
+	linux /isolinux/vmlinuz root=live:UUID=#uuid rd.live.image nomodeset quiet
+	initrd /isolinux/initramfs.img
+}
+menuentry "Avouch Linux 64-bit ISO (check media)" {
+	set gfxpayload=keep
+	linux /isolinux/vmlinuz root=live:UUID=#uuid rd.live.image rd.live.check quiet
+	initrd /isolinux/initramfs.img
+}
+menuentry 'Memtest86+'{
+	linux /isolinux/memtest86.bin
+}
+EOF
+
+    sed -i "s/#uuid/${DISK_uuid}/g" ${USB_MOUNT_POINT}/boot/grub/grub.cfg
+    else 
+        if [ -f ${USB_MOUNT_POINT}/boot/grub/grub.cfg ]; then
+            sed -i "/search --no-floppy --set=root -l/a search --no-floppy --set=root ${DISK_uuid}" ${USB_MOUNT_POINT}/boot/grub/grub.cfg
+            # delete a line containing label of dvd
+            sed -i '/--set=root -l/d' ${USB_MOUNT_POINT}/boot/grub/grub.cfg
+            # replace all value of CDLABELS to UUID
+            sed -i "s/CDLABEL=AVOUCH_LIVE/UUID=${DISK_uuid}/g" ${USB_MOUNT_POINT}/boot/grub/grub.cfg
+        else 
+            echo "No grub configuration file found."
+            echo "You nedd to provide /boot/grub/grub.cfg file manually for booting"
+        fi
+    fi
+    # sed -i "s:DISK_uuid:${DISK_uuid}:g" ${MOUNTPOINT}/boot/grub/grub.cfg
+    # sed -i "s:iso_file_name:${iso_file_name}:g" ${MOUNTPOINT}/boot/grub/grub.cfg
+#     if [ ! -f ${USB_MOUNT_POINT}/efi/boot/grub.cfg ]; then
+#     cat > ${USB_MOUNT_POINT}/efi/boot/grub.cfg << "EOF"
+# set default="0"
+
+# function load_video {
+# 	insmod efi_gop
+# 	insmod efi_uga
+# 	insmod video_bochs
+# 	insmod video_cirrus
+# 	insmod all_video
+# }
+
+# load_video
+# set gfxpayload=keep
+# insmod gzio
+# insmod part_gpt
+# insmod fat
+
+# set timeout=60
+# ### END /etc/grub.d/00_header ###
+
+# search --no-floppy --set=root #uuid
+
+# ### BEGIN /etc/grub.d/10_linux ###
+# menuentry "Avouch Linux 64-bit ISO" {
+# 	set gfxpayload=keep
+# 	linuxefi /isolinux/vmlinuz root=live:UUID=#uuid rd.live.image quiet
+# 	initrdefi /isolinux/initramfs.img
+# }
+# menuentry "Avouch Linux 64-bit ISO (basic graphics mode)" {
+# 	set gfxpayload=keep
+# 	linuxefi /isolinux/vmlinuz root=live:UUID=#uuid rd.live.image nomodeset quiet
+# 	initrdefi /isolinux/initramfs.img
+# }
+# menuentry "Avouch Linux 64-bit ISO (check media)" {
+# 	set gfxpayload=keep
+# 	linuxefi /isolinux/vmlinuz root=live:UUID=#uuid rd.live.image rd.live.check quiet
+# 	initrdefi /isolinux/initramfs.img
+# }
+# menuentry 'Memtest86+'{
+# 	linuxefi /isolinux/memtest86.bin
+# }
+# EOF
+
+#     sed -i "s/#uuid/${DISK_uuid}/g" ${USB_MOUNT_POINT}/efi/boot/grub.cfg
+#     else 
+#         if [ -f ${USB_MOUNT_POINT}/efi/boot/grub.cfg ]; then
+#             sed -i "/search --no-floppy --set=root -l/a search --no-floppy --set=root ${DISK_uuid}" ${USB_MOUNT_POINT}/efi/boot/grub.cfg
+#             # delete a line containing label of dvd
+#             sed -i '/--set=root -l/d' ${USB_MOUNT_POINT}/efi/boot/grub.cfg
+#             # replace all value of CDLABELS to UUID
+#             sed -i "s/CDLABEL=AVOUCH_LIVE/UUID=${DISK_uuid}/g" ${USB_MOUNT_POINT}/efi/boot/grub.cfg
+#         else 
+#             echo "No grub configuration file found."
+#             echo "You nedd to provide /boot/grub/grub.cfg file manually for booting"
+#         fi
+#     fi
+}
+
+umount_usb() {
+    umount -l ${USB_MOUNT_POINT}
+    rm -rf ${USB_MOUNT_POINT}
+}
+
+final_message() {
+    # Print disk info
+    echo ""
+    echo "Disk : $DISK"
+    parted -s $DISK p 2>&1 | grep Model
+    echo "Size : $(get_size_of_disk_gb ${DISK#/dev/}) GB"
+
+    echo ""
+    echo "Attention:"
+    echo "You will install Avouch Linux to $DISK."
+    echo "All the data on the disk $DISK will be lost!!!"
+    echo ""
+
+    read -p 'Continue? (y/n) '  Answer
+    if [ "$Answer" != "y" ]; then
+        if [ "$Answer" != "Y" ]; then
+            exit 0
+        fi
+    fi
+}
+
+main() {
+    check_root
+    unmount_usb
+    final_message
+    format_usb
+    mount_usb
+    # mount_iso   
+    if [[ ! -z ${ISOFILE} ]]; then
+        copy_files
+    else
+        echo "No ISO file provided. Skipping file copying"
+    fi
+    install_grub
+    grub_config
+    umount_usb
+    echo "Avouch Live USB created successfuly"
+}
+main "$@"

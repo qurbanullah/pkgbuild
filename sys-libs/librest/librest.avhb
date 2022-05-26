@@ -1,0 +1,30 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=librest
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="A helper library for RESTful services."
+arch=('x86_64')
+groups=('sys-libs')
+url="https://wiki.gnome.org/Projects/Librest"
+license=(LGPL2.1)
+depends=(glib2 libxml2 libsoup)
+makedepends=(gobject-introspection gtk-doc meson)
+source=("https://gitlab.gnome.org/GNOME/librest/-/archive/$pkgver/librest-$pkgver.tar.bz2")
+sha256sums=('SKIP')
+
+build() {
+	avouch-meson ${pkgname}-${pkgver} build
+	meson compile -C build
+}
+
+check() {
+	meson test -C build
+}
+
+package() {
+	DESTDIR="$pkgdir" meson install -C build
+}

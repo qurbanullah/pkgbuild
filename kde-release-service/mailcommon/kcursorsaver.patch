@@ -1,0 +1,11 @@
+--- src/mdn/mdnadvicehelper.cpp	2021-02-09 12:34:47.000000000 +0000
++++ ../mdnadvicehelper.cpp	2021-03-21 19:06:16.822974169 +0000
+@@ -197,7 +197,7 @@
+ {
+     for (int i = 0; i < numMdnMessageBoxes; ++i) {
+         if (!qstrcmp(what, mdnMessageBoxes[i].dontAskAgainID)) {
+-            KCursorSaver saver(Qt::ArrowCursor);
++            KPIM::KCursorSaver saver(Qt::ArrowCursor);
+             const MessageComposer::MDNAdvice answer = questionIgnoreSend(i18n(mdnMessageBoxes[i].text),
+                                                                          mdnMessageBoxes[i].canDeny);
+             switch (answer) {

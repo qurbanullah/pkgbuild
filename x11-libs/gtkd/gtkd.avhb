@@ -1,0 +1,51 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=gtkd
+_realname=GtkD
+pkgver=3.10.0
+pkgrel=1
+pkgdesc='D bindings for GTK+ and related libraries.'
+arch=('x86_64')
+groups=('x11-libs')
+url='https://gtkd.org'
+license=('LGPL')
+depends=('liblphobos' 'gtk3')
+makedepends=('ldc')
+optdepends=('pango' 'atk' 'gdk-pixbuf2' 'gtksourceview3' 'gstreamer' 'vte3' 'libpeas')
+source=("GtkD-$pkgver.tar.gz::https://github.com/gtkd-developers/GtkD/archive/v$pkgver.tar.gz"
+        'https://github.com/FFY00/GtkD/commit/5a3aabfc7e253eef7ce727a47c3ea0801776a472.patch'
+		'FixBuildingDemos.patch::https://github.com/gtkd-developers/GtkD/commit/323ff96c648882eaca2faee170bd9e90c6e1e9c3.patch')
+
+prepare() {
+    cd GtkD-$pkgver
+}
+
+build() {
+    cd GtkD-$pkgver
+
+    make \
+    	DC='ldc' \
+    	LDFLAGS="-L=\"-O2\"" \
+    	libdir='lib/' \
+        shared-{gtkd,gtkdgl,sv,gstreamer,vte,peas}
+}
+
+check() {
+    cd GtkD-$pkgver
+
+    make LDFLAGS='' test
+}
+
+package() {
+    cd GtkD-$pkgver
+
+    make \
+    	prefix='/usr' \
+    	libdir='lib/' \
+    	DESTDIR="$pkgdir" \
+    	install-{shared,headers}-{gtkd,gtkdgl,gtkdsv,gstreamer,vte,peas}
+}
+

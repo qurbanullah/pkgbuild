@@ -1,0 +1,10 @@
+--- src/anbox/input/manager.h	2021-04-03 23:51:01.225151132 +0000
++++ ../manager.h	2021-04-03 23:55:40.118496284 +0000
+@@ -20,6 +20,7 @@
+ 
+ #include <map>
+ #include <memory>
++#include <cstdint>
+ 
+ namespace anbox{
+   class Runtime;

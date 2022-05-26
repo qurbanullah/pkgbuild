@@ -1,0 +1,30 @@
+# Copyright 2010-2020 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=konversation
+pkgver=22.04.0
+pkgrel=1
+pkgdesc="A user friendly IRC client for KDE"
+arch=('x86_64')
+groups=('kde-release-service')
+url="http://konversation.kde.org"
+depends=('knotifyconfig' 'kemoticons' 'kparts' 'kidletime' 'qca-qt5' 'hicolor-icon-theme')
+optdepends=('python: python scripting support' 'kdebase-keditbookmarks: for managing bookmarks')
+makedepends=('extra-cmake-modules' 'kdoctools' 'python')
+license=('GPL2' 'FDL')
+source=("http://download.kde.org/stable/${pkgname}/${pkgver}/src/${pkgname}-${pkgver}.tar.xz"{,.sig})
+validpgpkeys=(514A8CD602861D417D20C480BCC34138A218774B) # Eike Hein <sho@eikehein.com>
+
+build() {
+  cmake -B build -S $pkgname-$pkgver \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DLIB_INSTALL_DIR=lib \
+    -DBUILD_TESTING=OFF
+  cmake --build build
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+}
