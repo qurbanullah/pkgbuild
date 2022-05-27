@@ -67,7 +67,6 @@ prepare() {
   fi
 
   # Apply custom patches
-  patch -p1 -i "$srcdir/clang_path_fix.patch" # Replace Windows specific search with the correct path (used for -mode=GenerateClangDatabase in UBT)
   if [[ $_system_mono == true ]]
   then
     export UE_USE_SYSTEM_MONO=1
