@@ -5,7 +5,7 @@
 
 pkgname=unixodbc
 _realname=unixODBC
-pkgver=2.3.7
+pkgver=2.3.9
 pkgrel=1
 pkgdesc="ODBC is an open specification for providing application developers with a predictable API with which to access Data Sources"
 arch=('x86_64')

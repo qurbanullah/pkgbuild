@@ -1,11 +1,11 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=vulkan-docs
 _realname=Vulkan-Docs
-pkgver=1.2.198
+pkgver=1.2.203
 pkgrel=1
 epoch=1
 pkgdesc="Vulkan html documentation"
@@ -13,23 +13,34 @@ arch=(any)
 groups=('dev-vulkan')
 url="https://www.khronos.org/vulkan/"
 license=('custom')
-makedepends=(asciidoctor python3 dblatex source-highlight cmake ghostscript nodejs npm git)
-source=("https://github.com/KhronosGroup/Vulkan-Docs/archive/v$pkgver.tar.gz")
+makedepends=(python3 dblatex source-highlight cmake ghostscript nodejs npm git)
+makedepends+=(rubygems graphicsmagick pango gdk-pixbuf2 jbigkit)
+groups=(vulkan-devel)
+source=("https://github.com/KhronosGroup/${_pkgname}/archive/v${pkgver}.tar.gz")
+sha256sums=('7a3116d0c1d8717eb2f1f7485521879f082f0dc66a0b47794c73f79ca05e3e0c')
 
 prepare() {
-  npm install escape-string-regexp
-  npm install he
+  export PATH="${PATH}:/build/.local/share/gem/ruby/3.0.0/bin"
+
+  gem install -N asciidoctor:1.5.8 asciidoctor-diagram asciidoctor-mathematical \
+     asciidoctor-pdf coderay json-schema i18n prawn-gmagick \
+     pygments.rb rouge text-hyphen
+
+  npm install escape-string-regexp@2.0.0 he lunr@2.3.6
 }
 
 build() {
-  cd "${srcdir}/${_realname}-${pkgver}"
+  export PATH="${PATH}:/build/.local/share/gem/ruby/3.0.0/bin"
+  export NODE_PATH="${srcdir}/node_modules"
 
-  ./makeAllExts html manhtmlpages styleguide registry
+  cd "${srcdir}/${_pkgname}-${pkgver}"
+
+  ./makeAllExts html chunked manhtmlpages styleguide registry
 }
 
-package() {
+package_vulkan-html-docs() {
   pkgdesc="Vulkan html documentation"
-  cd "${_realname}-${pkgver}"
+  cd "${_pkgname}-${pkgver}"
 
   install -dm755 "${pkgdir}/usr/share/doc/vulkan"
   install -dm755 "${pkgdir}/usr/share/licenses/${pkgname}"
