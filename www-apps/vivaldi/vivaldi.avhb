@@ -1,0 +1,59 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=vivaldi
+_rpmversion=5.2.2623.48-1
+pkgver=5.2.2623.48
+pkgrel=1
+pkgdesc='An advanced browser made with the power user in mind.'
+url="https://vivaldi.com"
+options=(!strip !zipman)
+license=('custom')
+arch=('x86_64')
+groups=('www-apps')
+depends=('gtk3' 'libcups' 'nss' 'alsa-lib' 'libxss' 'ttf-font' 'desktop-file-utils' 'shared-mime-info' 'hicolor-icon-theme')
+makedepends=('w3m')
+optdepends=(
+    'vivaldi-ffmpeg-codecs: playback of proprietary video/audio'
+    'libnotify: native notifications'
+)
+source=("https://downloads.vivaldi.com/stable/vivaldi-stable-${_rpmversion}.x86_64.rpm"
+        '0001-add-support-for-user-flags.patch')
+sha512sums=('1d206a63724e607913b311137471ab0d61b11cdcc0eadcaef9fbc24c2d4ed730287b2ba4a3b8fb2c6bdd9da3f91e53947f6d4040fc5d81806b6de49774204c83'
+            '334db2056114fdbf07407b1cee24284f019df7a15acd711ed016bab1a1ab211abf3884ed848f3496486e7c78056108ccf1e88547e22b787bc4f548c6785f64d2')
+
+package() {
+    cp --parents -a {opt,usr/bin,usr/share} "$pkgdir"
+
+    # add support for ~/.config/vivaldi-stable.conf
+    patch -p1 -i "$srcdir/0001-add-support-for-user-flags.patch" \
+        "$pkgdir/opt/$pkgname/$pkgname"
+
+    # suid sandbox
+    chmod 4755 "$pkgdir/opt/$pkgname/vivaldi-sandbox"
+
+    # make /usr/bin/vivaldi-stable available
+    binf="$pkgdir/usr/bin/vivaldi-stable"
+    if [[ ! -e "$binf" ]] && [[ ! -f "$binf" ]] && [[ ! -L "$binf" ]]; then
+        install -dm755 "$pkgdir/usr/bin"
+        ln -s /opt/vivaldi/vivaldi "$binf"
+    fi
+
+    # install icons
+    for res in 16 22 24 32 48 64 128 256; do
+        install -Dm644 "$pkgdir/opt/$pkgname/product_logo_${res}.png" \
+            "$pkgdir/usr/share/icons/hicolor/${res}x${res}/apps/$pkgname.png"
+    done
+
+    # install global icon in case hicolor theme gets bypassed
+    install -Dm644 "$pkgdir/opt/$pkgname/product_logo_256.png" \
+        "$pkgdir/usr/share/pixmaps/$pkgname.png"
+
+    # license
+    install -dm755 "$pkgdir/usr/share/licenses/$pkgname"
+    w3m -dump "$pkgdir/opt/$pkgname/LICENSE.html" \
+        | head -n 5 \
+        > "$pkgdir/usr/share/licenses/$pkgname/license.txt"
+}

@@ -1,0 +1,37 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=base
+pkgver=0.3.0
+pkgrel=1
+pkgdesc='Minimal package set to define a basic Arch Linux installation'
+url='https://www.archlinux.org'
+arch=('any')
+groups=('sys-base')
+license=('GPL')
+depends=(
+  # very very base
+  'filesystem' 'gcc-libs' 'glibc' 'bash'
+
+  # POSIX tools
+  'coreutils' 'file' 'findutils' 'gawk' 'grep' 'procps-ng' 'sed' 'tar'
+
+  # standard linux toolset
+  'gettext' 'pciutils' 'psmisc' 'shadow' 'util-linux' 'bzip2' 'gzip' 'xz'
+
+  # distro defined requirements
+  'licenses' 'eagleeye' 'systemd' 'systemd-sysvcompat'
+
+  # networking, ping, etc
+  'iputils' 'iproute2'
+)
+optdepends=('linux: bare metal support')
+
+package(){
+  cd $srcdir
+  true
+}
+
+

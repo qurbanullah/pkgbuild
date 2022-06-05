@@ -1,35 +1,45 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=libgdiplus
-pkgver=5.6
+pkgver=5.6.1
 pkgrel=1
 pkgdesc='Open Source Implementation of the GDI+ API'
 arch=('x86_64')
+groups=('dev-dotnet')
 license=('MPL' 'LGPL')
-url='http://www.mono-project.com/docs/gui/libgdiplus/'
-depends=('libtiff' 'libjpeg' 'libpng' 'cairo' 'giflib' 'glib2' 'libexif' 'zlib' 'freetype2')
-groups=('grafix')
-repo=('core')
-source=(${pkgname}-${pkgver}.tar.gz::https://github.com/mono/libgdiplus/archive/${pkgver}.tar.gz)
-sha256sums=('6a75e4a476695cd6a1475fd6b989423ecf73978fd757673669771d8a6e13f756')
-sha512sums=('15487b170e3dcca63573da2360788c5d235fc214bfbfa38b041fd3f075354589d5dcf93ee1cc9f242515f3430af43324f39aa1b51827d3f004b526fc524507df')
+url='https://www.mono-project.com/docs/gui/libgdiplus/'
+pkgdesc='Open Source Implementation of the GDI+ API'
+license=('MPL' 'LGPL')
+depends=('libtiff' 'libjpeg' 'libpng' 'cairo' 'giflib' 'glib2'
+         'libexif' 'zlib' 'freetype2')
+source=(https://github.com/mono/libgdiplus/archive/${pkgver}/${pkgname}-${pkgver}.tar.gz)
+sha256sums=('deff863023950b1d1de7e47e44fc31c8ba39cfc06334737261965f697b2ad312')
+sha512sums=('fe6a798da6ad194d4e1d3ce2ebb71a43d3f2f3d198bdf053e8a03e861c81c1c838f3d5d60cfde6b1d6f662fb7f9c2192a9acc89c30a65999e841f4ad7b180baf')
 
 prepare() {
-	cd "${srcdir}/${pkgname}-${pkgver}"
+	cd "${pkgname}-${pkgver}"
+	sed -i "s|src tests|src|g" Makefile.am
   autoreconf -fiv
 }
 
 build() {
-	cd "${srcdir}/${pkgname}-${pkgver}"
+	cd "${pkgname}-${pkgver}"
 	
 	export LDFLAGS="$LDFLAGS -lX11"
 	./configure --prefix=/usr --with-cairo=system
-	make ${MAKEFLAGS}
+	make
+}
+
+check() {
+  cd ${pkgname}-${pkgver}
+  make check
 }
 
 package() {
-	cd "${srcdir}/${pkgname}-${pkgver}"
-	make DESTDIR="$pkgdir" install
+  cd ${pkgname}-${pkgver}
+  make DESTDIR="${pkgdir}" install
+  install -Dm 644 NEWS README TODO AUTHORS ChangeLog -t "${pkgdir}/usr/share/doc/${pkgname}"
 }

@@ -4,14 +4,15 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=evolution-data-server
-pkgver=3.44.0
+pkgver=3.44.1
 pkgrel=1
 pkgdesc="Centralized access to appointments and contacts"
 url="https://wiki.gnome.org/Apps/Evolution"
 arch=(x86_64)
 groups=('gnome-base')
-depends=(gnome-online-accounts nss krb5 libgweather libical db libgdata libphonenumber)
-makedepends=(intltool gperf gobject-introspection vala gtk-doc boost git cmake)
+depends=(gnome-online-accounts nss krb5 libgweather-4 libical db libgdata libphonenumber
+         libcanberra)
+makedepends=(intltool gperf gobject-introspection vala gtk-doc boost git cmake ninja)
 source=(http://ftp.gnome.org/pub/GNOME/sources/${pkgname}/${pkgver:0:4}/${pkgname}-${pkgver}.tar.xz)
 
 build() {
@@ -21,17 +22,15 @@ build() {
     -DSYSCONF_INSTALL_DIR=/etc \
     -DENABLE_INTROSPECTION=ON \
     -DENABLE_VALA_BINDINGS=ON \
-    -DENABLE_GTK_DOC=OFF \
-    -DWITH_PHONENUMBER=OFF
+    -DENABLE_GTK_DOC=ON \
+    -DWITH_PHONENUMBER=ON \
+    -DWITH_GWEATHER4=ON
   ninja -C build
 }
 
-#check() {
-  # libedata-book tests fail because they try to
-  # mkdir /usr/lib/evolution-data-server/camel-providers
-  # long tie
-  #cmake --build build --target test || :
-#}
+check() {
+  ctest --output-on-failure --stop-on-failure
+}
 
 package() {
   DESTDIR="$pkgdir" ninja -C build install

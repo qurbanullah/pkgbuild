@@ -1,6 +1,8 @@
 # Maintainer: Kyle Keen <keenerd@gmail.com>
-# Contributor: Tom Newsom <Jeepster@gmx.co.uk>
-# Contributor: Kevin Piche <kevin@archlinux.org>
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=bochs
 pkgver=2.6.11
