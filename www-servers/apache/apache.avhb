@@ -9,7 +9,7 @@ pkgver=2.4.52
 pkgrel=1
 pkgdesc='A high performance Unix-based HTTP server'
 arch=('x86_64')
-groups=('www')
+groups=('www-servers')
 url='https://www.apache.org/dist/httpd'
 license=('APACHE')
 backup=(
@@ -22,8 +22,6 @@ backup=(
     etc/logrotate.d/httpd
 )
 provides=('mod_proxy_uwsgi')
-conflicts=('mod_proxy_uwsgi')
-replaces=('mod_proxy_uwsgi')
 depends=('zlib' 'apr-util' 'pcre' 'libnghttp2' 'openssl' 'libxcrypt')
 makedepends=('libxml2' 'lua' 'curl' 'brotli' 'jansson')
 optdepends=(

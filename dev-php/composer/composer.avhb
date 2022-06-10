@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=composer
-pkgver=2.1.11
+pkgver=2.3.7
 pkgrel=1
 pkgdesc="Dependency Manager for PHP"
 arch=('any')
@@ -20,6 +20,11 @@ sha256sums=('SKIP'
 
 getsrc() {
     git clone https://github.com/composer/composer.git
+}
+
+pkgver(){
+	cd ${pkgname}
+	git checkout ${pkgver}
 }
 
 prepare() {

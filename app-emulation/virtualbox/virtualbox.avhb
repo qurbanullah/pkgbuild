@@ -293,7 +293,7 @@ package_virtualbox-host-dkms() {
     printf "vboxdrv\nvboxnetadp\nvboxnetflt\n" > "$_p"
     # starting vbox 5.1, dkms.conf file was dropped
     local _p="$pkgdir/usr/src/vboxhost-${pkgver}_OSE/dkms.conf"
-    install -Dm0644 "$srcdir/$pkgname.conf" "$_p"
+    install -Dm0644 "$srcdir/virtualbox-host-dkms.conf" "$_p"
     sed -i "s,@VERSION@,$pkgver," "$_p"
 }
 
