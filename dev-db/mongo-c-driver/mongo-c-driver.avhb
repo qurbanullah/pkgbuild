@@ -1,10 +1,10 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=mongo-c-driver
-pkgver=1.21.1
+pkgver=1.21.2
 pkgrel=1
 pkgdesc='A client library written in C for MongoDB'
 arch=('x86_64')
@@ -16,14 +16,16 @@ makedepends=('cmake')
 source=("https://github.com/mongodb/mongo-c-driver/releases/download/$pkgver/$pkgname-$pkgver.tar.gz")
 
 build() {
-  cmake -S mongo-c-driver-$pkgver -B build -G Ninja \
+  cmake -S mongo-c-driver-$pkgver -B build \
     -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_INSTALL_PREFIX=/usr \
     -DCMAKE_INSTALL_LIBDIR=lib \
+    -DBUILD_VERSION=$pkgver \
     -DENABLE_STATIC=OFF \
-    -DENABLE_TESTS=OFF
+    -DENABLE_TESTS=OFF    
     # Test profiles are not found even with ENABLE_TESTS=ON
-  ninja -C build
+
+  cmake --build build
 }
 
 check() {
@@ -33,5 +35,5 @@ check() {
 }
 
 package() {
-  DESTDIR="$pkgdir/" ninja -C build install
+  DESTDIR="$pkgdir/" cmake --install build
 }

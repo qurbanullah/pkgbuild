@@ -12,7 +12,6 @@ groups=('dev-utils')
 license=('GPL3')
 url="https://www.gnu.org/software/bison/bison.html"
 depends=('glibc' 'm4' 'sh')
-groups=('base-devel')
 source=("https://ftp.gnu.org/gnu/bison/${pkgname}-${pkgver}.tar.xz"{,.sig})
 md5sums=('c9b552dee234b2f6b66e56b27e5234c9'
          'SKIP')

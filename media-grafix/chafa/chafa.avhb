@@ -8,6 +8,7 @@ pkgver=1.8.0
 pkgrel=1
 pkgdesc="Image-to-text converter supporting a wide range of symbols and palettes, transparency, animations, etc."
 arch=("x86_64")
+groups=('media-grafix')
 url="https://hpjansson.org/chafa/"
 depends=('imagemagick' 'libxslt')
 makedepends=('gtk-doc')

@@ -13,7 +13,6 @@ url="http://xorg.freedesktop.org/"
 license=('custom')
 depends=('xorg-fonts-encodings' 'xorg-fonts-alias' 'xorg-font-utils' 'fontconfig')
 install=xfonts.install
-groups=('fonts')
 source=(${url}/releases/individual/font/${pkgname}-${pkgver}.tar.bz2)
 
 build() {

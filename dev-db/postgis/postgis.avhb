@@ -1,0 +1,51 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=postgis
+pkgver=3.2.1
+pkgrel=1
+pkgdesc="Adds support for geographic objects to PostgreSQL"
+arch=('x86_64')
+groups=('dev-db')
+url="https://postgis.net/"
+license=('GPL')
+depends=('postgresql' 'gdal' 'json-c' 'proj' 'protobuf-c' 'libtiff' 'pcre2')
+optdepends=('perl: for contrib script postgis_restore.pl')
+makedepends=('clang' 'llvm')
+changelog=$pkgname.changelog
+source=(https://download.osgeo.org/postgis/source/${pkgname}-${pkgver}.tar.gz)
+sha256sums=('fbab68dde6ca3934b24ba08c8ab0cff2594f57f93deab41a15c82ae1bb69893e')
+b2sums=('9c49ad518fb968dc4787bedf6480af29c3e70f986df8233ef034f117b8a8920ff6e39dab57813390b813a3d856476634b18e6ce324795839d019a11559155ff5')
+
+prepare() {
+  cd ${pkgname}-${pkgver}
+
+  patch -Np1 -i ../postgis-2.2.0-arflags.patch
+  # patch -Np1 -i ../postgis-3.0.3-avoid-calling-ar-directly.patch
+
+  sed -i 's| -fstack-clash-protection | |' postgis/Makefile
+  sed -i 's| -fstack-clash-protection | |' raster/rt_pg/Makefile
+  sed -i 's| -fstack-clash-protection | |' topology/Makefile
+  sed -i 's| -fstack-clash-protection | |' extensions/address_standardizer/Makefile
+
+  # patch -Np1 -i ../postgis-3.0.3-detect-only-stdc.patch
+
+  sed -i 's/pj_get_release/proj_info/' configure # fix for proj8
+
+  ./autogen.sh
+}
+
+build() {
+  cd ${pkgname}-${pkgver}
+
+  ./configure --prefix=/usr
+  make ${MAKEFLAGS}
+}
+
+package() {
+  cd ${pkgname}-${pkgver}
+
+  make DESTDIR="${pkgdir}" install
+}

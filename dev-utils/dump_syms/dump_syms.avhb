@@ -4,45 +4,36 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=dump_syms
-pkgver=0.0.7
+pkgver=1.0.1
 pkgrel=1
 pkgdesc="Symbol dumper for Firefox"
 url="https://github.com/mozilla/dump_syms"
-arch=(x86_64)
+arch=('x86_64')
+groups=("dev-utils")
 license=(APACHE MIT)
 depends=(gcc-libs openssl bzip2)
 makedepends=(cargo)
-_commit=1899b09775037cd9466154dfbaf69abd4880e54c  # tags/v0.0.7
 source=(https://github.com/mozilla/dump_syms/archive/refs/tags/v$pkgver.tar.gz)
 sha512sums=('SKIP')
 
-getsrc() {
-  git clone https://github.com/mozilla/dump_syms
-}
-
-pkgver() {
-  cd $pkgname
-  git checkout $_commit
-  git describe --tags | sed 's/^v//;s/-/+/g'
-}
 
 prepare() {
-  cd $pkgname
+  cd $pkgname-$pkgver
   cargo fetch --locked --target x86_64-unknown-linux-gnu
 }
 
 build() {
-  cd $pkgname
+  cd $pkgname-$pkgver
   cargo build --release --frozen --all-targets
 }
 
 check() {
-  cd $pkgname
+  cd $pkgname-$pkgver
   cargo test --release --frozen
 }
 
 package() {
-  cd $pkgname
+  cd $pkgname-$pkgver
   install -Dt "$pkgdir/usr/bin" target/release/dump_syms
   install -Dt "$pkgdir/usr/share/licenses/$pkgname" -m644 LICENSE*
 }
