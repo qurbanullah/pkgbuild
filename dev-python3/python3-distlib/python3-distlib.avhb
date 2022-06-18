@@ -9,6 +9,7 @@ pkgver=0.3.4
 pkgrel=1
 pkgdesc="Low-level components of distutils2/packaging"
 arch=('any')
+groups=('dev-python')
 url="https://github.com/pypa/distlib/"
 license=('PSF')
 depends=('python3')

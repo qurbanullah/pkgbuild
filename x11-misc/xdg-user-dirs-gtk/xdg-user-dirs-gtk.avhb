@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -13,7 +14,6 @@ depends=('gtk3' 'xdg-user-dirs')
 makedepends=('intltool' gnome-common git)
 options=('!emptydirs')
 url="https://www.gnome.org"
-groups=('gnome')
 source=("https://gitlab.gnome.org/GNOME/xdg-user-dirs-gtk.git"
         show-in-mate.patch)
 

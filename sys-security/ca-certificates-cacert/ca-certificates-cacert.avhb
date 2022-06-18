@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -7,12 +8,11 @@ pkgver=20151023
 pkgrel=1
 pkgdesc="CAcert.org root certificates"
 arch=(any)
+groups=('sys-security')
 url="https://www.cacert.org/index.php?id=3"
 license=('custom:RDL')
 depends=(ca-certificates-utils)
 install=ca-certificates-cacert.install
-groups=(security)
-repo=(core)
 source=(CAcert.org_root.crt::http://www.cacert.org/certs/root.crt
         CAcert.org_class3.crt::http://www.cacert.org/certs/class3.crt
         LICENSE)

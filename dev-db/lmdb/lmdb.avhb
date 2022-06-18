@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -8,7 +8,8 @@ _realname=lmdb-LMDB
 pkgver=0.9.24
 pkgrel=1
 pkgdesc="Symas Lightning Memory-Mapped Database"
-arch=('i686' 'x86_64')
+arch=('x86_64')
+groups=('dev-db')
 url="http://symas.com/mdb"
 license=('custom:OpenLDAP')
 depends=('glibc')

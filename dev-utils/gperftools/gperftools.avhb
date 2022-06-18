@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -7,7 +7,8 @@ pkgname=gperftools
 pkgver=2.7.90
 pkgrel=1
 pkgdesc="Fast, multi-threaded malloc and nifty performance analysis tools"
-arch=('i686' 'x86_64')
+arch=('x86_64')
+groups=('dev-utils')
 url="https://github.com/gperftools/gperftools"
 license=('BSD')
 depends=('perl')

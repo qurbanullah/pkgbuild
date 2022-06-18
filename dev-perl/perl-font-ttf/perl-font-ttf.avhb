@@ -12,6 +12,7 @@ pkgver=1.06
 pkgrel=1
 pkgdesc="${_perlmod//-/::} - Perl module for TrueType font hacking"
 arch=(any)
+groups=('dev-perl')
 url="http://search.cpan.org/dist/${_perlmod}"
 license=('Artistic2.0')
 depends=(perl-io-string)

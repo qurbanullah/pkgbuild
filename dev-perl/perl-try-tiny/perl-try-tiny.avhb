@@ -9,6 +9,7 @@ pkgver=0.30
 pkgrel=1
 pkgdesc="Minimal try/catch with proper localization of \$@"
 arch=('any')
+groups=('dev-perl')
 url="http://search.cpan.org/dist/Try-Tiny"
 license=('MIT')
 depends=('perl')

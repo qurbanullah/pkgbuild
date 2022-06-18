@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -9,6 +9,7 @@ pkgver=1.68
 pkgrel=1
 pkgdesc="Provide a perl interface to ZIP archive files"
 arch=('any')
+groups=('dev-perl')
 license=('GPL' 'PerlArtistic')
 url="http://search.cpan.org/dist/Archive-Zip/"
 depends=('perl')

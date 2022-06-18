@@ -3,12 +3,13 @@
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
+pkgbase=flashplugin
 pkgname=(flashplugin pepper-flash)
 pkgver=32.0.0.344
 pkgrel=1
 pkgdesc="Adobe Flash Player"
 arch=('x86_64')
-groups=('www')
+groups=('www-apps')
 url="https://get.adobe.com/flashplayer/"
 license=('custom' 'LGPL')
 options=('!strip')

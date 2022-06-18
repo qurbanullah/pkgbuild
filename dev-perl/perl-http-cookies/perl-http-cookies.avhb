@@ -9,9 +9,10 @@ pkgver=6.10
 pkgrel=1
 pkgdesc="HTTP cookie jars"
 arch=(any)
+groups=('dev-perl')
 license=(PerlArtistic GPL)
 options=('!emptydirs')
-depends=('perl>=5.8.8' 'perl-http-date>=6' 'perl-http-message')
+depends=('perl' 'perl-http-date>=6' 'perl-http-message')
 makedepends=()
 checkdepends=()
 conflicts=('perl-libwww<6')

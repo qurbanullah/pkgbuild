@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -8,7 +8,7 @@ pkgver=1.18.2
 pkgrel=1
 pkgdesc="A fairly comprehensive, modular and portable cryptographic toolkit"
 arch=('x86_64')
-grous=('app-crypt')
+groups=("app-crypt")
 url="https://www.libtom.net/LibTomCrypt/"
 license=('custom:PublicDomain')
 depends=('libtommath' 'gmp')

@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -11,7 +12,6 @@ arch=('x86_64')
 groups=('media-libs')
 url="https://www.vamp-plugins.org/"
 license=('BSD')
-groups=('pro-audio')
 depends=('gcc-libs' 'glibc' 'libsndfile')
 provides=('libvamp-hostsdk.so' 'libvamp-sdk.so')
 source=("https://code.soundsoftware.ac.uk/attachments/download/${_dir}/${pkgname}-${pkgver}.tar.gz")

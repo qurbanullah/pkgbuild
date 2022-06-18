@@ -9,10 +9,11 @@ pkgver=2.150010
 pkgrel=1
 pkgdesc='the distribution metadata for a CPAN dist'
 arch=('any')
+groups=('dev-perl')
 license=('PerlArtistic' 'GPL')
 options=('!emptydirs')
-depends=('perl>=5.8' 'perl-cpan-meta-requirements>=2.121'
-         'perl-cpan-meta-yaml>=0.008' 'perl-parse-cpan-meta>=1.4414')
+depends=('perl' 'perl-cpan-meta-requirements'
+         'perl-cpan-meta-yaml' 'perl-parse-cpan-meta')
 url='https://metacpan.org/release/CPAN-Meta'
 source=("http://search.cpan.org/CPAN/authors/id/D/DA/DAGOLDEN/CPAN-Meta-$pkgver.tar.gz")
 

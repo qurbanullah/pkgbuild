@@ -9,6 +9,7 @@ pkgver=0.29
 pkgrel=1
 pkgdesc="getaddrinfo/getnameinfo support module"
 arch=('any')
+groups=('dev-perl')
 license=('PerlArtistic' 'GPL')
 options=('!emptydirs')
 depends=('perl')

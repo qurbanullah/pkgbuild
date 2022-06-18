@@ -8,6 +8,7 @@ pkgver=1.25
 pkgrel=1
 pkgdesc="GNU data recovery tool"
 arch=('x86_64')
+groups=('app-utils')
 url="https://www.gnu.org/software/ddrescue/ddrescue.html"
 license=('GPL3')
 depends=('gcc-libs' 'glibc')

@@ -8,6 +8,7 @@ _realname=HandBrake
 pkgver=1.5.1
 pkgrel=1
 arch=('x86_64')
+groups=('media-video')
 url="https://handbrake.fr/"
 license=('GPL')
 _commondeps=('libxml2' 'libass' 'libvorbis' 'opus' 'speex' 'libtheora' 'lame'

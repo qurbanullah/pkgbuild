@@ -8,12 +8,11 @@ pkgver=4.16.1
 pkgrel=1
 pkgdesc="An application finder for Xfce"
 arch=('x86_64')
-groups=('xfce4')
+groups=('xfce4-base')
 url="http://www.xfce.org/"
 license=('GPL2')
 depends=('libxfce4ui' 'garcon' 'hicolor-icon-theme')
 makedepends=('intltool')
-replaces=('xfce-utils')
 source=(https://archive.xfce.org/src/xfce/$pkgname/${pkgver%.*}/$pkgname-$pkgver.tar.bz2)
 
 build() {

@@ -9,9 +9,10 @@ pkgver=1.20200907
 pkgrel=1
 pkgdesc="Implements DomainKeys Identified Mail (DKIM)"
 arch=('any')
+groups=('dev-perl')
 url="http://search.cpan.org/dist/Mail-DKIM"
 license=('GPL' 'PerlArtistic')
-depends=('perl-crypt-openssl-rsa>=0.24' 'perl-digest-sha1' 'perl-mailtools' 'perl-net-dns')
+depends=('perl-crypt-openssl-rsa' 'perl-digest-sha1' 'perl-mailtools' 'perl-net-dns')
 options=('!emptydirs')
 source=(http://www.cpan.org/authors/id/J/JA/JASLONG/Mail-DKIM-$pkgver.tar.gz)
 md5sums=('9ceb8a0397aff83928e7a9760b1b190f')

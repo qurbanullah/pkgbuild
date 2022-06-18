@@ -10,7 +10,6 @@ pkgdesc="A Jabber/XMPP connection manager for Telepathy"
 arch=('x86_64')
 groups=('net-im')
 url="http://telepathy.freedesktop.org"
-groups=('telepathy')
 license=('LGPL2.1')
 depends=('telepathy-glib' 'libsoup' 'libnice' 'sqlite')
 makedepends=('libxslt' 'python3')

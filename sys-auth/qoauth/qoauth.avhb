@@ -1,0 +1,33 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=qoauth
+pkgver=2.0.0
+pkgrel=1
+pkgdesc="Support with OAuth-powered network services"
+url='http://github.com/ayoy/qoauth'
+license=(GPL)
+arch=('x86_64')
+groups=('sys-auth')
+depends=(qca-qt5)
+source=("https://github.com/ayoy/qoauth/archive/v$pkgver.tar.gz")
+
+prepare() {
+  cd $pkgname
+
+  # Install libraries in /usr/lib/
+  sed -i 's|lib64|lib|' src/src.pro
+}
+
+build() {
+  cd $pkgname
+  qmake
+  make
+}
+
+package() {
+  cd $pkgname
+  make INSTALL_ROOT="$pkgdir" install
+}

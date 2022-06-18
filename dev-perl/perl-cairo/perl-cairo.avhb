@@ -9,6 +9,7 @@ pkgver=1.109
 pkgrel=1
 pkgdesc="The Perl Cairo module"
 arch=(any)
+groups=('dev-perl')
 license=('LGPL')
 url="http://gtk2-perl.sourceforge.net/"
 depends=('perl>=5.10.0')

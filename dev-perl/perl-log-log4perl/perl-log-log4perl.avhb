@@ -9,6 +9,7 @@ pkgver=1.54
 pkgrel=1
 pkgdesc='Log4j implementation for Perl'
 arch=('any')
+groups=('dev-perl')
 url="https://metacpan.org/release/Log-Log4perl"
 license=('PerlArtistic' 'GPL')
 depends=('perl')

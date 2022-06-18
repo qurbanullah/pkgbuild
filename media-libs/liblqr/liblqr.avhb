@@ -1,11 +1,14 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=liblqr
 pkgver=0.4.2
 pkgrel=1
 pkgdesc="A seam-carving C/C++ library called Liquid Rescale"
-arch=('i686' 'x86_64')
+arch=('x86_64')
+groups=('media-libs')
 url="http://liblqr.wikidot.com/"
 license=('GPL')
 depends=('glib2')

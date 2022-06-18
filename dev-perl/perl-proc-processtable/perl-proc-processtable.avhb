@@ -9,6 +9,7 @@ pkgver=0.59
 pkgrel=1
 pkgdesc="Provides a consistent interface to process table information."
 arch=('x86_64')
+groups=('dev-perl')
 url="http://search.cpan.org/dist/Proc-ProcessTable/"
 license=('PerlArtistic')
 depends=('perl')

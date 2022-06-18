@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -8,7 +8,7 @@ pkgver=0.11.2
 pkgrel=1
 pkgdesc="Common data to run a LXQt session."
 arch=("any")
-groups=("lxqt")
+groups=("lxqt-base")
 url="http://lxqt.org"
 license=("LGPL2.1")
 depends=("qt5-svg" "hicolor-icon-theme" "xdg-utils")

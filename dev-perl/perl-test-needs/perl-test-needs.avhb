@@ -9,6 +9,7 @@ pkgver=0.002009
 pkgrel=1
 pkgdesc="Skip tests when modules not available"
 arch=('any')
+groups=('dev-perl')
 license=('PerlArtistic')
 url="https://metacpan.org/release/Test-Needs"
 depends=('perl')

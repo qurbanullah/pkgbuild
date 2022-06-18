@@ -5,7 +5,7 @@
 
 pkgname='phpdox'
 pkgver=0.12.0
-pkgrel=0
+pkgrel=1
 pkgdesc="Documentation generator for PHP Code using standard technology (SRC, DOCBLOCK, XML and XSLT)"
 url="http://phpdox.de"
 license=('BSD')

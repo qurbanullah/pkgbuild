@@ -17,7 +17,6 @@ makedepends=(extra-cmake-modules)
 optdepends=('iproute2: netstat backend'
             'firewalld: firewalld backend'
             'ufw: ufw backend')
-groups=(plasma)
 sha256sums=('5c2504836b28c95edcbe048b937db400ac39b4398590434ba200e6426b411c10'
             'SKIP')
 validpgpkeys=('E0A3EB202F8E57528E13E72FD7574483BB57B18D'  # Jonathan Esk-Riddell <jr@jriddell.org>

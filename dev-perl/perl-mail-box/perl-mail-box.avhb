@@ -9,6 +9,7 @@ pkgver=3.009
 pkgrel=1
 pkgdesc="Mail folder manager and MUA backend"
 arch=(any)
+groups=('dev-perl')
 url="http://search.cpan.org/dist/Mail-Box"
 license=('GPL' 'PerlArtistic')
 depends=('perl-timedate' 'perl-digest-hmac' 'perl-file-remove>=0.20'

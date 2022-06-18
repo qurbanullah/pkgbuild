@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -7,8 +8,9 @@ pkgver=4.3.1
 pkgrel=1
 pkgdesc='Authoritative only, high performance and simple DNS server'
 url='https://www.nlnetlabs.nl/nsd/'
-license=('BSD')
 arch=('x86_64')
+groups=('net-dns')
+license=('BSD')
 depends=('openssl' 'libevent')
 makedepends=('flex')
 source=("https://www.nlnetlabs.nl/downloads/${pkgname}/${pkgname}-${pkgver}.tar.gz"{,.asc})

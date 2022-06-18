@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -11,7 +11,6 @@ arch=('x86_64')
 groups=('sys-security')
 url='http://userspace.selinuxproject.org'
 license=('GPL2')
-groups=('selinux')
 makedepends=('libsepol')
 source=("https://github.com/SELinuxProject/selinux/releases/download/20190315/${pkgname}-${pkgver}.tar.gz")
 sha256sums=('a946c32b284532447857e4c48830f8816867c61220c8c08bdd32e6f691335f8e')

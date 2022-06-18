@@ -9,6 +9,7 @@ pkgver=1.63
 pkgrel=1
 pkgdesc="Modules for parsing/translating POD format documents"
 arch=('any')
+groups=('dev-perl')
 license=('PerlArtistic')
 url="https://metacpan.org/release/Pod-Parser"
 depends=('perl')

@@ -9,12 +9,12 @@ pkgver=1.05
 pkgrel=1
 pkgdesc="Determine the locale encoding"
 arch=(any)
+groups=('dev-perl')
 license=(PerlArtistic GPL)
 options=('!emptydirs')
 depends=('perl')
 makedepends=()
 checkdepends=()
-conflicts=('perl-libwww<6')
 url=http://search.cpan.org/dist/Encode-Locale
 source=(http://search.cpan.org/CPAN/authors/id/G/GA/GAAS/Encode-Locale-1.02.tar.gz)
 

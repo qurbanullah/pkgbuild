@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=x264
-pkgver=164.rbfc87b7a
+pkgver=164.rbaee400f
 pkgrel=1
 epoch=2
 pkgdesc='Open Source H264/AVC video encoder'
@@ -15,7 +15,7 @@ license=(GPL)
 depends=(libavcodec.so libavformat.so libavutil.so liblsmash.so libswscale.so)
 makedepends=(git ffmpeg l-smash nasm)
 provides=(libx264 libx264.so)
-source=(git+https://code.videolan.org/videolan/x264.git#commit=72db437770fd1ce3961f624dd57a8e75ff65ae0b)
+source=(git+https://code.videolan.org/videolan/x264.git)
 sha256sums=(SKIP)
 
 getsrc(){

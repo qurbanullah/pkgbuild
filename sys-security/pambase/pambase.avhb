@@ -11,8 +11,6 @@ arch=('any')
 groups=('sys-security')
 url="http://www.archlinux.org"
 license=('GPL')
-groups=(security)
-repo=(core)
 source=('system-auth'
         'system-local-login'
         'system-login'

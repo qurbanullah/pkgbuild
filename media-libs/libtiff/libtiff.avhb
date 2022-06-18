@@ -1,9 +1,10 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=libtiff
-pkgver=4.1.0
+pkgver=4.4.0
 pkgrel=1
 pkgdesc="Library for manipulation of TIFF images"
 arch=('x86_64')

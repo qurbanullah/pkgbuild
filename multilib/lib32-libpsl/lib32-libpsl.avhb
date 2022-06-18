@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -9,7 +10,7 @@ pkgrel=1
 pkgdesc='Public Suffix List library'
 url='https://github.com/rockdaboot/libpsl'
 arch=('x86_64')
-groups=('dev-libs')
+groups=('multilib')
 repo=('extra')
 license=('MIT')
 depends=('libidn2' 'libunistring')

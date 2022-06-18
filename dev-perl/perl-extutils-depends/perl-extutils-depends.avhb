@@ -9,9 +9,10 @@ pkgver=0.8000
 pkgrel=1
 pkgdesc="The Perl depends module"
 arch=('any')
+groups=('dev-perl')
 license=('PerlArtistic')
 url="http://search.cpan.org/dist/${_realname}/"
-depends=('perl>=5.10.0')
+depends=('perl')
 source=(http://www.cpan.org/authors/id/F/FL/FLORA/ExtUtils-Depends-${pkgver}.tar.gz)
 replaces=('extutils-depends')
 options=('!emptydirs')

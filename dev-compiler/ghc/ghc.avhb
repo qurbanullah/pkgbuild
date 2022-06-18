@@ -16,6 +16,7 @@ pkgver=9.0.1
 pkgrel=1
 pkgdesc='The Glasgow Haskell Compiler'
 arch=('x86_64')
+groups=('dev-compiler')
 url='https://www.haskell.org/ghc/'
 license=('custom')
 makedepends=('ghc-static' 'perl' 'libxslt' 'docbook-xsl' 'python-sphinx' 'haskell-hscolour'

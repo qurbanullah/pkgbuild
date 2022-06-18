@@ -9,6 +9,7 @@ pkgver=2.21
 pkgrel=1
 pkgdesc='Various e-mail related modules'
 arch=(any)
+groups=('dev-perl')
 license=(PerlArtistic GPL)
 options=(!emptydirs)
 depends=(perl-timedate)

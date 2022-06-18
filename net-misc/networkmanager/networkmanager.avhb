@@ -6,7 +6,7 @@
 pkgbase=networkmanager
 pkgname=(networkmanager libnm nm-cloud-setup)
 _realname=NetworkManager
-pkgver=1.36.4
+pkgver=1.38.2
 pkgrel=1
 _pppver=2.4.8
 pkgdesc="Network connection manager and user applications"
@@ -86,7 +86,6 @@ package_networkmanager() {
               'dhclient: alternative DHCP client'
               'openresolv: alternative resolv.conf manager')
   backup=(etc/NetworkManager/NetworkManager.conf)
-  groups=(gnome)
 
   DESTDIR="$pkgdir" meson install -C build
 

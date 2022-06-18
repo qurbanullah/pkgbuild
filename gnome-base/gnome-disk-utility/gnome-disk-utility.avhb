@@ -11,7 +11,6 @@ url="https://gitlab.gnome.org/GNOME/gnome-disk-utility"
 arch=('x86_64')
 groups=('gnome-base')
 license=(GPL)
-groups=(gnome)
 depends=(udisks2 gtk3 libsecret libpwquality libcanberra libdvdread libnotify parted systemd-libs)
 makedepends=(docbook-xsl appstream-glib git meson)
 source=(https://gitlab.gnome.org/GNOME/$pkgname/-/archive/$pkgver/$pkgname-$pkgver.tar.bz2)
