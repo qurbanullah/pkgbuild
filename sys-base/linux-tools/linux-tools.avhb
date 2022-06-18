@@ -134,7 +134,6 @@ build() {
 
 package_linux-tools-meta() {
   pkgdesc='Linux kernel tools meta package'
-  groups=()
   depends=(
     'bpf'
     'cgroup_event_listener'

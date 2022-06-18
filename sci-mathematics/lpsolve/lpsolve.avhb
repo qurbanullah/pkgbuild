@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -9,7 +10,7 @@ _mainver=5.5
 pkgrel=1
 pkgdesc="A Mixed Integer Linear Programming (MILP) solver"
 arch=('x86_64')
-groups=('science')
+groups=('sci-mathematics')
 url="http://lpsolve.sourceforge.net/"
 license=('GPL')
 depends=('glibc')

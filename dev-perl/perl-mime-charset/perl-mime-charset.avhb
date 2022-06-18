@@ -9,6 +9,7 @@ pkgver='1.012.2'
 pkgrel=1
 pkgdesc="Charset Information for MIME"
 arch=('any')
+groups=('dev-perl')
 license=('PerlArtistic' 'GPL')
 options=('!emptydirs')
 depends=('perl')

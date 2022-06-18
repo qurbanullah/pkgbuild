@@ -9,6 +9,7 @@ pkgver=6.21
 pkgrel=1
 pkgdesc="Low-level HTTP connection (client)"
 arch=(any)
+groups=('dev-perl')
 url=http://search.cpan.org/dist/Net-HTTP
 license=(PerlArtistic GPL)
 options=(!emptydirs)

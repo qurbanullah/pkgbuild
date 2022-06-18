@@ -9,9 +9,10 @@ pkgver=0.118
 pkgrel=1
 pkgdesc='A small and fast Perl module for working with file paths'
 arch=('any')
+groups=('dev-perl')
 url='https://metacpan.org/release/Path-Tiny'
 license=('PerlArtistic' 'GPL')
-depends=('perl>=5.17.8')
+depends=('perl')
 source=(http://search.cpan.org/CPAN/authors/id/D/DA/DAGOLDEN/Path-Tiny-0.076.tar.gz)
 options=(!emptydirs)
 md5sums=('495b965187a59af9b99c0f4709013746')

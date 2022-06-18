@@ -10,6 +10,7 @@ pkgrel=1
 pkgdesc="Mock D-Bus objects for tests"
 url="https://github.com/martinpitt/python-dbusmock"
 arch=(any)
+groups=('dev-python')
 license=(LGPL3)
 depends=(python3-dbus python3-pygobject)
 makedepends=(python3-setuptools git)

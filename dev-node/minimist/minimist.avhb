@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -8,7 +8,7 @@ pkgver=1.2.5
 pkgrel=1
 pkgdesc="parse argument options"
 arch=('any')
-grous=('dev-node')
+groups=('dev-node')
 url='https://github.com/substack/minimist'
 license=('MIT')
 depends=('nodejs')

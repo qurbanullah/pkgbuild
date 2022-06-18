@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -12,7 +12,6 @@ groups=('sys-security')
 url="http://www.and.org/ustr/"
 license=('GPL')
 depends=('glibc')
-groups=(security)
 source=(http://www.and.org/ustr/$pkgver/ustr-$pkgver.tar.bz2)
 md5sums=('93147d9f0c9765d4cd0f04f7e44bdfce')
 

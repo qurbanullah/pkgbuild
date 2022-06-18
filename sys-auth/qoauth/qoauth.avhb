@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -8,7 +9,8 @@ pkgrel=1
 pkgdesc="Support with OAuth-powered network services"
 url='http://github.com/ayoy/qoauth'
 license=(GPL)
-arch=(i686 x86_64)
+arch=('x86_64')
+groups=('sys-auth')
 depends=(qca-qt5)
 source=("https://github.com/ayoy/qoauth/archive/v$pkgver.tar.gz")
 

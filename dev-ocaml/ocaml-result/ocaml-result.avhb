@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -9,7 +9,7 @@ pkgver=1.5
 pkgrel=1
 pkgdesc="Compatibility Result module"
 arch=('x86_64')
-groups=('dev-lang')
+groups=('dev-ocaml')
 url="https://github.com/janestreet/result"
 license=('BSD')
 depends=('ocaml')

@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -9,6 +9,7 @@ pkgver=27
 pkgrel=1
 pkgdesc="Linux kernel module handling"
 arch=('x86_64')
+groups=('multilib')
 url="http://git.kernel.org/?p=utils/kernel/kmod/kmod.git;a=summary"
 license=('GPL2')
 depends=('lib32-zlib' 'lib32-xz')

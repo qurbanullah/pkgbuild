@@ -3,6 +3,7 @@
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
+pkgbase=flashplugin
 pkgname=(flashplugin pepper-flash)
 pkgver=32.0.0.344
 pkgrel=1

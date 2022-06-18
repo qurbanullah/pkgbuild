@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -8,7 +8,7 @@ pkgver=0.51.0
 pkgrel=1
 pkgdesc="The internationalization tool collection"
 arch=('any')
-grous=('dev-utils')
+groups=('dev-utils')
 url="https://edge.launchpad.net/intltool"
 license=('GPL')
 depends=('perl-xml-parser')

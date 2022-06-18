@@ -9,6 +9,7 @@ pkgrel=1
 pkgdesc="Open Source aptX codec library"
 url="https://github.com/iamthehorker/libfreeaptx"
 arch=(x86_64)
+groups=('media-libs')
 license=(LGPL)
 depends=(glibc)
 makedepends=(git)

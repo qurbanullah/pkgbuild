@@ -9,6 +9,7 @@ pkgver=2.9.0
 pkgrel=1
 pkgdesc="Perl module that provides SPF support"	
 arch=('any')
+groups=('dev-perl')
 license=('custom')
 url="http://search.cpan.org/dist/${_realname}/"
 depends=('perl-error' 'perl-netaddr-ip' 'perl-uri' 'perl-net-dns' 'perl')

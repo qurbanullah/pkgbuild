@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -7,9 +8,10 @@ epoch=1
 pkgver=20190731
 pkgrel=1
 pkgdesc='Simplifies the drawing of beautiful curves'
+arch=('x86_64')
+groups=('media-grafix')
 url='https://github.com/fontforge/libspiro'
 license=('GPL')
-arch=('x86_64')
 source=("https://github.com/fontforge/libspiro/archive/${pkgver}.tar.gz")
 
 prepare() {

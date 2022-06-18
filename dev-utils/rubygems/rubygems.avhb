@@ -8,7 +8,7 @@ pkgdesc='Package management framework for Ruby'
 pkgver=3.3.14
 pkgrel=1
 arch=(any)
-grous=('dev-utils')
+groups=('dev-utils')
 url='https://rubygems.org/'
 license=(MIT)
 # To avoid circular dependency with ruby, move it to makedepends

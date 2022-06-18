@@ -7,7 +7,7 @@
 
 pkgbase=gnome-software
 pkgname=(gnome-software)
-pkgver=42.0
+pkgver=42.2
 pkgrel=1
 pkgdesc="GNOME Software Tools"
 url="https://wiki.gnome.org/Apps/Software/"
@@ -42,7 +42,6 @@ _pick() {
 }
 
 package() {
-  groups=('gnome')
   depends=(libxmlb gnome-desktop gsettings-desktop-schemas gspell libpackagekit-glib
            gnome-online-accounts appstream-glib)
   optdepends=('flatpak: Flatpak support plugin'

@@ -1,13 +1,14 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=units
-pkgver=2.19
+pkgver=2.21
 pkgrel=1
 pkgdesc="converts between different units"
 arch=('x86_64')
-groups=('science')
+groups=('sci-calculators')
 url="http://www.gnu.org/software/units/units.html"
 depends=('readline')
 optdepends=('python-unidecode: for live currency rates'

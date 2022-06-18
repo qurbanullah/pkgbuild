@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -8,7 +8,7 @@ pkgver=1.1.0
 pkgrel=1
 pkgdesc="LXQt system configuration."
 arch=("x86_64")
-groups=('lxqt')
+groups=('lxqt-base')
 url="http://lxqt.org"
 license=("LGPL2.1")
 depends=("liblxqt" "libkscreen" "libxcursor" "qt5-svg")
@@ -18,7 +18,8 @@ validpgpkeys=("169704C6FB490C6892C7F23C37E0AF1FDA48F373")
 
 build() {
     cmake -S "$pkgname-$pkgver" -B build -G Ninja \
-        -DCMAKE_INSTALL_PREFIX=/usr
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_INSTALL_LIBDIR=/usr/lib
     ninja -C build
 }
 

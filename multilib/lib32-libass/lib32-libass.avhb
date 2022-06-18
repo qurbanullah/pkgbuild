@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -9,7 +10,6 @@ pkgrel=1
 pkgdesc='A portable library for SSA/ASS subtitles rendering (32 bit)'
 arch=('x86_64')
 groups=('multilib')
-repo=('extra')
 url='https://github.com/libass/libass/'
 license=('BSD')
 depends=("${_realname}" 'lib32-fontconfig' 'lib32-fribidi' 'lib32-glib2' 'lib32-glibc'

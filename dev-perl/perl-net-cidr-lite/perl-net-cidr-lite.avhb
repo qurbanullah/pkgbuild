@@ -9,6 +9,7 @@ pkgver=0.22
 pkgrel=1
 pkgdesc="Perl extension for merging IPv4 or IPv6 CIDR addresses"
 arch=('any')
+groups=('dev-perl')
 license=('PerlArtistic')
 url="http://search.cpan.org/dist/${_realname}/"
 depends=('perl>=5.10.0')

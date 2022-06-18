@@ -3,8 +3,8 @@
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
-pkgbase=qtkeychain
 pkgname=qtkeychain-qt5
+_realname=qtkeychain
 pkgver=0.13.2
 pkgrel=1
 pkgdesc='Provides support for secure credentials storage'
@@ -20,7 +20,7 @@ sha256sums=('cc547d58c1402f6724d3ff89e4ca83389d9e2bdcfd9ae3d695fcdffa50a625a8'
             '7a0d29a04a8950ab5e674fc5738373acded775c496050e06a59897773f859150')
 
 build() {
-  cmake -B build -S $pkgbase-$pkgver \
+  cmake -B build -S $_realname-$pkgver \
     -DCMAKE_INSTALL_PREFIX=/usr \
     -DCMAKE_INSTALL_LIBDIR=lib
   cmake --build build
@@ -28,5 +28,5 @@ build() {
 
 package() {
   DESTDIR="$pkgdir" cmake --install build
-  install -Dm644 $pkgbase-$pkgver/COPYING "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+  install -Dm644 $_realname-$pkgver/COPYING "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
 }

@@ -9,6 +9,7 @@ pkgver=2.005004
 pkgrel=1
 pkgdesc="Minimalist Object Orientation (with Moose compatiblity)"
 arch=('any')
+groups=('dev-perl')
 license=('PerlArtistic' 'GPL')
 options=('!emptydirs')
 depends=('perl-class-method-modifiers>=1.1' 'perl-devel-globaldestruction>=0.11' 'perl-import-into>=1.002'

@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -8,6 +8,7 @@ pkgver=1.7.2
 pkgrel=1
 pkgdesc="Data logging and graphing application"
 arch=('x86_64')
+groups=('app-utils')
 url="https://www.rrdtool.org"
 license=('GPL' 'custom')
 depends=('libxml2' 'pango' 'ttf-dejavu')

@@ -13,8 +13,6 @@ url="https://git.xfce.org/apps/xfce4-panel-profiles/about/"
 license=('GPL3')
 depends=('xfce4-panel' 'gtk3' 'python-gobject')
 makedepends=('intltool' 'git')
-conflicts=('xfpanel-switch')
-replces=('xfpanel-switch')
 source=("https://archive.xfce.org/src/apps/${pkgname}/${pkgver%.*}/${pkgname}-${pkgver}.tar.bz2")
 
 build() {

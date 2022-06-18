@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -9,6 +9,7 @@ pkgver=1.1.1_beta
 pkgrel=2
 pkgdesc="System Monitor With UI Like Windows"
 arch=('any')
+groups=('app-utils')
 url="https://github.com/KrispyCamel4u/SysMonTask"
 license=('MIT')
 depends=('python' 'python-psutil>=5.8' 'python-gobject' 'python-cairo'

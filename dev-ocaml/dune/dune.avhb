@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -8,7 +8,7 @@ pkgver=3.0.3
 pkgrel=1
 pkgdesc="A composable build system for OCaml (formerly jbuilder)"
 arch=('x86_64')
-groups=('dev-utils')
+groups=('dev-ocaml')
 url="https://github.com/ocaml/dune"
 license=('Apache')
 depends=('glibc' 'ocaml' 'ocaml-findlib')

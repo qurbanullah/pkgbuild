@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -14,7 +14,6 @@ pkgdesc="Vulkan Utilities and Tools"
 license=('custom')
 depends=('libx11' 'wayland' 'libvulkan.so')
 makedepends=('cmake' 'python' 'vulkan-headers' 'vulkan-icd-loader' 'glslang' 'spirv-tools')
-groups=('vulkan-devel')
 source=("${pkgname}-${pkgver}.tar.gz::https://github.com/KhronosGroup/Vulkan-Tools/archive/v${pkgver}.tar.gz")
 sha256sums=('bf7eea7c4eecaa705666c926273fc43ebf2f9661e69321d0f4b02f95c1f6dd3e')
 

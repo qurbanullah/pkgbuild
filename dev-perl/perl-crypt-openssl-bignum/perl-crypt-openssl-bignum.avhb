@@ -9,6 +9,7 @@ pkgver=0.09
 pkgrel=1
 pkgdesc="OpenSSL's multiprecision integer arithmetic "
 arch=('any')
+groups=('dev-perl')
 url="http://search.cpan.org/dist/Crypt-OpenSSL-Bignum"
 depends=('perl' 'openssl')
 license=('GPL')

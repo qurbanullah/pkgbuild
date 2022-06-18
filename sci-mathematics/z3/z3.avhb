@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -9,7 +9,7 @@ pkgver=4.8.10
 pkgrel=1
 pkgdesc='High-performance theorem prover'
 arch=('x86_64')
-groups=('science')
+groups=('sci-mathematics')
 url='https://github.com/Z3Prover/z3'
 license=('MIT')
  # 'java-environment-common' 'mono' 'ocaml' 'ocaml-findlib'

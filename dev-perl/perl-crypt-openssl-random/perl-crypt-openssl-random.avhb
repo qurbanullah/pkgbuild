@@ -9,6 +9,7 @@ pkgver=0.15
 pkgrel=1
 pkgdesc="Interface to OpenSSL PRNG methods"
 arch=('any')
+groups=('dev-perl')
 url="http://search.cpan.org/dist/Crypt-OpenSSL-Random"
 depends=('perl' 'openssl')
 license=('GPL')

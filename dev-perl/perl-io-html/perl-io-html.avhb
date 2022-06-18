@@ -9,6 +9,7 @@ pkgver=1.004
 pkgrel=1
 pkgdesc="Open an HTML file with automatic charset detection"
 arch=('any')
+groups=('dev-perl')
 url='http://search.cpan.org/dist/IO-HTML'
 depends=('perl')
 license=('PerlArtistic' 'GPL')

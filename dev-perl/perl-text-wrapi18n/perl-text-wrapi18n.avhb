@@ -9,6 +9,7 @@ pkgver=0.06
 pkgrel=1
 pkgdesc="Line wrapping module with support for multibyte, fullwidth, and combining characters and languages without whitespaces between words"
 arch=('any')
+groups=('dev-perl')
 license=('GPL' 'PerlArtistic')
 url="https://search.cpan.org/dist/${_realname}/"
 depends=('perl-text-charwidth')

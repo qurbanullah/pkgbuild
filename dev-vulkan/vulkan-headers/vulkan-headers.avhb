@@ -14,7 +14,6 @@ groups=('dev-vulkan')
 url="https://www.khronos.org/vulkan/"
 license=('APACHE')
 makedepends=(cmake git)
-groups=(vulkan-devel)
 source=(https://github.com/KhronosGroup/Vulkan-Headers/archive/v$pkgver.tar.gz)
 
 build() {

@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -7,7 +8,7 @@ pkgver=7.2
 pkgrel=1
 pkgdesc="A C library that implements the 'World Coordinate System' (WCS) standard in FITS"
 arch=('x86_64')
-groups=('science')
+groups=('sci-astronomy')
 url="http://www.atnf.csiro.au/people/Mark.Calabretta/WCS/"
 license=(GPL3)
 depends=(cfitsio)

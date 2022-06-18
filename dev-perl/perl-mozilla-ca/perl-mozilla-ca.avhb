@@ -9,6 +9,7 @@ pkgver=20200520
 pkgrel=1
 pkgdesc="Mozilla's CA cert bundle in PEM format"
 arch=(any)
+groups=('dev-perl')
 license=(GPL2 LGPL2.1)
 options=(!emptydirs)
 depends=('perl')

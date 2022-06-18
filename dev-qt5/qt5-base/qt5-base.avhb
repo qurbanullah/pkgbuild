@@ -109,9 +109,6 @@ package_qt5-xcb-private-headers() {
   pkgdesc='Private headers for Qt5 Xcb'
 
   depends=("qt5-base=$pkgver")
-  optdepends=()
-  groups=()
-  conflicts=()
 
   cd ${_realname}
   install -d -m755 "$pkgdir"/usr/include/qtxcb-private

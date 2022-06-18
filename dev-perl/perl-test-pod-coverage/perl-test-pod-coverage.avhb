@@ -9,6 +9,7 @@ pkgver=1.10
 pkgrel=1
 pkgdesc="CPAN Test::Pod::Coverage module"
 arch=('any')
+groups=('dev-perl')
 url="http://search.cpan.org/dist/Test-Pod-Coverage/"
 license=('PerlArtistic')
 depends=('perl-pod-coverage')

@@ -9,6 +9,7 @@ pkgver=2.17
 pkgrel=1
 pkgdesc="A switch statement for Perl"
 arch=('any')
+groups=('dev-perl')
 license=('PerlArtistic' 'GPL')
 options=('!emptydirs')
 depends=('perl')

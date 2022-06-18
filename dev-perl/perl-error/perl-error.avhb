@@ -10,6 +10,7 @@ pkgrel=1
 pkgdesc="Perl/CPAN Error module - Error/exception handling in an OO-ish way"
 url="http://search.cpan.org/dist/Error/"
 arch=('any')
+groups=('dev-perl')
 license=('PerlArtistic' 'GPL')
 depends=('perl')
 checkdepends=('perl-test-pod' 'perl-test-pod-coverage')

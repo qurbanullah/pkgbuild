@@ -9,10 +9,11 @@ pkgver=6.05
 pkgrel=1
 pkgdesc="Date conversion routines"
 arch=(any)
+groups=('dev-perl')
 license=(PerlArtistic GPL)
 options=('!emptydirs')
-depends=('perl>=5.8.8')
-conflicts=('perl-libwww<6')
+depends=('perl')
+conflicts=('perl-libwww')
 url=http://search.cpan.org/dist/HTTP-Date
 source=(http://search.cpan.org/CPAN/authors/id/G/GA/GAAS/HTTP-Date-$pkgver.tar.gz)
 
