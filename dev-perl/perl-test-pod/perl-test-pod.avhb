@@ -9,6 +9,7 @@ pkgver=1.52
 pkgrel=1
 pkgdesc="Check for POD errors in files"
 arch=('any')
+groups=('dev-perl')
 url="http://search.cpan.org/dist/Test-Pod/"
 license=('GPL' 'PerlArtistic')
 depends=('perl')

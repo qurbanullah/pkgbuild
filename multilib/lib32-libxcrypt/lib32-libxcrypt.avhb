@@ -9,6 +9,7 @@ pkgver=4.4.23
 pkgrel=1
 pkgdesc='Modern library for one-way hashing of passwords (32-bit)'
 arch=('x86_64')
+groups=('multilib')
 url='https://github.com/besser82/libxcrypt/'
 license=('GPL')
 depends=('lib32-glibc' 'libxcrypt')

@@ -4,8 +4,8 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgbase=linux
-pkgver=5.17.1
-_pkgver=5.17.1
+pkgver=5.18.2
+_pkgver=5.18.2
 pkgrel=1
 arch=('x86_64')
 groups=('sys-base')
@@ -104,10 +104,12 @@ _package() {
     install -Dm644 "$(make -s image_name)" "$modulesdir/vmlinuz"
 
     # Used by mkinitcpio to name the kernel
-    echo "$pkgbase" | install -Dm644 /dev/stdin "$modulesdir/pkgbase"
+    # echo "$pkgbase" | install -Dm644 /dev/stdin "$modulesdir/pkgbase"
 
     message "Installing modules..."
-    make INSTALL_MOD_PATH="$pkgdir/usr" INSTALL_MOD_STRIP=1 modules_install
+    make INSTALL_MOD_PATH="$pkgdir/usr" INSTALL_MOD_STRIP=1 \
+      DEPMOD=/doesnt/exist modules_install  # Suppress depmod
+    # make INSTALL_MOD_PATH="$pkgdir/usr" INSTALL_MOD_STRIP=1 modules_install
 
 
 

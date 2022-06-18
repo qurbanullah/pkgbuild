@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -10,10 +10,9 @@ pkgrel=1
 #_gittage=1ff8969
 pkgdesc='Lightweight X11 Display Manager'
 arch=('x86_64')
-groups=('sys-dev')
+groups=('sys-dm')
 url="https://sourceforge.net/projects/lxdm/"
 license=('GPL')
-groups=('lxde')
 depends=('gtk2' 'xorg-server')
 makedepends=('intltool' 'iso-codes')
 optdepends=('gtk-engines: default GTK+ theme'
@@ -78,7 +77,6 @@ build() {
 }
 
 package_lxdm() {
-  groups=('lxde')
   depends=('gtk2' 'xorg-server')
   optdepends+=('gnome-themes-standard: default GTK+ theme')
 
@@ -93,7 +91,6 @@ package_lxdm() {
 }
 
 package_lxdm-gtk3() {
-  groups=('lxde-gtk3')
   pkgdesc+=' (GTK+ 3 version)'
   depends=('gtk3' 'xorg-server')
   conflicts=('lxdm')

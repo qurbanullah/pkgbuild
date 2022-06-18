@@ -9,6 +9,7 @@ pkgver=1.643
 pkgrel=1
 pkgdesc="Database independent interface for Perl"
 arch=('any')
+groups=('dev-perl')
 license=('GPL' 'PerlArtistic')
 url="http://search.cpan.org/dist/${_realname}/"
 depends=('perl')

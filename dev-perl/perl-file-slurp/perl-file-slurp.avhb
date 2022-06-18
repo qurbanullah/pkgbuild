@@ -9,6 +9,7 @@ pkgver=9999.32
 pkgrel=1
 pkgdesc="Read/write/append files quickly"
 arch=('any')
+groups=('dev-perl')
 url="http://search.cpan.org/dist/File-Slurp"
 license=('GPL' 'PerlArtistic')
 depends=('perl')

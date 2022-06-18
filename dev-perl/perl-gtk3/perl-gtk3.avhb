@@ -9,6 +9,7 @@ pkgver=0.038
 pkgrel=1
 pkgdesc="The Perl Gtk3 module"
 arch=(any)
+groups=('dev-perl')
 license=('LGPL')
 url="http://gtk2-perl.sourceforge.net/"
 depends=('perl>=5.10.0')

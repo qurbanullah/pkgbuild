@@ -9,6 +9,7 @@ _realname=apcu
 pkgver=5.1.21
 pkgrel=1
 arch=('x86_64')
+groups=('dev-php')
 pkgdesc='A userland caching module for PHP'
 url='https://pecl.php.net/package/APCu'
 makedepends=('php' 'php7')

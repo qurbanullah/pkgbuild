@@ -9,6 +9,7 @@ _realname=Text-CharWidth
 pkgrel=1
 pkgdesc="Perl/CPAN Module Text::CharWidth"
 arch=("x86_64")
+groups=('dev-perl')
 url="https://search.cpan.org/dist/Text-CharWidth"
 license=("GPL" "PerlArtistic")
 options=('!emptydirs')

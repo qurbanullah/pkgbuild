@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -11,8 +12,6 @@ groups=('media-grafix')
 url="http://printing.kde.org/downloads/"
 license=(GPL)
 depends=(cairo gobject-introspection 'mozjs')
-groups=('grafix')
-repo=('core')
 source=(ftp://ftp.kde.org/pub/kde/printing/poster.tar.bz2)
 
 build() {

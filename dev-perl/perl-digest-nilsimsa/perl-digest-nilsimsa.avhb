@@ -9,6 +9,7 @@ pkgver=0.06
 pkgrel=1
 pkgdesc="Perl version of Nilsimsa code"
 arch=('any')
+groups=('dev-perl')
 license=('LGPL')
 url="http://search.cpan.org/dist/${_realname}/"
 depends=('perl')

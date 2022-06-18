@@ -13,7 +13,6 @@ groups=('sys-security')
 arch=('any')
 url="https://github.com/SELinuxProject/refpolicy/wiki"
 license=('GPL')
-groups=('selinux' 'selinux-policies')
 optdepends=('linux-hardened: Linux kernel with SELinux support'
             'linux-selinux: Linux kernel with SELinux support')
 makedepends=('python' 'checkpolicy>=2.8' 'policycoreutils>=2.8'

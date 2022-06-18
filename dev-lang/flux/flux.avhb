@@ -1,0 +1,49 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=flux
+pkgver=0.149.0
+pkgrel=1
+pkgdesc='Lightweight scripting language for querying databases and working with data'
+arch=('x86_64')
+groups=('dev-lang')
+url='https://github.com/influxdata/flux'
+license=('MIT')
+depends=('gcc-libs')
+makedepends=('git' 'go' 'cargo' 'clang')
+source=("git+https://github.com/influxdata/flux#tag=v$pkgver")
+sha512sums=('SKIP')
+
+getsrc() {
+    git clone https://github.com/influxdata/flux
+}
+
+build() {
+    cd flux
+
+    export CGO_CPPFLAGS="${CPPFLAGS}"
+    export CGO_CFLAGS="${CFLAGS}"
+    export CGO_CXXFLAGS="${CXXFLAGS}"
+    export CGO_LDFLAGS="${LDFLAGS}"
+    export GOFLAGS='-buildmode=pie -trimpath -ldflags=-linkmode=external -mod=readonly -modcacherw'
+    export PKG_CONFIG=$PWD/pkg-config
+
+    go build -o pkg-config github.com/influxdata/pkg-config
+    go build ./cmd/flux
+
+    target=$(
+        eval $(rustc --print cfg | grep target)
+        echo $target_arch-$target_vendor-$target_os-$target_env
+    )
+    mv libflux/target/$target/release/libflux.so .
+}
+
+package() {
+    cd flux
+
+    install -Dm775 libflux.so -t "$pkgdir/usr/lib"
+    install -Dm775 flux -t "$pkgdir/usr/bin"
+    install -Dm644 LICENSE -t "$pkgdir/usr/share/licenses/flux"
+}

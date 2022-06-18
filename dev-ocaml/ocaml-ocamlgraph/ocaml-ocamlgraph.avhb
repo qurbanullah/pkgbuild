@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -9,7 +9,7 @@ pkgver=1.8.8
 pkgrel=1
 pkgdesc="Graph library for OCaml"
 arch=('x86_64')
-groups=('dev-lang')
+groups=('dev-ocaml')
 url="http://ocamlgraph.lri.fr/index.en.html"
 source=("http://ocamlgraph.lri.fr/download/ocamlgraph-$pkgver.tar.gz")
 md5sums=('9d71ca69271055bd22d0dfe4e939831a')

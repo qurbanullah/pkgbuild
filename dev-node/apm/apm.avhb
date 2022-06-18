@@ -8,7 +8,7 @@ pkgver=2.6.4
 pkgrel=1
 pkgdesc='Atom package manager'
 arch=('x86_64')
-ups=('dev-node')
+groups=('dev-node')
 url='https://github.com/atom/apm'
 license=('MIT')
 depends=('libsecret' 'nodejs>=10' 'npm' 'python')

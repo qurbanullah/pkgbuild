@@ -9,6 +9,7 @@ pkgver=1.3293
 pkgrel=1
 pkgdesc="Perl wrappers for glib 2.x, including GObject"
 arch=(x86_64)
+groups=('dev-perl')
 license=('LGPL')
 url="http://gtk2-perl.sourceforge.net/"
 options=('!emptydirs')

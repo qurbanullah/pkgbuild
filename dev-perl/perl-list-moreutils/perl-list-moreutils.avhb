@@ -9,6 +9,7 @@ pkgver=0.430
 pkgrel=1
 pkgdesc="Provide the stuff missing in List::Util"
 arch=('any')
+groups=('dev-perl')
 license=('PerlArtistic' 'GPL')
 options=('!emptydirs')
 depends=('perl-exporter-tiny')

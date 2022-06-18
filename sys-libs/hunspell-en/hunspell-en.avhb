@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -8,6 +9,7 @@ pkgver=2019.10.06
 pkgrel=1
 pkgdesc="English hunspell dictionaries"
 arch=(any)
+groups=('sys-libs')
 url="http://wordlist.aspell.net/dicts/"
 license=('LGPL' 'custom:scowl')
 optdepends=('hunspell: the spell checking libraries and apps')

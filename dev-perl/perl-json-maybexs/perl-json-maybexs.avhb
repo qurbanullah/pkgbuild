@@ -9,6 +9,7 @@ pkgver=1.004003
 pkgrel=1
 pkgdesc="Use Cpanel::JSON::XS with a fallback to JSON::XS and JSON::PP"
 arch=('any')
+groups=('dev-perl')
 license=('PerlArtistic' 'GPL')
 depends=('perl')
 makedepends=('perl-test-needs')

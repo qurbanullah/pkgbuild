@@ -5,7 +5,7 @@
 
 pkgname=vulkan-caps-viewer
 _realname=VulkanCapsViewer
-pkgver=3.04
+pkgver=3.22
 pkgrel=1
 pkgdesc='Vulkan Hardware Capability Viewer'
 arch=('x86_64')

@@ -9,12 +9,11 @@ pkgver=1.09
 pkgrel=1
 pkgdesc='Framework for more readable interactive test scripts'
 arch=('any')
+groups=('dev-perl')
 url="https://metacpan.org/release/Test-Inter"
 license=('PerlArtistic')
 depends=('perl')
 options=('!emptydirs')
-groups=('perl')
-repo=('extra')
 source=("http://search.cpan.org/CPAN/authors/id/S/SB/SBECK/Test-Inter-$pkgver.tar.gz")
 
 build() {

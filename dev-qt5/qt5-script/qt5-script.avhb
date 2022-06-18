@@ -15,7 +15,6 @@ license=('GPL3' 'LGPL3' 'FDL' 'custom')
 pkgdesc='Classes for making Qt applications scriptable. Provided for Qt 4.x compatibility'
 depends=('qt5-base')
 makedepends=('git')
-groups=('qt' 'qt5')
 _pkgfqn=${pkgname/5-/}
 source=(https://invent.kde.org/qt/qt/$_realname.git)
 # source=(git+https://code.qt.io/qt/$_pkgfqn.git#tag=v${pkgver}-lts)

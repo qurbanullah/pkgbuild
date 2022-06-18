@@ -9,6 +9,7 @@ pkgver=1.45
 pkgrel=1
 pkgdesc="Perform diffs on files and record sets "
 arch=('any')
+groups=('dev-perl')
 url="http://search.cpan.org/dist/${_realname}"
 license=('GPL' 'PerlArtistic')
 depends=('perl-algorithm-diff')

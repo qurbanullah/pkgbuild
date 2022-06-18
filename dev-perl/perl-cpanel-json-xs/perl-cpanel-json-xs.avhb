@@ -9,6 +9,7 @@ pkgver=4.26
 pkgrel=1
 pkgdesc="cPanel fork of JSON::XS, fast and correct serializing"
 arch=('x86_64')
+groups=('dev-perl')
 license=('PerlArtistic' 'GPL')
 depends=('perl')
 url="https://metacpan.org/release/${_realname}"

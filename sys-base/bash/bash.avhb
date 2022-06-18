@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -13,7 +13,6 @@ arch=('x86_64')
 groups=('sys-base')
 license=(GPL)
 url='https://www.gnu.org/software/bash/bash.html'
-groups=(base)
 backup=(etc/bash.bash{rc,_logout} etc/skel/.bash{rc,_profile,_logout})
 depends=('readline>=7.0' glibc ncurses)
 optdepends=('bash-completion: for tab completion')

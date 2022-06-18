@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -12,35 +13,28 @@ url="https://github.com/x42/liboauth"
 license=(MIT)
 depends=(curl nss)
 makedepends=(git)
-groups=(security)
-repo=(core)
-_commit=11e9461fc433e3787198f9c01a0a565a8a1f90a9
-source=("git+$url#commit=$_commit")
+source=("https://github.com/x42/liboauth/archive/refs/tags/v$pkgver.tar.gz")
 
-
-# getsrc(){
-# 	git clone https://github.com/x42/liboauth.git
-# }
 
 prepare() {
-	cd $pkgname
+	cd $pkgname-$pkgver
 	autoreconf -fvi
 }
 
 build() {
-	cd $pkgname
+	cd $pkgname-$pkgver
 	./configure --prefix=/usr --disable-static --enable-nss
 	sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
 	make
 }
 
 check() {
-	cd $pkgname
+	cd $pkgname-$pkgver
 	make check
 }
 
 package() {
-	cd $pkgname
+	cd $pkgname-$pkgver
 	make DESTDIR="$pkgdir" install
 	install -Dm644 COPYING.MIT "$pkgdir/usr/share/licenses/$pkgname/COPYING"
 }

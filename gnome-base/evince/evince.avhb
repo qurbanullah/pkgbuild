@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=evince
-pkgver=42.1
+pkgver=42.3
 pkgrel=1
 pkgdesc="Document viewer (PDF, Postscript, djvu, tiff, dvi, XPS, SyncTex support with gedit, comics books (cbr,cbz,cb7 and cbt))"
 url="https://wiki.gnome.org/Apps/Evince"
@@ -17,7 +17,6 @@ makedepends=(libnautilus-extension texlive-bin gobject-introspection docbook-xsl
              meson appstream-glib yelp-tools)
 optdepends=('texlive-bin: DVI support'
             'gvfs: bookmark support and session saving')
-groups=(gnome)
 options=('!emptydirs')
 source=(https://gitlab.gnome.org/GNOME/$pkgname/-/archive/$pkgver/$pkgname-$pkgver.tar.bz2)
 

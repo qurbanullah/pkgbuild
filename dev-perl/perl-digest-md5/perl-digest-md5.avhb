@@ -9,6 +9,7 @@ pkgver=2.58
 pkgrel=1
 pkgdesc="Perl interface to the SHA-1 Algorithm"
 arch=('any')
+groups=('dev-perl')
 license=('PerlArtistic')
 url="http://search.cpan.org/dist/${_realname}/"
 depends=('perl')

@@ -1,5 +1,7 @@
-# Maintainer: Felix Yan <felixonmars@archlinux.org>
-# Contributor: Daniel Peukert <daniel@peukert.cc>
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname="ocaml-stdlib-shims"
 _realname='stdlib-shims'
@@ -7,9 +9,10 @@ pkgver=0.3.0
 pkgrel=1
 pkgdesc='Shim to substitute `Pervasives` with `Stdlib` before 4.08'
 arch=('x86_64')
+groups=('dev-ocaml')
 url="https://github.com/ocaml/$_realname"
 license=('custom:LGPL2.1 with linking exception')
-depends=('ocaml>=4.13.1')
+depends=('ocaml')
 makedepends=('dune')
 options=('!strip')
 source=("$pkgname-$pkgver-$pkgrel.tar.gz::$url/archive/$pkgver.tar.gz")

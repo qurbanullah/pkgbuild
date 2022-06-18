@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=libnftnl
-pkgver=1.2.1
+pkgver=1.2.2
 pkgrel=1
 pkgdesc='Netfilter library providing interface to the nf_tables subsystem'
 arch=('x86_64')

@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -9,6 +9,7 @@ pkgver=0.4.17
 pkgrel=1
 pkgdesc='A library that provides automatic proxy configuration management'
 arch=('x86_64')
+groups=('multilib')
 url='http://libproxy.googlecode.com'
 license=('LGPL')
 depends=('lib32-gcc-libs' 'libproxy')

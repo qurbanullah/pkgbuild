@@ -10,7 +10,7 @@ pkgdesc="Password and account management tool suite with support for shadow file
 arch=('x86_64')
 url='https://github.com/shadow-maint/shadow'
 license=('BSD')
-groups=('security')
+groups=('sys-security')
 # libcap-ng needed by install scriptlet for 'filecap'
 depends=('pam' 'acl' 'libacl.so' 'audit' 'libaudit.so' 'libcap-ng' 'libcap-ng.so')
 backup=(etc/login.defs
@@ -19,8 +19,6 @@ backup=(etc/login.defs
         etc/pam.d/{chgpasswd,groupmems}
         etc/default/useradd)
 options=(strip debug)
-groups=(security)
-repo=(core)
 install='shadow.install'
 validpgpkeys=('D5C2F9BFCA128BBA22A77218872F702C4D6E25A8')  # Christian Perrier
 source=("git+https://github.com/shadow-maint/shadow.git#tag=$pkgver"

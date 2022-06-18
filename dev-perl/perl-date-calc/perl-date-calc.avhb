@@ -9,9 +9,10 @@ pkgver=6.4
 pkgrel=1
 pkgdesc="Perl module for Gregorian calendar date calculations"
 arch=(any)
+groups=('dev-perl')
 license=('PerlArtistic')
 url="http://search.cpan.org/dist/${_realname}/"
-depends=('perl-bit-vector' 'perl>=5.10.0')
+depends=('perl-bit-vector' 'perl')
 options=(!emptydirs)
 source=(http://search.cpan.org/CPAN/authors/id/S/ST/STBEY/${_realname}-${pkgver}.tar.gz)
 md5sums=('9b64555b7051c1beb6b61daead2d01b3')

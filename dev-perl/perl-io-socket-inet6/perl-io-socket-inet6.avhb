@@ -9,6 +9,7 @@ pkgver=2.72
 pkgrel=1
 pkgdesc="Object interface for AF_INET|AF_INET6 domain sockets"
 arch=('any')
+groups=('dev-perl')
 license=('PerlArtistic' 'GPL')
 options=('!emptydirs')
 depends=('perl-socket6')

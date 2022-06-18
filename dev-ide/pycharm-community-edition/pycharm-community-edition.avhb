@@ -1,0 +1,98 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=pycharm-community-edition
+_realname=intellij-community-idea
+pkgver=2022.1.2
+_build=221.5787.20
+pkgrel=1
+pkgdesc='Python IDE for Professional Developers'
+arch=(x86_64)
+groups=('dev-ide')
+url=https://www.jetbrains.com/pycharm/
+license=(APACHE)
+depends=(
+  giflib
+  glib2
+  java-environment=11
+  java11-openjfx
+  python3
+  sh
+  ttf-font
+  fontconfig
+  libdbusmenu-glib
+)
+optdepends=(
+  'ipython: IPython integration for Python 3'
+)
+makedepends=(
+  git
+  java-environment=11
+  # python2-setuptools
+  python3-setuptools
+)
+source=(
+  "git+https://github.com/JetBrains/intellij-community.git#tag=pycharm/${_build}"
+  idea-android::"git://git.jetbrains.org/idea/android.git#tag=pycharm/${_build}"
+  pycharm.desktop
+  pycharm.sh
+)
+sha256sums=('SKIP'
+            'SKIP'
+            'f727119ec7c8b96820e80712b1ee342de6a94ff72402e8f2d390cbff702f9b21'
+            '7b5360b4977e934931acab775d04915417a5da9f3ea1dd44355525b0016cf65d')
+
+getsrc() {
+  git clone git://git.jetbrains.org/idea/android.git
+  git checkout pycharm/${_build}
+}
+
+prepare() {
+  cd $_realname-$_build
+
+  # echo ${_build} > build.txt
+  mv "${srcdir}"/android android
+
+  sed '/String targetOS/c   String targetOS = OS_LINUX' -i platform/build-scripts/groovy/org/jetbrains/intellij/build/BuildOptions.groovy
+  sed 's|../build/plugins-autoupload.txt|plugins-autoupload.txt|' -i platform/build-scripts/groovy/org/jetbrains/intellij/build/impl/DistributionJARsBuilder.groovy
+  touch plugins-autoupload.txt
+  # Fix pycharm python/installer.cmd & python/plugin.cmd
+  sed 's|intellij.pycharm.community.build|"$(cd "$(dirname "$0")"; pwd)/../" intellij.pycharm.community.build|' -i python/installers.cmd
+  #sed 's|intellij.pycharm.community.build|"$(cd "$(dirname "$0")"; pwd)/../" intellij.pycharm.community.build|' -i python/plugin.cmd
+}
+
+build() {
+  cd $_realname-$_build
+
+  unset _JAVA_OPTIONS
+  export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+  export PATH="${JAVA_HOME}/bin:${PATH}"
+  export JDK_16_x64=/usr/lib/jvm/java-11-openjdk
+  export JDK_18_x64=/usr/lib/jvm/java-11-openjdk
+
+  ./python/installers.cmd -Dintellij.build.target.os=linux
+  #./python/plugin.cmd -Dintellij.build.target.os=linux
+
+  tar -xf out/pycharm-ce/artifacts/pycharmPC-221.SNAPSHOT-no-jbr.tar.gz -C "${srcdir}"
+
+  cd ../pycharm-community-${pkgver}
+
+  # python2 plugins/python-ce/helpers/pydev/setup_cython.py build_ext --build-temp build --build-lib .
+  python3 plugins/python-ce/helpers/pydev/setup_cython.py build_ext --build-temp build --build-lib .
+}
+
+package() {
+  cd pycharm-community-${pkgver}
+
+  # workaround FS#40934
+  sed -i 's/lcd/on/' bin/*.vmoptions
+
+  install -dm 755 "${pkgdir}"/usr/share/{licenses,pixmaps,pycharm}
+  cp -dr --no-preserve='ownership' bin lib plugins "${pkgdir}"/usr/share/pycharm/
+  cp -dr --no-preserve='ownership' license "${pkgdir}"/usr/share/licenses/pycharm/
+  ln -s /usr/share/pycharm/bin/pycharm.png "${pkgdir}"/usr/share/pixmaps/
+  install -Dm 644 ../pycharm.desktop -t "${pkgdir}"/usr/share/applications/
+  install -Dm 755 ../pycharm.sh "${pkgdir}"/usr/bin/pycharm
+}

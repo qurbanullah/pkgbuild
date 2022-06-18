@@ -9,6 +9,7 @@ pkgver=0.51
 pkgrel=1
 pkgdesc="Perl bindings to create and manipulate PAR distributions"
 arch=('any')
+groups=('dev-perl')
 url="https://search.cpan.org/dist/PAR-Dist/"
 license=('GPL' 'PerlArtistic')
 depends=('perl')

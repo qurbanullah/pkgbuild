@@ -1,0 +1,31 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+_pkgauthor=CircleCI-Public
+_upstream_pkgname=circleci-cli
+_upstream_elfname=circleci
+pkgname=circleci-cli-bin
+_realname=circleci-cli
+pkgver=0.1.18678
+pkgrel=1
+pkgdesc="CircleCI's new command-line application."
+arch=('x86_64')
+_goos="linux"
+_goarch="amd64"
+groups=('app-admin')
+url="https://github.com/${_pkgauthor}/${_upstream_pkgname}"
+license=("MIT")
+### https://github.com/CircleCI-Public/circleci-cli/releases/download/v0.1.4427/circleci-cli_0.1.4427_linux_amd64.tar.gz
+source=("${_upstream_pkgname}-${pkgver}.tar.gz::https://github.com/${_pkgauthor}/${_upstream_pkgname}/releases/download/v${pkgver}/${_upstream_pkgname}_${pkgver}_${_goos}_${_goarch}.tar.gz"
+  "LICENSE::https://raw.githubusercontent.com/${_pkgauthor}/${_upstream_pkgname}/master/LICENSE")
+sha256sums=(
+  "624f98b3d48d367031bd9991cc93e97a727f647bade310b7eb3d1ff8cacf556b"
+  "89f336660e1dea7ea005892dc44696fb15544cbffedfbddcd4f6671a735763a9"
+)
+
+package() {
+  install -Dm755 "${srcdir}/${_upstream_pkgname}_${pkgver}_${_goos}_${_goarch}/${_upstream_elfname}" "${pkgdir}/usr/bin/${_upstream_elfname}"
+  install -Dm644 "${srcdir}/LICENSE" "${pkgdir}/usr/share/licenses/${_upstream_pkgname}/LICENSE"
+}

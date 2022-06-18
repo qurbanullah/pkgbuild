@@ -1,15 +1,15 @@
-# $Id$
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=lib32-x264
 _realname=x264
-pkgver=160.r33f9e147
+pkgver=164.rbaee400f
 pkgrel=1
 pkgdesc='Open Source H264/AVC video encoder (lib32)'
 arch=('x86_64')
 groups=('multilib')
-repo=('extra')
 url='https://www.videolan.org/developers/x264.html'
 license=('GPL')
 depends=("${_realname}")
@@ -17,9 +17,12 @@ makedepends=('git' 'l-smash' 'nasm' 'lib32-gcc-libs')
 provides=('lib32-libx264' 'libx264.so')
 conflicts=('lib32-libx264' 'lib32-libx264-10bit' 'lib32-libx264-all')
 replaces=('lib32-libx264' 'lib32-libx264-10bit' 'lib32-libx264-all')
-_commit='72db437770fd1ce3961f624dd57a8e75ff65ae0b'
-source=("git+https://git.videolan.org/git/x264.git#commit=${_commit}")
+source=("https://git.videolan.org/git/x264.git")
 sha256sums=('SKIP')
+
+getsrc(){
+    git clone https://code.videolan.org/videolan/x264.git
+}
 
 pkgver() {
   cd x264

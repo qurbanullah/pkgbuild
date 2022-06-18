@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Unreal Engine 5 Editor
+Comment=Unreal Engine Generate Project Files
+Path=/opt/unreal-engine/Engine/Binaries/Linux/
+# Exec=/opt/unreal-engine/Engine/Binaries/Linux/UnrealEditor %F
+Exec=/opt/unreal-engine/Engine/Binaries/Linux/UnrealVersionSelector-Linux-Shipping -editor %f
+MimeType=text/x-uproject
+Icon=ue5editor
+Terminal=false
+Categories=Development;
+

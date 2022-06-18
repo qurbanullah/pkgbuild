@@ -10,7 +10,6 @@ pkgrel=1
 pkgdesc='Handle Common Gateway Interface requests and responses'
 arch=(any)
 groups=('dev-perl')
-repo=('extra')
 license=(PerlArtistic GPL)
 options=(!emptydirs)
 depends=('perl' perl-html-parser)

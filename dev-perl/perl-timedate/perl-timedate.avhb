@@ -9,6 +9,7 @@ pkgver=2.30
 pkgrel=1
 pkgdesc="Date formating subroutines"
 arch=('any')
+groups=('dev-perl')
 license=('PerlArtistic')
 url="http://search.cpan.org/dist/${_realname}/"
 depends=('perl')

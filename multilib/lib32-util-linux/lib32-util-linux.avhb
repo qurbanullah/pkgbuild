@@ -1,23 +1,19 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=lib32-util-linux
 pkgbase=util-linux
-_pkgmajor=2.36.1
+_pkgmajor=2.38
 pkgver=${_pkgmajor}
 pkgrel=1
 pkgdesc="Miscellaneous system utilities for Linux (32-bit)"
 url='http://www.kernel.org/pub/linux/utils/util-linux/'
 arch=('x86_64')
 groups=('multilib')
-repo=('extra')
 depends=('lib32-glibc' "$_pkgbasename")
 makedepends=('gcc-multilib')
-provides=('lib32-util-linux-ng')
-conflicts=('lib32-util-linux-ng')
-replaces=('lib32-util-linux-ng')
 license=('GPL2')
 options=('!libtool' '!emptydirs')
 source=("ftp://ftp.kernel.org/pub/linux/utils/util-linux/v$pkgver/util-linux-$pkgver.tar.xz")
