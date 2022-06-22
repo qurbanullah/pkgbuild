@@ -1,0 +1,28 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=fractal
+pkgver=4.4.0
+pkgrel=1
+pkgdesc="GTK+ client for Matrix written in Rust"
+arch=(x86_64)
+groups=("app-net")
+url="https://wiki.gnome.org/Apps/Fractal"
+license=(GPL3)
+depends=(gtk3 gst-plugins-base-libs gst-plugin-gtk gst-plugins-bad gst-editing-services gtksourceview4 gspell libhandy0)
+optdepends=('org.freedesktop.secrets: password storage')
+makedepends=(meson rust)
+_md5=d4168ac40fd681240964705e000dd353
+source=("https://gitlab.gnome.org/GNOME/fractal/uploads/${_md5}/${pkgname}-${pkgver}.tar.xz")
+sha256sums=('65af7912f3d04bd6b2386b023415fef26afc48d256af205256f86396a1415825')
+
+build() {
+    avouch-meson $pkgname-$pkgver build
+    meson compile -C build
+}
+
+package() {
+    DESTDIR="${pkgdir}" meson install -C build
+}
