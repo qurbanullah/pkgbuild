@@ -1,0 +1,64 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=certbot-apache
+pkgver=1.28.0
+pkgrel=1
+pkgdesc='Apache plugin for Certbot'
+arch=('any')
+groups=("app-crypt")
+license=('Apache')
+url='https://pypi.python.org/pypi/certbot-apache'
+replaces=('letsencrypt-apache')
+depends=(
+  'certbot'
+  'python-acme'
+  'python-augeas'
+  'python-setuptools'
+)
+makedepends=(
+  'python-build'
+  'python-wheel'
+  'python-installer'
+)
+checkdepends=('python-pytest')
+source=("https://files.pythonhosted.org/packages/source/${pkgname::1}/$pkgname/$pkgname-$pkgver.tar.gz"{,.asc})
+validpgpkeys=('148C30F6F7E429337A72D992B00B9CC82D7ADF2C'
+              '1B41B758F9A78C7F444C20FA3E5B4152E3ADB1FD'
+              'A2CFB51FA275A7286234E7B24D17C995CD9775F2'
+              '86379B4F0AF371B50CD9E5FF3402831161D1D280'
+              '20F201346BF8F3F455A73F9A780CC99432A28621'
+              'F2871B4152AE13C49519111F447BF683AA3B26C3')
+sha512sums=('a45d3ec5395e6671a2fddc8c77849a78d8bd049a844a58b52b62a973c863651f55292339740846fec12414133f24de57848805bfc86b05e2c046c701dcba99ad'
+            'SKIP')
+b2sums=('fff48a81c243aa04cd6c4b15629becd8af23d19a01adf40b7a4bc635a13d60eac6970b00ca66cb02cbc1269c1b266f0db202e45083b0327c9a8852921ed83ccd'
+        'SKIP')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+
+  # nuke setuptools from orbit ^W install_requires
+  sed \
+    -e '/setuptools>=/d' \
+    -i setup.py
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+
+  python -m build --wheel --no-isolation
+}
+
+check() {
+  cd "$pkgname-$pkgver"
+
+  python -m pytest
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+
+  python -m installer --destdir="$pkgdir" dist/*.whl
+}

@@ -1,0 +1,47 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=hardinfo-gtk3
+_realname=hardinfo
+pkgver=0.5.1.816.g877ea2b
+_commit=877ea2bc7777626c6fe77b6934a09261f1f1409e
+pkgrel=2
+pkgdesc="A system information and benchmark tool. (GTK3 version)"
+arch=('x86_64')
+groups=('app-benchmark')
+url="https://github.com/lpereira/hardinfo"
+license=('GPL2')
+depends=('gtk3')
+makedepends=('cmake' 'git')
+source=($pkgname::git+https://github.com/lpereira/hardinfo#commit=$_commit)
+sha1sums=('SKIP')
+
+# getsrc() {
+#   git clone https://github.com/lpereira/hardinfo
+# }
+
+pkgver() {
+  cd $_realname
+  git describe --long | sed "s/^release-//;s/^0.5-/0.5.1-/;s/-/./g"
+}
+
+prepare() {
+  cd ${_realname}
+  git submodule update --init
+  mkdir -p build
+}
+
+build() {
+  CFLAGS+=' -fcommon' # https://wiki.gentoo.org/wiki/Gcc_10_porting_notes/fno_common
+  cmake -S $_realname -B build \
+    -DHARDINFO_GTK3=1 \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_INSTALL_LIBDIR=lib
+  make -C build
+}
+
+package() {
+  make DESTDIR="${pkgdir}" -C build install
+}

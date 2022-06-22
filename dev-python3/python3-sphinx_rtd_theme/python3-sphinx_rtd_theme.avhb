@@ -23,7 +23,7 @@ build() {
 
 check() {
   cd ${_realname}-${pkgver}
-  python3 setup.py pytest
+  python3 setup.py test
 }
 
 package() {
