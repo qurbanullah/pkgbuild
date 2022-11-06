@@ -88,6 +88,30 @@ prepare() {
 
 build() {
   cd $pkgname
+  export CFLAGS="$CFLAGS -O3 -fvisibility=hidden"
+  export ARGS="$ARGS -O3 -fvisibility=hidden"
+
+  
+  make CrashReportClient ARGS="-O3 -fvisibility=hidden"
+  make ShaderCompileWorker ARGS="-O3 -fvisibility=hidden"
+  make UnrealLightmass ARGS="-O3 -fvisibility=hidden"
+  make UnrealFrontend ARGS="-O3 -fvisibility=hidden"
+  make UnrealInsights ARGS="-O3 -fvisibility=hidden"
+  make UnrealPak ARGS="-O3 -fvisibility=hidden"
+  make UnrealEditor ARGS="-O3 -fvisibility=hidden"
+  
+
+  # Build all targets from the "all" rule separately, because building multiple targets in parallel results in an error (but building one target with multiple threads is possible)
+  ARGS="$ARGS -march=x86-64-v4 -mtune=x86-64-v4 -O3 -pipe -fvisibility=hidden -Wp,-D_GLIBCXX_ASSERTIONS -Wl,-O3,--sort-common,--as-needed,-z,relro,-z,now" make CrashReportClient-Linux-Shipping
+  ARGS="$ARGS -O3 -fvisibility=hidden" make CrashReportClientEditor-Linux-Shipping
+  ARGS="$ARGS -O3 -fvisibility=hidden" make ShaderCompileWorker
+  ARGS="$ARGS -O3 -fvisibility=hidden" make UnrealLightmass
+  ARGS="$ARGS -O3 -fvisibility=hidden" make UnrealFrontend
+  ARGS="$ARGS -O3 -fvisibility=hidden" make UnrealEditor
+  ARGS="$ARGS -O3 -fvisibility=hidden" make UnrealInsights
+
+  make CrashReportClient ShaderCompileWorker UnrealLightmass UnrealPak UnrealEditor
+
   ./GenerateProjectFiles.sh 2>&1 | tee -a "../generate_project_files_build.log"
   Engine/Build/BatchFiles/RunUAT.sh BuildGraph -target="Make Installed Build Linux" -script=Engine/Build/InstalledEngineBuild.xml -set:WithDDC=false -set:HostPlatformOnly=true 2>&1 | tee -a "build1.log"
 }

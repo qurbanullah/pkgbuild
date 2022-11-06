@@ -5,21 +5,25 @@
 
 pkgname=zoom
 _realname=zoom_x86_64.pkg
-pkgver=5.10.6
-_subver=3192
+pkgver=5.12.2
+_subver=4816
 pkgrel=1
 pkgdesc="Video Conferencing and Web Conferencing Service"
 arch=('x86_64')
 groups=('app-net')
 license=('custom')
 url="https://zoom.us/"
-depends=('fontconfig' 'glib2' 'libpulse' 'libsm' 'ttf-font' 'libx11' 'libxcb' 'libxcomposite' 'libxfixes' 'libxi' 'libxcursor'
-	'libxkbcommon-x11' 'libxrandr' 'libxrender' 'libxshmfence' 'libxslt' 'mesa' 'nss' 'pulseaudio-alsa' 'xcb-util-image' 'xcb-util-keysyms')
-optdepends=('qt5-webengine: SSO login support'
-			'picom: extra compositor needed by some window managers for screen sharing'
-			'xcompmgr: extra compositor needed by some window managers for screen sharing')
+depends=('fontconfig' 'glib2' 'libpulse' 'libsm' 'ttf-font' 'libx11' 'libxtst' 'libxcb'
+	'libxcomposite' 'libxfixes' 'libxi' 'libxcursor' 'libxkbcommon-x11' 'libxrandr'
+	'libxrender' 'libxshmfence' 'libxslt' 'mesa' 'nss' 'xcb-util-image'
+	'xcb-util-keysyms' 'dbus' 'libdrm')
+optdepends=('pulseaudio-alsa: audio via PulseAudio'
+	'qt5-webengine: SSO login support'
+	'ibus: remote control'
+	'picom: extra compositor needed by some window managers for screen sharing'
+	'xcompmgr: extra compositor needed by some window managers for screen sharing')
 options=(!strip)
-source=("https://zoom.us/client/${pkgver}/zoom_x86_64.pkg.tar.xz")
+source=("https://cdn.zoom.us/prod/${pkgver}.${_subver}/zoom_x86_64.pkg.tar.xz")
 
 prepare() {
 	sed -i 's/Zoom\.png/Zoom/g' "${srcdir}/usr/share/applications/Zoom.desktop"

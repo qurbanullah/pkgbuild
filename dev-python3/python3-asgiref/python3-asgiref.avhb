@@ -5,7 +5,7 @@
 
 pkgname=python3-asgiref
 _realname=asgiref
-pkgver=3.5.0
+pkgver=3.5.2
 pkgrel=1
 pkgdesc="Reference ASGI adapters and channel layers"
 arch=(any)

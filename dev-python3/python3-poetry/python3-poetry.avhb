@@ -5,7 +5,7 @@
 
 pkgname=python3-poetry
 _realname=poetry
-pkgver=1.1.13
+pkgver=1.1.14
 pkgrel=1
 pkgdesc='Python dependency management and packaging made easy'
 arch=(any)

@@ -16,11 +16,6 @@ makedepends=(yelp-tools git meson)
 source=("https://gitlab.gnome.org/GNOME/$pkgname/-/archive/$pkgver/$pkgname-$pkgver.tar.bz2")
 sha256sums=('SKIP')
 
-_gccver=11
-makedepends+=("gcc>=$_gccver" "gcc<$((_gccver + 1))")
-conflicts+=("gcc<$_gccver" "gcc>=$((_gccver + 1))")
-
-
 build() {
 	# Ensure static library is non-LTO compatible
 	export CFLAGS="$CFLAGS -ffat-lto-objects"

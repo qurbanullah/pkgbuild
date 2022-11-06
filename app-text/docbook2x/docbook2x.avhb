@@ -30,9 +30,11 @@ prepare() {
 
 build()  {
 	cd ${srcdir}/docbook2X-${pkgver}
-	./configure --prefix=/usr \
+	# to avoid file conflicts with docbook2* from docbook-utils
+	./configure \
+		--prefix=/usr \
 		--mandir=/usr/share/man \
-		--program-transform-name 's,2x-,2,'
+		--program-transform-name 's,docbook2,db2x_docbook2,'
 	make
 }
 

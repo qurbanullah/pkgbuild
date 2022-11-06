@@ -3,7 +3,7 @@
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
-pkgname=python-resolvelib
+pkgname=python3-resolvelib
 _realname=resolvelib
 # pkgver=0.8.1 # not compatible with ansible
 pkgver=0.5.5

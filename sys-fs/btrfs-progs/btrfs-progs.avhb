@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=btrfs-progs
-pkgver=5.16.2
+pkgver=5.18.1
 pkgrel=1
 pkgdesc='Btrfs filesystem utilities'
 arch=('x86_64')

@@ -1,10 +1,10 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=usbmuxd
-pkgver=1.1.0+70+g52a24c5
+pkgver=1.1.1
 pkgrel=1
 pkgdesc="USB Multiplex Daemon"
 arch=('x86_64')
@@ -13,35 +13,28 @@ url="http://marcansoft.com/blog/iphonelinux/usbmuxd/"
 license=('GPL2' 'GPL3')
 depends=('libimobiledevice')
 makedepends=('git')
-source=("git+https://github.com/libimobiledevice/usbmuxd" usbmuxd.sysusers)
-
-# getsrc(){
-# 	git clone https://github.com/libimobiledevice/usbmuxd
-# }
-
-pkgver() {
-  cd $pkgname
-  git describe --tags | sed 's/-/+/g'
-}
+source=("https://github.com/libimobiledevice/usbmuxd/archive/refs/tags/$pkgver.tar.gz" 
+        usbmuxd.sysusers
+        )
 
 prepare() {
-  cd $pkgname
+  cd ${pkgname}-${pkgver}
   NOCONFIGURE=1 ./autogen.sh
 }
 
 check() {
-  cd $pkgname
+  cd ${pkgname}-${pkgver}
   make check
 }
 
 build() {
-  cd $pkgname
+  cd ${pkgname}-${pkgver}
   ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --sbindir=/usr/bin
   make
 }
 
 package() {
-  cd $pkgname
+  cd ${pkgname}-${pkgver}
   make DESTDIR="${pkgdir}" install
 
   install -Dm644 "$srcdir"/usbmuxd.sysusers "$pkgdir"/usr/lib/sysusers.d/usbmuxd.conf
