@@ -13,8 +13,7 @@ groups=('x11-drivers')
 url="https://xorg.freedesktop.org/"
 license=('custom')
 depends=('systemd-libs' 'mesa')
-makedepends=('xorg-server-devel' 'systemd' 'X-ABI-VIDEODRV_VERSION=25.2' 'git')
-conflicts=('xorg-server<21.1.1' 'X-ABI-VIDEODRV_VERSION<25' 'X-ABI-VIDEODRV_VERSION>=26')
+makedepends=('xorg-server-devel' 'systemd' 'git')
 groups=('xorg-drivers')
 #source=(${url}/releases/individual/driver/${pkgname}-${pkgver}.tar.bz2{,.sig})
 #sha512sums=('73a81f6c492daf2e89067fb52b3033dc0fe6841f109627ddca1aee54a45a738c8c134443753a2a2aaa2c131e1d560057ebc76351ff2304c16407df3ff568fcd6'

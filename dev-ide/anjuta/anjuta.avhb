@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -9,6 +9,7 @@ pkgver=3.34.0
 pkgrel=1
 pkgdesc="GNOME Integrated Development Environment (IDE)"
 arch=(x86_64)
+groups=(dev-ide)
 license=(GPL)
 makedepends=(gdl vte3 autogen devhelp glade libgda subversion neon dconf gtk-doc
              yelp-tools gnome-common intltool gobject-introspection itstool gjs
@@ -49,7 +50,7 @@ build() {
 package_libanjuta(){
   pkgdesc="Anjuta runtime library"
   depends=(gdl)
-  conflicts=('anjuta<3.4.4')
+  conflicts=('anjuta')
 
   cd $pkgbase-$pkgver/libanjuta
 

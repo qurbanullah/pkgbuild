@@ -89,5 +89,3 @@ package() {
   ln -s /opt/maven/bin/mvn "${pkgdir}/usr/bin/mvn"
   ln -s /opt/maven/bin/mvnDebug "${pkgdir}/usr/bin/mvnDebug"
 }
-
-# vim: ts=2 sw=2 et:

@@ -1,0 +1,36 @@
+# Copyright 2010-2022 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=python3-nautilus
+_realname=nautilus-python
+pkgver=1.2.3
+pkgrel=1
+pkgdesc="Python bindings for the Nautilus Extension API"
+arch=('x86_64')
+groups=('gnome-extra')
+url="https://wiki.gnome.org/Projects/NautilusPython"
+license=('GPL')
+depends=('nautilus' 'python3-pygobject')
+source=(https://download.gnome.org/sources/$_pkgname/$pkgver/$_pkgname-$pkgver.tar.xz)
+
+prepare() {
+  cd $_realname-$pkgver
+
+  # https://gitlab.gnome.org/GNOME/nautilus-python/-/merge_requests/7
+  patch -Np1 -i ../gcc10.patch
+}
+
+build() {
+  cd $_realname-$pkgver
+  ./configure --prefix=/usr --sysconfdir=/etc --localstatedir=/var --enable-gtk-doc \
+              PYTHON=python3
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+  make
+}
+
+package() {
+  cd $_realname-$pkgver
+  make DESTDIR="$pkgdir" install
+}

@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=evolution-ews
-pkgver=3.44.0
+pkgver=3.44.3
 pkgrel=1
 pkgdesc="MS Exchange integration through Exchange Web Services"
 url="https://wiki.gnome.org/Apps/Evolution/EWS"
