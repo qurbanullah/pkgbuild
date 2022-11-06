@@ -15,7 +15,6 @@ options=('!emptydirs')
 depends=('perl' 'perl-http-date>=6' 'perl-http-message')
 makedepends=()
 checkdepends=()
-conflicts=('perl-libwww<6')
 url=http://search.cpan.org/dist/HTTP-Cookies
 source=(http://search.cpan.org/CPAN/authors/id/G/GA/GAAS/HTTP-Cookies-6.00.tar.gz)
 md5sums=('21bed72b30a46604c152b7e25cf1cb45')

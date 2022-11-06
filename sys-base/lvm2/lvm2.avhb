@@ -104,7 +104,7 @@ package_lvm2() {
   depends=('bash' "device-mapper>=${pkgver}" 'libdevmapper.so' 'systemd-libs'
     'libudev.so' 'util-linux-libs' 'libblkid.so' 'readline' 'libreadline.so'
     'thin-provisioning-tools')
-  conflicts=('lvm' 'mkinitcpio<0.7')
+  conflicts=('lvm')
   backup=('etc/lvm/lvm.conf'
     'etc/lvm/lvmlocal.conf')
   options=('!makeflags')

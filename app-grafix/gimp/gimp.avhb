@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=gimp
-pkgver=2.10.30
+pkgver=2.10.32
 pkgrel=1
 pkgdesc="GNU Image Manipulation Program"
 arch=('x86_64')
@@ -31,13 +31,13 @@ prepare() {
 
   patch -Np1 < ../0001-no-check-update.patch
   
-  autoreconf -vi
+  autoreconf -vif
 }
 
 build() {
     pkg-config --exists --print-errors "OpenEXR >= 1.6.1"
     cd ${pkgname}-${pkgver}
-    PYTHON=/usr/bin/python2 ./configure \
+    ./configure \
         --prefix=/usr \
         --sysconfdir=/etc \
         --libexecdir=/usr/bin \
@@ -45,6 +45,7 @@ build() {
         --enable-gimp-console \
         --disable-python \
         --enable-gtk-doc \
+        --disable-check-update \
         --with-bug-report-url='https://bugs.avouch.org/?string=gimp' \
         --with-openexr \
         --without-aa

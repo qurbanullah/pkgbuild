@@ -5,34 +5,62 @@
 
 pkgname=playonlinux
 _realname=PlayOnLinux
-pkgver=4.3.4
+pkgver=4.4.0
 pkgrel=1
 pkgdesc="GUI for managing Windows programs under linux"
 url="http://www.playonlinux.com/"
 license=('GPL')
-depends=('wine' 'imagemagick' 'xterm' 'wxpython' 'cabextract' 'unzip' 'mesa-demos' 'gnupg'
-         'icoutils' 'xdg-user-dirs' 'libxmu' 'netcat' 'wget' 'p7zip')
+depends=('wine' 'imagemagick' 'xterm' 'python-wxpython' 'cabextract' 'unzip' 'mesa-utils' 'gnupg'
+         'icoutils' 'xdg-user-dirs' 'libxmu' 'netcat' 'wget' 'p7zip' 'jq' 'perl' python-natsort)
 arch=('any')
 groups=('app-emulation')
 source=(http://www.playonlinux.com/script_files/PlayOnLinux/${pkgver/.0/}/PlayOnLinux_${pkgver/.0/}.tar.gz)
 options=(!strip)
 md5sums=('9869697c13010e88cf68607cea334dbd')
 
+getsrc(){
+  git clone https://github.com/PlayOnLinux/POL-POM-4.git
+}
+
+pkgver() {
+  cd "${srcdir}/playonlinux4"
+  git describe --tags | sed 's/^v//;s/-/+/g'
+}
+
+build() {
+  cd "${srcdir}/playonlinux4"
+
+  #sed -i "s/libexec/bin/g" Makefile
+
+  #make PREFIX=/usr
+  #make DESTDIR="${pkgdir}" install
+}
+
 package() {
   cd "$srcdir/$pkgname"
 
-  sed -i "s/libexec/bin/g" Makefile
+  install -d "${pkgdir}/usr/share/playonlinux4"
+	install -d "${pkgdir}/usr/bin"
+	cp -r "${srcdir}/playonlinux4/" "${pkgdir}/usr/share/"
+	rm -rf "${pkgdir}/usr/share/playonlinux4/.git"
 
-  make PREFIX=/usr
-  make DESTDIR="${pkgdir}" install
+	echo '#!/bin/bash' > "${pkgdir}/usr/bin/playonlinux4"
+	echo "/usr/share/playonlinux4/playonlinux \"\$@\"" >> "${pkgdir}/usr/bin/playonlinux4"
+	chmod +x "${pkgdir}/usr/bin/playonlinux4"
 
-  install -d "${pkgdir}"/usr/share/playonlinux/lang
-  mv -v "${pkgdir}"/usr/share/locale "${pkgdir}"/usr/share/playonlinux/lang/locale
-  chmod 755 "${pkgdir}"/usr/share/playonlinux/lang
+	# Needed for wxpython2.8 support, wxpython 3.0 is buggy with POL
+	sed -i "s/wxversion.ensureMinimal/wxversion.select/g" "${pkgdir}/usr/share/playonlinux4/python/mainwindow.py"
 
-  install -m755 "${srcdir}"/PlayOnLinuxUrlHandler.desktop "${pkgdir}"/usr/share/applications/PlayOnLinuxUrlHandler.desktop
-  install -m755 playonlinux-url_handler "${pkgdir}"/usr/bin/playonlinux-url_handler
-  sed -i "s/python /python2 /g" "$pkgdir"/usr/{bin,share/playonlinux}/playonlinux-url_handler
+	install -D -m644 "${srcdir}/playonlinux4/etc/PlayOnLinux.desktop" "${pkgdir}/usr/share/applications/playonlinux4.desktop"
+	sed -i 's/ %F//g' "${pkgdir}/usr/share/applications/playonlinux4.desktop"
 
-#  sed -i "s/ %F//g" $pkgdir/usr/share/applications/playonlinux.desktop
+	# Fixup desktop file
+	sed -i 's/playonlinux/playonlinux4/g' "${pkgdir}/usr/share/applications/playonlinux4.desktop"
+	sed -i 's/PlayOnLinux/PlayOnLinux 4/g' "${pkgdir}/usr/share/applications/playonlinux4.desktop"
+
+	# Install icons
+	for size in 16 22 32; do
+		install -Dm644 "${srcdir}/playonlinux4/etc/playonlinux${size}.png" \
+		"${pkgdir}/usr/share/icons/hicolor/${size}x${size}/apps/playonlinux4.png"
+	done
 }

@@ -1,7 +1,8 @@
 DATA_MOUNTPOINT=/mnt
 EFI_MOUNTPOINT=/mnt
 
-
+DATA_MOUNTPOINT=/run/media/avouch/WINDOWS10
+EFI_MOUNTPOINT=/run/media/avouch/WINDOWS10
 
 sudo mount -t vfat /dev/sdc1 ${DATA_MOUNTPOINT}
 

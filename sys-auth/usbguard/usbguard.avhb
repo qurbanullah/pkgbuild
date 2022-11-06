@@ -4,16 +4,16 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=usbguard
-pkgver=0.7.8
+pkgver=1.1.1
 pkgrel=1
 pkgdesc='Software framework for implementing USB device authorization policies'
 url='https://github.com/dkopecek/usbguard'
 arch=('x86_64')
 groups=('sys-auth')
 license=('GPL2')
-depends=('glibc' 'libqb' 'libqb.so' 'libsodium' 'libcap-ng' 'protobuf' 'polkit' 'dbus-glib'
-         'audit' 'libaudit.so' 'libseccomp' 'libseccomp.so')
-makedepends=('catch2' 'pegtl' 'libxslt' 'asciidoc' 'systemd')
+depends=('glibc' 'libqb' 'libsodium' 'libcap-ng' 'protobuf' 'polkit' 'dbus-glib'
+         'audit' 'libseccomp' 'libcap-ng' 'glib2')
+makedepends=('catch2' 'pegtl' 'libxslt' 'libxml2' 'asciidoc' 'systemd')
 provides=('libusbguard.so')
 backup=(etc/usbguard/usbguard-daemon.conf
         etc/usbguard/rules.conf)
@@ -23,7 +23,6 @@ validpgpkeys=('FD9B3F9DCEBB5537A8FAF5213B0C109510712034') # Daniel Kopeček <dnk
 
 prepare() {
   cd ${pkgname}-${pkgver}
-  sed 's|/usr/include/catch|/usr/include/catch2|g' -i configure.ac
   autoreconf -fiv
 }
 

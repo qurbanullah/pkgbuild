@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2022 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -12,43 +12,29 @@ groups=('app-mobile')
 url="http://libimobiledevice.org/"
 license=('GPL2' 'LGPL2.1')
 depends=('glib2')
-makedepends=('python' 'cython' 'autoconf-archive' 'git' 'python-setuptools')
+makedepends=('python3' 'cython' 'autoconf-archive' 'git' 'python-setuptools')
 options=('!makeflags')
-_commit=c5a30e9267068436a75b5d00fcbf95cb9c1f4dcd
-source=("https://github.com/libimobiledevice/libplist")
-
-getsrc(){
-  git clone $source
-}
-
-pkgver() {
-  cd $pkgname
-  git describe --tags | sed 's/-/+/g'
-  git checkout $_commit
-  git describe --tags | sed 's/-/+/g'
-}
+source=("https://github.com/libimobiledevice/libplist/archive/refs/tags/$pkgver.tar.gz")
 
 prepare() {
-  cd $pkgname
-  # Update ac_python_devel.m4 to newer ax_python_devel.m4
-  git cherry-pick -n 42bb64ba96
+  cd ${pkgname}-${pkgver}
   NOCONFIGURE=1 ./autogen.sh
 }
 
 build() {
-  cd $pkgname  
+  cd ${pkgname}-${pkgver}
   ./configure --prefix=/usr
   sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
   make
 }
 
 check() {    
-  cd $pkgname 
+  cd ${pkgname}-${pkgver}
   make check  
 }
 
 package() {
-  cd $pkgname
+  cd ${pkgname}-${pkgver}
   make DESTDIR="$pkgdir" install
   install -D -m644 cython/plist.pxd "${pkgdir}"/usr/include/plist/cython/plist.pxd
 }

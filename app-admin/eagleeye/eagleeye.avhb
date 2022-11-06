@@ -11,58 +11,30 @@ arch=('x86_64')
 groups=('sys-apps')
 url="http://www.avouch.org/projects/eagleeye/"
 license=('GPL')
-depends=('QT5')
-replaces=('')
-conflicts=('')
+depends=('python3')
 install=eagleeye.install
 source=("https://github.com/qurbanullah/eagleeye.git")
-# source=("ftp://ftp.avouch.org/eagleeye/${pkgname}/${pkgname}-${pkgver}.tar.gz")
 
 getsrc() {
+  [ -d $pkgname ] && rm -r $pkgname
 	git clone $source
 }
 
-# pkgver() {
-# 	cd ${pkgname}
-# 	git describe --tag
-# }
-
 build() {
-	cd ${pkgname}
-	qmake-qt5
-	make
+  cd $pkgname
+  python3 setup.py build
 }
 
+# check() {
+#   cd $pkgname
+#   python3 setup.py pytest
+# }
+
 package() {
-	cd ${pkgname}
-	install -D -m755 eeinstaller/eeinstaller ${pkgdir}/usr/bin/eeinstaller
-	install -D -m755 eeinstaller/eeinstaller ${pkgdir}/usr/bin/ee_installer
+  cd $pkgname
+  python3 setup.py install --skip-build --root="${pkgdir}" --optimize='1'
 
-	install -D -m755 eeupdater/eeupdater ${pkgdir}/usr/bin/eeupdater
-	install -D -m755 eeupdater/eeupdater ${pkgdir}/usr/bin/ee_updater
+  # install eescript
+  install -m755 scripts/eebuild $pkgdir/usr/bin/eebuild
 
-	for i in ee; do
-		  install -m 755 eeinstaller/scripts/$i "$pkgdir/usr/bin/"
-	done
-
-	install -Dm644 "eeinstaller/data/ee.conf" \
-		"$pkgdir/etc/ee.conf"
-	
-	install -Dm644 "eeinstaller/data/eeinstaller.desktop" \
-		"$pkgdir/usr/share/applications/eeinstaller.desktop"
-	install -Dm644 "eeupdater/data/eeupdater.desktop" \
-		"$pkgdir/usr/share/applications/eeupdater.desktop"
-
-	install -Dm644 "eeinstaller/data/eagleeye.xml" \
-		"$pkgdir/usr/share/mime/packages/eagleeye.xml"
-	
-	# Install policy file
-	install -Dm644 "eeinstaller/data/org.avouch.pkexec.eeinstaller.policy" \
-		"${pkgdir}/usr/share/polkit-1/actions/org.avouch.pkexec.eeinstaller.policy"
-	install -Dm644 "eeinstaller/data/org.avouch.pkexec.eeupdater.policy" \
-		"${pkgdir}/usr/share/polkit-1/actions/org.avouch.pkexec.eeupdater.policy"
-
-	# license
-	install -d ${pkgdir}/usr/share/licenses/${pkgname}
-	ln -sf /usr/share/licenses/gnu/gpl-2.0.txt "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
 }

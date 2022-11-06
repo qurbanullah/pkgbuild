@@ -3,6 +3,10 @@
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
+# GTK 2/3 symbols detected. Using GTK 2/3 and GTK 4 in the same process is not supported
+# to fix this error uninstall evolution-ews
+# https://gitlab.gnome.org/GNOME/gnome-contacts/-/issues/222
+
 pkgname=gnome-contacts
 pkgver=42.0
 pkgrel=1
@@ -11,7 +15,7 @@ url="https://wiki.gnome.org/Apps/Contacts"
 arch=('x86_64')
 groups=('gnome-base')
 license=(GPL2)
-depends=(gtk3 folks gnome-desktop dconf gnome-online-accounts libgee cheese libhandy)
+depends=(gtk4 folks gnome-online-accounts libgee libadwaita libportal evolution-data-server)
 makedepends=(vala gobject-introspection git meson)
 source=(https://gitlab.gnome.org/GNOME/$pkgname/-/archive/$pkgver/$pkgname-$pkgver.tar.bz2)
 
