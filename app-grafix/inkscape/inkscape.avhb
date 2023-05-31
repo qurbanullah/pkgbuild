@@ -4,9 +4,10 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=inkscape
-pkgver=1.2
-_pkgver=1.2_2022-05-15_dc2aedaf03
-# _realname=inkscape-INKSCAPE_$_pkgver
+pkgver=1.2.2
+_pkgver=${pkgver//./_}
+# _pkgver=1.2_2022-05-15_dc2aedaf03
+# _realname=inkscape-INKSCAPE
 pkgrel=1
 pkgdesc='Professional vector graphics editor'
 arch=('x86_64')
@@ -28,11 +29,15 @@ depends=(
 	'lib2geom'
 	'libcdr'
 	'libjpeg-turbo'
+	'libsoup'
 	'libvisio'
 	'libxslt'
 	'poppler-glib'
 	'potrace'
-	'python3'
+	'python'
+	'python-cssselect'
+	'python-lxml'
+	'python-numpy'
 	'ttf-font'
 )
 
@@ -57,32 +62,31 @@ sha256sums=('SKIP'
 _backports=(
 )
 
-getsrc() {
-	# git clone https://gitlab.com/inkscape/lib2geom.git
-	# git clone https://gitlab.com/inkscape/extensions.git
-	git clone https://gitlab.com/inkscape/themes.git
-}
+# getsrc() {
+# 	cd "${_realname}_${_pkgver}"
+# 	git clone https://gitlab.com/inkscape/lib2geom.git
+# 	git clone https://gitlab.com/inkscape/extensions.git
+# 	git clone https://gitlab.com/inkscape/themes.git
+# }
 
-prepare() {
+# prepare() {
 	# bsdtar -xf $srcarchivedir/lib2geom-1.1.tar.bz2
 	# bsdtar -xf $srcarchivedir/extensions-EXTENSIONS_AT_INKSCAPE_$pkgver.tar.bz2
 
-	cd "${pkgname}-${_pkgver}"
+	# cd "${_realname}_${_pkgver}"
 	# rm -r src/3rdparty/2geom
-	# mv ../lib2geom-1.1 src/3rdparty/2geom
+	# mv lib2geom src/3rdparty/2geom
 
 	# rm -r share/extensions
-	# mv ../extensions-EXTENSIONS_AT_INKSCAPE_$pkgver share/extensions
+	# mv extensions share/extensions
 	
 	# rm -r share/themes
-	# mv ../themes share
-
-	# patch -Np1 -i ../poppler-22.03.0.patch
-}
+	# mv themes share
+# }
 
 build() {
 	export PKG_CONFIG_PATH='/usr/lib/imagemagick6/pkgconfig'
-	cmake -B build -S cd "${pkgname}-${_pkgver}" -G Ninja \
+	cmake -B build -S "${pkgname}" -G Ninja \
 		-DCMAKE_BUILD_TYPE=Release \
 		-DCMAKE_INSTALL_PREFIX:PATH=/usr \
 		-DCMAKE_INSTALL_LIBDIR=/usr/lib \

@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=firefox
-pkgver=100.0
+pkgver=111.0.1
 pkgrel=1
 pkgdesc="Standalone web browser from mozilla.org"
 arch=('x86_64')
@@ -211,7 +211,7 @@ END
   install -Dm644 /dev/stdin "$_distini" <<END
 [Global]
 id=avouch
-version=0.2.0
+version=0.3.0
 about=Mozilla Firefox for Avouch Linux
 
 [Preferences]
@@ -253,10 +253,10 @@ END
     ln -srfv "$pkgdir/usr/lib/libnssckbi.so" "$nssckbi"
   fi
 
-  export SOCORRO_SYMBOL_UPLOAD_TOKEN_FILE="$srcdir/.crash-stats-api.token"
-  if [[ -f $SOCORRO_SYMBOL_UPLOAD_TOKEN_FILE ]]; then
-    make -C obj uploadsymbols
-  else
-    cp -fvt "$srcdir" obj/dist/*crashreporter-symbols-full.tar.zst
-  fi
+  # export SOCORRO_SYMBOL_UPLOAD_TOKEN_FILE="$srcdir/.crash-stats-api.token"
+  # if [[ -f $SOCORRO_SYMBOL_UPLOAD_TOKEN_FILE ]]; then
+  #   make -C obj uploadsymbols
+  # else
+  #   cp -fvt "$srcdir" obj/dist/*crashreporter-symbols-full.tar.zst
+  # fi
 }

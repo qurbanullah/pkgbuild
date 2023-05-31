@@ -1,0 +1,40 @@
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=uvicorn
+pkgver=0.21.0
+pkgrel=1
+pkgdesc='The lightning-fast ASGI server'
+arch=(any)
+groups=('www-servers')
+url=https://github.com/encode/uvicorn
+license=(BSD)
+depends=(
+  python
+  python-asgiref
+  python-click
+  python-h11
+  python-httptools
+  python-uvloop
+  python-websockets
+)
+makedepends=(
+  git
+  python-build
+  python-hatchling
+  python-installer
+)
+source=(https://github.com/encode/uvicorn/archive/refs/tags/$pkgver.tar.gz)
+b2sums=(SKIP)
+
+build() {
+  cd uvicorn-$pkgver
+  python -m build --wheel --no-isolation
+}
+
+package() {
+  python -m installer --destdir="${pkgdir}" uvicorn-$pkgver/dist/*.whl
+  install -Dm 644 uvicorn-$pkgver/LICENSE.md -t "${pkgdir}"/usr/share/licenses/uvicorn/
+}

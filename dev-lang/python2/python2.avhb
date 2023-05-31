@@ -13,17 +13,21 @@ arch=('x86_64')
 groups=('dev-lang')
 license=('PSF')
 url="https://www.python.org/"
-depends=('bzip2' 'expat' 'gdbm' 'libffi' 'libnsl' 'libxcrypt' 'openssl' 'sqlite' 'zlib')
+depends=('bzip2' 'expat' 'gdbm' 'libffi' 'libnsl' 'libxcrypt' 'openssl-1.1'  'sqlite' 'zlib')
 makedepends=('tk' 'bluez-libs')
-checkdepends=('gdb' 'file' 'xorg-server-xvfb')
+checkdepends=('gdb' 'file' 'xorg-server-xvfb' 'xterm')
 optdepends=('tk: for IDLE'
             'python2-setuptools'
             'python2-pip')
-_gentoo_patches="python-gentoo-patches-${pkgver}_p7"
+conflicts=('python<3')
+_gentoo_patches="python-gentoo-patches-${pkgver}_p16"
 source=("https://www.python.org/ftp/python/${pkgver%rc?}/Python-${pkgver}.tar.xz"{,.asc}
         mtime-workaround.patch
-        "https://dev.gentoo.org/~mgorny/dist/python/$_gentoo_patches.tar.xz"
-        py2-ize-the-CJK-codec-test.patch)
+        "https://dev.gentoo.org/~mgorny/dist/python/$_gentoo_patches.tar.xz")
+sha512sums=('a7bb62b51f48ff0b6df0b18f5b0312a523e3110f49c3237936bfe56ed0e26838c0274ff5401bda6fc21bf24337477ccac49e8026c5d651e4b4cafb5eb5086f6c'
+            'SKIP'
+            '4e761cfd57791e8b72ecdf84c2e03875bf074311130eea5b8e97409fa304fa3468dbd359a511c4e9978e686e662c58054b4174d3e73f845fa9ded2e83a3a8076'
+            '810be590d0e06fab4b2165e6852ca49662f09dcd7e20b47a29f613ad7653252c8dfac3f0eb228d77c8a914efa7c08788b2fbd552a4b47504f5fd0ec17450c48f')
 validpgpkeys=('C01E1CAD5EA2C4F0B8E3571504C367C218ADD4FF')  # Benjamin Peterson
 noextract=("$_gentoo_patches.tar.xz")
 
@@ -34,7 +38,7 @@ prepare() {
 
   # makepkg will touch all files to $SOURCE_DATE_EPOCH which will break pyc file's mtime check.
   # workaround this by touching them to $SOURCE_DATE_EPOCH before running compileall.
-  patch -p0 -i ../mtime-workaround.patch
+  # patch -p0 -i ../mtime-workaround.patch
 
   patch -p1 -i ../0001-bpo-39017-Avoid-infinite-loop-in-the-tarfile-module-.patch #CVE-2019-20907
   patch -p1 -i ../0002-bpo-39503-CVE-2020-8492-Fix-AbstractBasicAuthHandler.patch #CVE-2020-8492
@@ -43,8 +47,9 @@ prepare() {
   patch -p1 -i ../0005-bpo-41944-No-longer-call-eval-on-content-received-vi.patch #CVE-2020-27619
   patch -p1 -i ../0006-bpo-40791-Make-compare_digest-more-constant-time.-GH.patch
   patch -p1 -i ../0007-3.6-closes-bpo-42938-Replace-snprintf-with-Python-un.patch #CVE-2021-3177
-  patch -p1 -i ../0024-3.6-bpo-42967-only-use-as-a-query-string-separator-G.patch #CVE-2021-23336
-  patch -p1 -i ../py2-ize-the-CJK-codec-test.patch
+  patch -p1 -i ../0008-3.6-bpo-42967-only-use-as-a-query-string-separator-G.patch #CVE-2021-23336
+  patch -p1 -i ../0009-py2-ize-the-CJK-codec-test.patch
+  patch -p1 -i ../0017-bpo-46811-Make-test-suite-support-Expat-2.4.5-GH-314.patch
 
   # Temporary workaround for FS#22322
   # See http://bugs.python.org/issue10835 for upstream report
@@ -74,9 +79,10 @@ prepare() {
 }
 
 build() {
+  use_linker "ld"
   cd "${srcdir}/Python-${pkgver}"
 
-  disable_ld_gold
+
   export OPT="${CFLAGS}"
   ./configure --prefix=/usr \
               --enable-shared \
@@ -99,7 +105,8 @@ build() {
 #   # Since 2.7.15: test_ctypes
 #   # test_ftplib test_imaplib test_urllib2_localnet: krb5 errors
 #   # test_codecmaps_jp: TODO
-
+#   export TERM=xterm
+#   local -x TZ=UTC
 #   cd Python-${pkgver}
 #   LD_LIBRARY_PATH="${srcdir}/Python-${pkgver}":${LD_LIBRARY_PATH} \
 #     xvfb-run "${srcdir}/Python-${pkgver}/python" -m test.regrtest -v -uall -x test_idle test_tk test_ttk_guionly test_ctypes test_ssl test_ftplib test_imaplib test_urllib2_localnet test_codecmaps_jp

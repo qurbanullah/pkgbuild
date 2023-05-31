@@ -1,3 +1,5 @@
+# First make new partition table mbr with gparted
+
 sudo gdisk /dev/sdc
 
 Command (? for help): r

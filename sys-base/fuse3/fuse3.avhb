@@ -6,7 +6,7 @@
 pkgbase=fuse3
 pkgname=(fuse-common fuse3)
 _realname=fuse
-pkgver=3.9.2
+pkgver=3.13.0
 pkgrel=1
 arch=('x86_64')
 groups=('sys-base')

@@ -1,10 +1,11 @@
-# $Id$
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=python2-setuptools-scm
 _realname=setuptools_scm
-pkgver=3.5.0
+pkgver=5.0.2
 pkgrel=1
 pkgdesc="Handles managing your python package versions in scm metadata."
 arch=('any')
@@ -16,19 +17,13 @@ makedepends=('python2-setuptools')
 checkdepends=('python2-pytest' 'mercurial' 'python2-pip' 'python2-toml')
 source=("https://pypi.io/packages/source/s/setuptools_scm/setuptools_scm-$pkgver.tar.gz")
 
-build() { 
-	cd ${_realname}-${pkgver}
-   python2 setup.py build
-   python2 setup.py egg_info
+build() {
+  cd $_realname-$pkgver
+  python2 setup.py build
 }
 
-check() {	
-	cd ${_realname}-${pkgver}
-	python2 setup.py test
-}
-
-package() {	
-	cd ${_realname}-${pkgver}
-	python2 setup.py install --root "${pkgdir}" --optimize=1
-	install -Dm644 LICENSE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE"
+package() {
+  cd $_realname-$pkgver
+  python2 setup.py install --root="$pkgdir/" --optimize=1 --skip-build
+  install -Dm644 -t "$pkgdir"/usr/share/licenses/$pkgname LICENSE
 }

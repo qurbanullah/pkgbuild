@@ -1,10 +1,11 @@
-# $Id$
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=python2-pip
 _realname=pip
-pkgver=20.0.2
+pkgver=20.3.4
 pkgrel=1
 pkgdesc="The PyPA recommended tool for installing Python packages"
 url="https://pip.pypa.io/"
@@ -28,19 +29,24 @@ build() {
 }
 
 package() {
-	cd ${_realname}-${pkgver}
-  python2 setup.py install --prefix=/usr --root="$pkgdir"
+  local _site_packages
+  _site_packages=$(python2 -c "import site; print(site.getsitepackages()[0])")
 
-  mv "$pkgdir/usr/bin/pip" "$pkgdir/usr/bin/pip2"
+  cd ${_realname}-${pkgver}
+  python2 setup.py install --prefix=/usr --root="${pkgdir}"
+
+  mv "${pkgdir}/usr/bin/${_name}" "$pkgdir/usr/bin/${_name}2"
   sed -i "s|#!/usr/bin/env python$|#!/usr/bin/env python2|" \
-    ${pkgdir}/usr/lib/python2.7/site-packages/pip/__init__.py
-  python2 -m compileall ${pkgdir}/usr/lib/python2.7/site-packages/pip/__init__.py
+    "${pkgdir}/${_site_packages}/pip/__init__.py"
+  python2 -m compileall "${pkgdir}/${_site_packages}/pip/__init__.py"
 
   install -D -m644 LICENSE.txt \
-	  "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+	  "${pkgdir}/usr/share/licenses/${pkgbase}/LICENSE"
 
-  install -Dm644 -t "$pkgdir"/usr/share/man/man1 docs/build/man-pip2/*
+  install -Dm644 -t "${pkgdir}/usr/share/man/man1" docs/build/man-${_name}2/*
 
-  PYTHONPATH="$pkgdir"/usr/lib/python2.7/site-packages "$pkgdir"/usr/bin/pip2 completion --bash \
-    | install -Dm644 /dev/stdin "$pkgdir"/usr/share/bash-completion/completions/pip2
+  PYTHONPATH="${pkgdir}/${_site_packages}" "${pkgdir}/usr/bin/${_name}2" completion --bash \
+    | install -Dm644 /dev/stdin "${pkgdir}/usr/share/bash-completion/completions/${_name}2"
+  PYTHONPATH="${pkgdir}/${_site_packages}" "${pkgdir}/usr/bin/${_name}2" completion --fish \
+    | install -Dm644 /dev/stdin "${pkgdir}/usr/share/fish/vendor_completions.d/${_name}2.fish"
 }

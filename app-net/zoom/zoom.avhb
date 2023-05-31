@@ -5,8 +5,8 @@
 
 pkgname=zoom
 _realname=zoom_x86_64.pkg
-pkgver=5.12.2
-_subver=4816
+pkgver=5.14.7
+_subver=2928
 pkgrel=1
 pkgdesc="Video Conferencing and Web Conferencing Service"
 arch=('x86_64')

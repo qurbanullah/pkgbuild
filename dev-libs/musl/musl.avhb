@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=musl
-pkgver=1.2.1
+pkgver=1.2.3
 pkgrel=1
 pkgdesc='Lightweight implementation of C standard library'
 arch=('x86_64')
@@ -23,11 +23,12 @@ prepare() {
   cd $pkgname-$pkgver
 
   # FS#68685 - [musl][security] 1.2.1-1: CVE-2020-28928: wcsnrtombs destination buffer overflow
-  patch -p1 -i ../CVE-2020-28928.patch
+  # patch -p1 -i ../CVE-2020-28928.patch
 }
 
 build() {
   cd $pkgname-$pkgver
+  use_linker 'ld'
   ./configure --prefix=/usr/lib/musl \
     --exec-prefix=/usr \
     --enable-wrapper=all

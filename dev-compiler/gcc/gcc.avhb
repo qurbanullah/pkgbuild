@@ -7,14 +7,15 @@
 # NOTE: libtool requires rebuilt with each new gcc version
 
 pkgbase=gcc
-pkgname=(gcc gcc-libs lib32-gcc-libs gcc-fortran gcc-objc gcc-ada gcc-go gcc-d libgccjit)
-_pkgver=11
-pkgver=11.3.0
+pkgname=(gcc gcc-libs lib32-gcc-libs gcc-fortran gcc-objc gcc-ada gcc-go gcc-d lto-dump libgccjit)
+# pkgname=(gcc gcc-libs lib32-gcc-libs gcc-fortran gcc-objc gcc-ada gcc-go lto-dump libgccjit)
+pkgver=13.1.0
+_pkgver=${pkgver%%.*}
 #_majorver=${pkgver:0:2}
 _majorver=${pkgver%%.*}
 pkgrel=1
-_islver=0.24
-#_snapshot=20210328
+# _islver=0.24
+# _snapshot=20221121
 pkgdesc='The GNU Compiler Collection'
 arch=('x86_64')
 groups=('dev-compiler')
@@ -42,7 +43,7 @@ checkdepends=(
 )
 options=(!emptydirs !lto debug)
 source=(https://ftp.gnu.org/gnu/gcc/gcc-$pkgver/gcc-$pkgver.tar.xz
-        http://isl.gforge.inria.fr/isl-${_islver}.tar.xz
+        # http://isl.gforge.inria.fr/isl-${_islver}.tar.xz
         c89 c99)
 validpgpkeys=(F3691687D867B81B51CE07D9BBE43771487328A9  # bpiotrowski@archlinux.org
               86CFFCA918CF3AF47147588051E8B148A9999C34  # evangelos@foutrelis.com
@@ -51,7 +52,7 @@ validpgpkeys=(F3691687D867B81B51CE07D9BBE43771487328A9  # bpiotrowski@archlinux.
 
 if [ -n "${_snapshot}" ]; then	
 	#_basedir=${pkgbase}-${_majorver}-${_snapshot}
-  _basedir=${pkgbase}-${_pkgver}-${_snapshot}
+  _basedir=${pkgbase}-${pkgver}-${_snapshot}
 	else
 	_basedir=${pkgbase}-${pkgver}
 fi
@@ -61,8 +62,8 @@ _libdir="usr/lib/gcc/${CHOST}/${_majorver}"
 # _libdir=usr/lib/gcc/$CHOST/${pkgver%%+*}
 
 prepare() {	
-  [[ ! -d gcc ]] && ln -s gcc-${pkgver/+/-} gcc
-  cd gcc
+  [[ ! -d gcc ]] && ln -sf ${_basedir} gcc
+  cd $_basedir
 
 	# Do not run fixincludes
 	sed -i 's@\./fixinc\.sh@-c true@' gcc/Makefile.in
@@ -74,7 +75,7 @@ prepare() {
 	sed -i "/ac_cpp=/s/\$CPPFLAGS/\$CPPFLAGS -O2/" {libiberty,gcc}/configure
 	
   # D hacks
-  patch -p1 -i "$srcdir/gdc_phobos_path.patch"
+#   patch -p1 -i "$srcdir/gdc_phobos_path.patch"
 
   # Reproducible gcc-ada
   patch -Np0 < "$srcdir/gcc-ada-repro.patch"
@@ -105,6 +106,7 @@ build() {
       --mandir=/usr/share/man \
       --infodir=/usr/share/info \
       --with-bugurl=https://avouch.org/bugs \
+      --with-build-config=bootstrap-lto \
       --with-linker-hash-style=gnu \
       --with-gcc-major-version-only \
       --with-system-zlib \
@@ -116,6 +118,8 @@ build() {
       --enable-default-ssp \
       --enable-gnu-indirect-function \
       --enable-gnu-unique-object \
+      --enable-libstdcxx-backtrace \
+      --enable-link-serialization=1 \
       --enable-linker-build-id \
       --enable-lto \
       --enable-multilib \
@@ -124,10 +128,7 @@ build() {
       --enable-threads=posix \
       --disable-libssp \
       --disable-libstdcxx-pch \
-      --disable-werror \
-      --with-build-config=bootstrap-lto \
-      --enable-link-serialization=1 \
-      gdc_include_dir=/usr/include/dlang/gdc"
+      --disable-werror"
 
   cd gcc-build
 
@@ -137,7 +138,22 @@ build() {
   export CFLAGS=${CFLAGS/-Werror=format-security/}
   export CXXFLAGS=${CXXFLAGS/-Werror=format-security/}
 
-  "$srcdir/gcc/configure" \
+  message "CFLAGS are : $CFLAGS"
+  message "CXXFLAGS are : $CXXFLAGS"
+  message "LDFLAGS are : $LDFLAGS"
+
+  # "$srcdir/gcc/configure" \
+  #   CC="$GCC" CXX="$GXX" \
+  #   --enable-languages=c,c++,ada,fortran,go,lto,objc,obj-c++,d \
+  #   --enable-bootstrap \
+  #   $_confflags
+
+  # d failed to build with error
+  # /build/gcc/gcc/gcc/d/dmd/cond.d:637:9: error: ‘object.__switch’ not found. 
+  # The current runtime does not support switch cases on strings, or the runtime is corrupt.
+  # no workout found yet 
+  # disable temporarily
+    "$srcdir/gcc/configure" \
     CC="$GCC" CXX="$GXX" \
     --enable-languages=c,c++,ada,fortran,go,lto,objc,obj-c++,d \
     --enable-bootstrap \
@@ -145,10 +161,10 @@ build() {
 
   # see https://bugs.archlinux.org/task/71777 for rationale re *FLAGS handling
   make ${MAKEFLAGS} -O STAGE1_CFLAGS="-O2" \
-          BOOT_CFLAGS="$CFLAGS" \
-          BOOT_LDFLAGS="$LDFLAGS" \
-          LDFLAGS_FOR_TARGET="$LDFLAGS" \
-          profiledbootstrap
+    BOOT_CFLAGS="$CFLAGS" \
+    BOOT_LDFLAGS="$LDFLAGS" \
+    LDFLAGS_FOR_TARGET="$LDFLAGS" \
+    bootstrap
   
   # make documentation
   make ${MAKEFLAGS} -O -C $CHOST/libstdc++-v3/doc doc-man-doxygen
@@ -192,7 +208,7 @@ check() {
 
 package_gcc-libs() {
   pkgdesc='Runtime libraries shipped by GCC'
-  depends=('glibc>=2.27')
+  depends=('glibc')
   options=(!emptydirs !strip)
   provides=($pkgname-multilib libgo.so libgfortran.so libgphobos.so
             libubsan.so libasan.so libtsan.so liblsan.so)
@@ -238,6 +254,7 @@ package_gcc-libs() {
 package_gcc() {
   pkgdesc="The GNU Compiler Collection - C and C++ frontends"
   depends=("gcc-libs=$pkgver-$pkgrel" 'binutils>=2.28' libmpc zstd libisl.so)
+  groups=('base-devel')
   optdepends=('lib32-gcc-libs: for generating code for 32-bit ABI')
   provides=($pkgname-multilib)
   replaces=($pkgname-multilib)
@@ -247,7 +264,7 @@ package_gcc() {
 
   make -C gcc DESTDIR="$pkgdir" install-driver install-cpp install-gcc-ar \
     c++.install-common install-headers install-plugin install-lto-wrapper
-  
+
   install -m755 -t "$pkgdir/usr/bin/" gcc/gcov{,-tool}
   install -m755 -t "$pkgdir/${_libdir}/" gcc/{cc1,cc1plus,collect2,lto1}
 
@@ -290,7 +307,7 @@ package_gcc() {
   make -C $CHOST/32/libsanitizer/asan DESTDIR="$pkgdir" install-nodist_toolexeclibHEADERS
 
   make -C gcc DESTDIR="$pkgdir" install-man install-info
-  rm "$pkgdir"/usr/share/man/man1/{gccgo,gfortran,gdc}.1
+  rm "$pkgdir"/usr/share/man/man1/{gccgo,gfortran,lto-dump,gdc}.1
   rm "$pkgdir"/usr/share/info/{gccgo,gfortran,gnat-style,gnat_rm,gnat_ugn,gdc}.info
 
   make -C libcpp DESTDIR="$pkgdir" install
@@ -298,6 +315,12 @@ package_gcc() {
 
   # many packages expect this symlink
   ln -s gcc "$pkgdir"/usr/bin/cc
+
+  # create cc-rs compatible symlinks
+  # https://github.com/rust-lang/cc-rs/blob/1.0.73/src/lib.rs#L2578-L2581
+  for binary in {c++,g++,gcc,gcc-ar,gcc-nm,gcc-ranlib}; do
+    ln -s /usr/bin/${binary} "${pkgdir}"/usr/bin/x86_64-linux-gnu-${binary}
+  done
 
   # POSIX conformance launcher scripts for c89 and c99
   install -Dm755 "$srcdir/c89" "$pkgdir/usr/bin/c89"
@@ -401,7 +424,7 @@ package_gcc-ada() {
 package_gcc-go() {
   pkgdesc='Go front-end for GCC'
   depends=("gcc=$pkgver-$pkgrel" libisl.so)
-  provides=("go=1.12.2" $pkgname-multilib)
+  provides=("go=1.18" $pkgname-multilib)
   replaces=($pkgname-multilib)
   conflicts=(go)
 
@@ -424,6 +447,7 @@ package_lib32-gcc-libs() {
   pkgdesc='32-bit runtime libraries shipped by GCC'
   depends=('lib32-glibc>=2.27')
   provides=(libgo.so libgfortran.so libubsan.so libasan.so)
+  groups=(multilib-devel)
   options=(!emptydirs !strip)
 
   cd gcc-build
@@ -473,8 +497,18 @@ package_gcc-d() {
   rm -f "$pkgdir/usr/lib/"lib{gphobos,gdruntime}.so*
   rm -f "$pkgdir/usr/lib32/"lib{gphobos,gdruntime}.so*
 
-  install -d "$pkgdir"/usr/include/dlang
-  ln -s /"${_libdir}"/include/d "$pkgdir"/usr/include/dlang/gdc
+  # Install Runtime Library Exception
+  install -d "$pkgdir/usr/share/licenses/$pkgname/"
+  ln -s /usr/share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION \
+    "$pkgdir/usr/share/licenses/$pkgname/"
+}
+
+package_lto-dump() {
+  pkgdesc="Dump link time optimization object files"
+  depends=("gcc=$pkgver-$pkgrel" libisl.so)
+
+  cd gcc-build
+  make -C gcc DESTDIR="$pkgdir" lto.install-{common,man,info}
 
   # Install Runtime Library Exception
   install -d "$pkgdir/usr/share/licenses/$pkgname/"

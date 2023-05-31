@@ -1,3 +1,5 @@
+# First make new partition table mbr with gparted
+
 DATA_MOUNTPOINT=/mnt
 EFI_MOUNTPOINT=/mnt
 

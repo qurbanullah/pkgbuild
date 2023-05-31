@@ -32,6 +32,8 @@ mount -t vfat /dev/sdb1 "${MOUNTPOINT}/efi"
 mkdir -p "${MOUNTPOINT}/sys/firmware/efi/efivars"
 mount -t efivarfs efivarfs ${MOUNTPOINT}/sys/firmware/efi/efivars
 
+
+
 # /usr chroot
 chroot "$MOUNTPOINT" /usr/bin/env -i \
 HOME=/root \
@@ -42,6 +44,10 @@ PATH=/bin:/usr/bin:/sbin:/usr/sbin \
 
 
 ### end chroot
+
+
+# First make new partition table mbr with gparted
+
 
 EFI_DRIVE="/dev/sdb1"
 #DATA_DRIVE="/dev/sdb4"

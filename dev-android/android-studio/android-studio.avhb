@@ -4,10 +4,10 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=android-studio
-_realname=android-studio-ide
-pkgver=4.1.3
+_realname=android-studio
+pkgver=2021.3.1.17
 pkgrel=1
-_build=201.7199119
+# _build=201.7199119
 pkgdesc="The official Android IDE (Stable branch)"
 arch=('x86_64')
 groups=('dev-android')

@@ -1,0 +1,73 @@
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=ncurses5-compat-libs
+_realname=ncurses
+pkgver=6.4
+pkgrel=1
+pkgdesc='System V Release 4.0 curses emulation library, ABI 5'
+arch=(i686 x86_64)
+url='http://invisible-island.net/ncurses/ncurses.html'
+license=(MIT)
+depends=(glibc gcc-libs sh)
+provides=(libtinfo5)
+conflicts=(libtinfo5)
+source=(https://ftp.gnu.org/pub/gnu/ncurses/ncurses-$pkgver.tar.gz{,.sig})
+sha256sums=('97fc51ac2b085d4cde31ef4d2c3122c21abc217e9090a43a30fc5ec21684e059'
+            'SKIP')
+validpgpkeys=('19882D92DDA4C400C22C0D56CC2AF4472167BE03')  # Thomas Dickey
+
+prepare() {
+	cd ${srcdir}/${_realname}-${pkgver}
+	# patches from Gentoo
+	patch -Np1 -i "${srcdir}/ncurses-5.7-nongnu.patch"
+	patch -Np1 -i "${srcdir}/ncurses-6.0-rxvt-unicode-9.15.patch" #192083 #383871
+	patch -Np1 -i "${srcdir}/ncurses-6.0-pkg-config.patch"
+	# patch -Np1 -i "${srcdir}/ncurses-5.9-gcc-5.patch" #545114
+	patch -Np1 -i "${srcdir}/ncurses-6.0-ticlib.patch" #557360
+	# patch -Np1 -i "${srcdir}/ncurses-6.0-cppflags-cross.patch" #601426
+	# patch -Np1 -i "${srcdir}/ncurses-6.2-no_user_ldflags_in_libs.patch"
+
+  cd ${srcdir}
+	# do not link against test libraries
+	patch -Np1 -d $_realname-$pkgver -i ../$_realname-6.3-libs.patch
+	# do not leak build-time LDFLAGS into the pkgconfig files:
+	# https://bugs.archlinux.org/task/68523
+	patch -Np1 -d $_realname-$pkgver -i ../$_realname-6.3-pkgconfig.patch
+	# NOTE: can't run autoreconf because the autotools setup is custom and ancient
+}
+
+build() {
+  cd ${_realname}-${pkgver}
+
+  ./configure \
+    --prefix=/usr \
+    --mandir=/usr/share/man \
+    --with-shared \
+    --with-normal \
+    --without-debug \
+    --without-ada \
+    --enable-widec \
+    --disable-pc-files \
+    --with-cxx-binding \
+    --with-cxx-shared \
+    --with-versioned-syms \
+    --with-abi-version=5
+  make ${MAKEFLAGS}
+}
+
+package() {
+  cd ${_realname}-${pkgver}
+  make DESTDIR="$pkgdir" install.libs
+  install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  rm -rf "$pkgdir/usr/include/" "$pkgdir/usr/lib/pkgconfig" \
+    "$pkgdir"/usr/lib/*.so "$pkgdir"/usr/lib/*.a
+
+  for lib in ncurses ncurses++ form panel menu; do
+    ln -s /usr/lib/lib${lib}w.so.5 "$pkgdir/usr/lib/lib${lib}.so.5"
+  done
+  ln -s /usr/lib/libncurses.so.5 "$pkgdir/usr/lib/libtinfo.so.5"
+  ln -s /usr/lib/libncurses.so.5 "$pkgdir/usr/lib/libtic.so.5"
+}

@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 
+
+# First make new partition table mbr with gparted
+
+
 DISK=/dev/sdc
 DRIVE=/dev/sdc1
 DATA_MOUNTPOINT=/mnt

@@ -4,8 +4,8 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgbase=linux
-pkgver=5.18.2
-_pkgver=5.18.2
+pkgver=6.2.11
+_pkgver=6.2.11
 pkgrel=1
 arch=('x86_64')
 groups=('sys-base')

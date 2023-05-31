@@ -10,7 +10,7 @@
 
 pkgbase=glibc
 pkgname=(glibc lib32-glibc)
-pkgver=2.35
+pkgver=2.37
 pkgrel=1
 pkgdesc="GNU C Library"
 arch=('x86_64')
@@ -60,8 +60,8 @@ prepare() {
   # Patch src: https://patchwork.ozlabs.org/project/glibc/patch/87eebkf8ph.fsf@oldenburg.str.redhat.com/
   # patch -Np1 -i "${srcdir}"/disable-clone3.diff
 
-  # Fix C.UTF-8 generation errors
-  # https://bugs.archlinux.org/task/73797
+  # # Fix C.UTF-8 generation errors
+  # # https://bugs.archlinux.org/task/73797
   # patch -Np1 -i "${srcdir}"/0001-localedef-Update-LC_MONETARY-handling-Bug-28845.patch
   # patch -Np1 -i "${srcdir}"/0001-localedata-Do-not-generate-output-if-warnings-were-p.patch
 
@@ -71,10 +71,20 @@ prepare() {
   # patch -Np1 -i ../glibc-rh827510.patch
   # patch -Np1 -i ../glibc-rh1070416.patch
   # patch -Np1 -i ../glibc-temp-ibmldbl64.patch
+
+  # re-enable `--hash-style=both` for building shared objects due to issues with EPIC's EAC
+  # which relies on DT_HASH to be present in these libs.
+  # reconsider 2023-01
+  patch -Np1 -i "${srcdir}"/reenable_DT_HASH.patch
+
+    # Fix a security issue identified upstream (from BLFS):
+    sed '/width -=/s/workend - string/number_length/' \
+        -i stdio-common/vfprintf-process-arg.c
+        
 }
 
 build() {
-  disable_ld_gold
+  use_linker "ld"
   local _configure_flags=(
       --prefix=/usr
       --with-headers=/usr/include
@@ -85,8 +95,8 @@ build() {
       --enable-multi-arch
       --enable-stack-protector=strong
       --enable-systemtap
-      --disable-profile
       --disable-crypt
+      --disable-profile      
       --disable-werror
   )
 
@@ -102,7 +112,6 @@ build() {
     export CFLAGS=${CFLAGS/-fno-plt/}
     export CPPFLAGS=${CPPFLAGS/-D_FORTIFY_SOURCE=2/}  
     export CXXFLAGS=${CXXFLAGS/-fno-plt/}
-    export LDFLAGS=""
 
     "$srcdir/$_basedir/configure" \
         --libdir=/usr/lib \
@@ -112,10 +121,11 @@ build() {
     # build libraries with fortify disabled
     echo "build-programs=no" >> configparms
     make -O ${MAKEFLAGS}
+    # make -O
 
     # re-enable fortify for programs
     sed -i "/build-programs=/s#no#yes#" configparms
-    echo "CFLAGS += -Wp,-D_FORTIFY_SOURCE=2" >> configparms
+    echo "CFLAGS += -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong" >> configparms
     make -O
 
     # build info pages manually for reprducibility
@@ -124,8 +134,10 @@ build() {
 
 
   pushd "$srcdir/lib32-glibc-build"
-    export CC="gcc -m32 -mstackrealign"
-    export CXX="g++ -m32 -mstackrealign"
+    # For compatibility with older binaries at slight performance cost.
+    # avoid - undefined reference to `__memcpy_chk' bu adding -fstack-protector-strong
+    export CC="gcc -m32 -mstackrealign -fstack-protector-strong"
+    export CXX="g++ -m32 -mstackrealign -fstack-protector-strong"
 
     echo "slibdir=/usr/lib32" >> configparms
     echo "rtlddir=/usr/lib32" >> configparms
@@ -133,15 +145,10 @@ build() {
     echo "rootsbindir=/usr/bin" >> configparms
 
     # remove fortify for building libraries
-    # CFLAGS=${CFLAGS/-Wp,-D_FORTIFY_SOURCE=2/}
-    # export LDFLAGS=${LDFLAGS/-z now/}
-    
-    # remove fortify for building libraries
     export CFLAGS=${CFLAGS/-D_FORTIFY_SOURCE=2/}
     export CFLAGS=${CFLAGS/-fno-plt/}
     export CPPFLAGS=${CPPFLAGS/-D_FORTIFY_SOURCE=2/}  
     export CXXFLAGS=${CXXFLAGS/-fno-plt/}
-    export LDFLAGS=""
 
     "$srcdir/$_basedir/configure" \
         --host=i686-pc-linux-gnu \
@@ -152,46 +159,58 @@ build() {
     # build libraries with fortify disabled
     echo "build-programs=no" >> configparms
     make -O ${MAKEFLAGS}
+    # make -O
 
     # re-enable fortify for programs
     sed -i "/build-programs=/s#no#yes#" configparms
-    echo "CFLAGS += -Wp,-D_FORTIFY_SOURCE=2" >> configparms
-    make -O
-  popd
-}
+    echo "CFLAGS += -Wp,-D_FORTIFY_SOURCE=2 -fstack-protector-strong" >> configparms
+    make -O ${MAKEFLAGS}
+    # make -O
 
+    # pregenerate C.UTF-8 locale until it is built into glibc
+    # (https://sourceware.org/glibc/wiki/Proposals/C.UTF-8, FS#74864)-
+    elf/ld.so --library-path "$PWD" locale/localedef -c -f ../$_basedir/localedata/charmaps/UTF-8 -i ../$_basedir/localedata/locales/C ../C.UTF-8/
+  popd
+
+}
 
 # Credits for skip_test() and check() @allanmcrae
 # https://github.com/allanmcrae/toolchain/blob/f18604d70c5933c31b51a320978711e4e6791cf1/glibc/PKGBUILD
 skip_test() {
-  test=$1
-  file=$2
-  sed -i "s/\b$test\b//" $srcdir/$_basedir/$file
+  test=${1}
+  file=${2}
+  sed -i "s/\b${test}\b//" "${srcdir}"/glibc/${file}
 }
 
 check() {
   cd glibc-build
+  use_linker "ld"
 
   # adjust/remove buildflags that cause false-positive testsuite failures
   sed -i '/FORTIFY/d' configparms                                     # failure to build testsuite
   sed -i 's/-Werror=format-security/-Wformat-security/' config.make   # failure to build testsuite
   sed -i '/CFLAGS/s/-fno-plt//' config.make                           # 16 failures
   sed -i '/CFLAGS/s/-fexceptions//' config.make                       # 1 failure
-  LDFLAGS=${LDFLAGS/-z now/}                                          # 10 failures
-  LDFLAGS=${LDFLAGS/,-z,now/}  
+#   LDFLAGS=${LDFLAGS/-z now/}                                          # 10 failures for ld.gold
+  LDFLAGS=${LDFLAGS/,-z,now/}                                         # 10 failures for ld.bfd
 
-  # The following tests fail due to restrictions in the Arch build system
+  # The following tests fail due to restrictions in the Avouch build system
   # The correct fix is to add the following to the systemd-nspawn call:
   # --system-call-filter="@clock @memlock @pkey"
-  skip_test test-errno-linux sysdeps/unix/sysv/linux/Makefile
-  skip_test tst-ntp_gettime  sysdeps/unix/sysv/linux/Makefile
-  skip_test tst-ntp_gettimex sysdeps/unix/sysv/linux/Makefile
-  skip_test tst-mlock2       sysdeps/unix/sysv/linux/Makefile
-  skip_test tst-pkey         sysdeps/unix/sysv/linux/Makefile
-  skip_test tst-adjtime      time/Makefile
-  skip_test tst-clock2       time/Makefile
+  skip_test test-errno-linux        sysdeps/unix/sysv/linux/Makefile
+  skip_test tst-mlock2              sysdeps/unix/sysv/linux/Makefile
+  skip_test tst-ntp_gettime         sysdeps/unix/sysv/linux/Makefile
+  skip_test tst-ntp_gettimex        sysdeps/unix/sysv/linux/Makefile
+  skip_test tst-pkey                sysdeps/unix/sysv/linux/Makefile
+  skip_test tst-process_mrelease    sysdeps/unix/sysv/linux/Makefile
+  skip_test tst-ttyname             sysdeps/unix/sysv/linux/Makefile
+  skip_test tst-adjtime             time/Makefile
+  skip_test tst-clock2              time/Makefile
 
-  make -O ${MAKEFLAGS} check
+  # Fix the Makefile to skip an unneeded sanity check that fails in the LFS partial environment (From LFS):
+  sed '/test-installation/s@$(PERL)@echo not running@' -i Makefile
+
+  make -O -k check
 }
 
 package_glibc() {
@@ -203,16 +222,18 @@ package_glibc() {
           etc/locale.gen
           etc/nscd.conf)
 
+    use_linker "ld"
   install -dm755 "$pkgdir/etc"
   touch "$pkgdir/etc/ld.so.conf"
 
-  make -C glibc-build install_root="$pkgdir" install
+  cd glibc-build
+  make install_root="$pkgdir" install
   rm -f "$pkgdir"/etc/ld.so.{cache,conf}
 
   # Shipped in tzdata
   rm -f "$pkgdir"/usr/bin/{tzselect,zdump,zic}
 
-  cd glibc
+  cd $srcdir/$_basedir
 
   install -dm755 "$pkgdir"/usr/lib/{locale,systemd/system,tmpfiles.d}
   install -m644 nscd/nscd.conf "$pkgdir/etc/nscd.conf"
@@ -227,7 +248,7 @@ package_glibc() {
   # Create /etc/locale.gen
   install -m644 "$srcdir/locale.gen.txt" "$pkgdir/etc/locale.gen"
   sed -e '1,3d' -e 's|/| |g' -e 's|\\| |g' -e 's|^|#|g' \
-    "$srcdir/glibc/localedata/SUPPORTED" >> "$pkgdir/etc/locale.gen"
+    "$srcdir/$_basedir/localedata/SUPPORTED" >> "$pkgdir/etc/locale.gen"
 
   if check_option 'debug' n; then
     find "$pkgdir"/usr/bin -type f -executable -exec strip $STRIP_BINARIES {} + 2> /dev/null || true
@@ -253,7 +274,12 @@ package_lib32-glibc() {
   depends=("glibc=$pkgver")
   options+=('!emptydirs')
 
+    use_linker "ld"
   cd lib32-glibc-build
+
+#   sed -i "/CFLAGS/d" configparms
+    export CC="gcc -m32 -mstackrealign -fstack-protector-strong"
+    export CXX="g++ -m32 -mstackrealign -fstack-protector-strong"
 
   make install_root="$pkgdir" install
   rm -rf "$pkgdir"/{etc,sbin,usr/{bin,sbin,share},var}

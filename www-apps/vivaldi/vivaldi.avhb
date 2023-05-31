@@ -4,8 +4,8 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=vivaldi
-_rpmversion=5.2.2623.48-1
-pkgver=5.2.2623.48
+_rpmversion=6.0.2979.18-1
+pkgver=6.0.2979.18
 pkgrel=1
 pkgdesc='An advanced browser made with the power user in mind.'
 url="https://vivaldi.com"

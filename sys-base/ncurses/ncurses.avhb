@@ -1,9 +1,10 @@
-# $Id$
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=ncurses
-pkgver=6.2
+pkgver=6.4
 pkgrel=1
 pkgdesc='System V Release 4.0 curses emulation library'
 arch=('x86_64')
@@ -24,50 +25,63 @@ prepare() {
 	patch -Np1 -i "${srcdir}/ncurses-5.7-nongnu.patch"
 	patch -Np1 -i "${srcdir}/ncurses-6.0-rxvt-unicode-9.15.patch" #192083 #383871
 	patch -Np1 -i "${srcdir}/ncurses-6.0-pkg-config.patch"
-	patch -Np1 -i "${srcdir}/ncurses-5.9-gcc-5.patch" #545114
+	# patch -Np1 -i "${srcdir}/ncurses-5.9-gcc-5.patch" #545114
 	patch -Np1 -i "${srcdir}/ncurses-6.0-ticlib.patch" #557360
-	patch -Np1 -i "${srcdir}/ncurses-6.0-cppflags-cross.patch" #601426
-	patch -Np1 -i "${srcdir}/ncurses-6.2-no_user_ldflags_in_libs.patch"
+	# patch -Np1 -i "${srcdir}/ncurses-6.0-cppflags-cross.patch" #601426
+	# patch -Np1 -i "${srcdir}/ncurses-6.2-no_user_ldflags_in_libs.patch"
+
+	cd ${srcdir}
+	# do not link against test libraries
+	patch -Np1 -d $pkgname-$pkgver -i ../$pkgname-6.3-libs.patch
+	# do not leak build-time LDFLAGS into the pkgconfig files:
+	# https://bugs.archlinux.org/task/68523
+	patch -Np1 -d $pkgname-$pkgver -i ../$pkgname-6.3-pkgconfig.patch
+	# NOTE: can't run autoreconf because the autotools setup is custom and ancient
 }
 
 build() {
-	cd ${srcdir}/${pkgname}-${pkgver}
-	./configure \
-		--prefix=/usr \
-		--mandir=/usr/share/man \
-		--enable-pc-files \
-		--with-pkg-config-libdir=/usr/lib/pkgconfig \
-		--with-shared \
-		--with-normal \
-		--without-debug \
-		--without-ada \
-		--enable-widec \
-		--with-cxx-binding \
-		--with-cxx-shared \
+	local configure_options=(
+		--prefix=/usr
+		--enable-widec
+		--enable-pc-files
+		--mandir=/usr/share/man
+		--with-cxx-binding
+		--with-cxx-shared
 		--with-manpage-format=normal
+		--with-pkg-config-libdir=/usr/lib/pkgconfig
+		--with-shared
+		--with-versioned-syms
+		--with-xterm-kbs=del
+		--without-ada
+	)
+
+	cd $pkgname-$pkgver
+	./configure "${configure_options[@]}"
 	make ${MAKEFLAGS}
 }
 
 package() {
-	cd ${srcdir}/${pkgname}-${pkgver}
-	make DESTDIR="$pkgdir" install
-	install -Dm644 COPYING "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+
+	make DESTDIR="$pkgdir" install -C $pkgname-$pkgver
+	install -vDm 644 $pkgname-$pkgver/COPYING -t "$pkgdir/usr/share/licenses/$pkgname/"
 
 	# fool packages looking to link to non-wide-character ncurses libraries
 	for lib in ncurses ncurses++ form panel menu; do
-		echo "INPUT(-l${lib}w)" > "$pkgdir/usr/lib/lib${lib}.so"
-		ln -s ${lib}w.pc "$pkgdir/usr/lib/pkgconfig/${lib}.pc"
-	done
-
-	for lib in tic tinfo; do
-		echo "INPUT(libncursesw.so.${pkgver:0:1})" > "$pkgdir/usr/lib/lib${lib}.so"
-		ln -s libncursesw.so.${pkgver:0:1} "$pkgdir/usr/lib/lib${lib}.so.${pkgver:0:1}"
-		ln -s ncursesw.pc "$pkgdir/usr/lib/pkgconfig/${lib}.pc"
+		printf "INPUT(-l%sw)\n" "${lib}" > "$pkgdir/usr/lib/lib${lib}.so"
+		ln -sv ${lib}w.pc "$pkgdir/usr/lib/pkgconfig/${lib}.pc"
 	done
 
 	# some packages look for -lcurses during build
-	echo 'INPUT(-lncursesw)' > "$pkgdir/usr/lib/libcursesw.so"
-	ln -s libncurses.so "$pkgdir/usr/lib/libcurses.so"
+	printf 'INPUT(-lncursesw)\n' > "$pkgdir/usr/lib/libcursesw.so"
+	ln -sv libncurses.so "$pkgdir/usr/lib/libcurses.so"
+
+	# tic and ticinfo functionality is built in by default
+	# make sure that anything linking against it links against libncursesw.so instead
+	for lib in tic tinfo; do
+		printf "INPUT(libncursesw.so.%s)\n" "${pkgver:0:1}" > "$pkgdir/usr/lib/lib${lib}.so"
+		ln -sv libncursesw.so.${pkgver:0:1} "$pkgdir/usr/lib/lib${lib}.so.${pkgver:0:1}"
+		ln -sv ncursesw.pc "$pkgdir/usr/lib/pkgconfig/${lib}.pc"
+	done
 }
 
 

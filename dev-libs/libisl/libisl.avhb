@@ -5,16 +5,16 @@
 
 pkgname=libisl
 _realname=${pkgname#lib}
-pkgver=0.24
+pkgver=0.25
 pkgrel=1
 pkgdesc="Library for manipulating sets and relations of integer points bounded by linear constraints"
 arch=('x86_64')
 groups=('dev-libs')
-url="http://freecode.com/projects/isl"
+url='https://libisl.sourceforge.io'
 depends=('gmp')
 provides=('isl' 'libisl.so')
 license=('MIT')
-source=(http://isl.gforge.inria.fr/$pkgname-$pkgver.tar.xz)
+source=("https://libisl.sourceforge.io/isl-${pkgver}.tar.xz")
 
 build() {
   cd "${srcdir}"/${_realname}-${pkgver}
