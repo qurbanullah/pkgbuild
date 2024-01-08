@@ -1,10 +1,11 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=gpm
-pkgver=1.20.7
+pkgver=1.20.7.r38.ge82d1a6
+_commit='e82d1a653ca94aa4ed12441424da6ce780b1e530'
 pkgrel=1
 pkgdesc="A mouse server for the console and xterm"
 arch=('x86_64')
@@ -14,41 +15,60 @@ license=('GPL')
 depends=('bash')
 options=('!makeflags')
 install=gpm.install
-source=(http://www.nico.schottelius.org/software/gpm/archives/${pkgname}-${pkgver}.tar.lzma \
-        gpm.sh gpm.service)
+source=("https://github.com/telmich/gpm.git"
+        'gpm.sh'
+        'gpm.path'
+        'gpm.service')
+
+# getsrc() {
+# 	git clone ${source[0]}
+# }
+
+pkgver() {
+  cd "${srcdir}/${pkgname}"
+  git checkout $_commit
+
+  GITTAG="$(git describe --abbrev=0 --tags 2>/dev/null)"
+  printf '%s.r%s.g%s' \
+    "${GITTAG}" \
+    "$(git rev-list --count ${GITTAG}..)" \
+    "$(git rev-parse --short HEAD)"
+}
 
 prepare(){
-	cd "${srcdir}/${pkgname}-${pkgver}"
-	
-	# patches from fedora
-    patch -Np1 -i ../gpm-format-security.patch
-    # Include patch from upstream pull request: https://github.com/telmich/gpm/pull/12
-    patch -Np1 -i ../gpm-1.20.7-sysmacros.patch
-    # Include patch from upstream pull request: https://github.com/telmich/gpm/pull/20
-    patch -Np1 -i ../gpm-1.20.7-sigemptyset.patch
-	# Gentoo
-	patch -Np1 -i ../gpm-1.20.7-gcc-10.patch
-    
-    ./autogen.sh
-
+	cd "${srcdir}/${pkgname}"
+    # Fix ABI values
+	sed -i \
+		-e '/^abi_lev=/s:=.*:=1:' \
+		-e '/^abi_age=/s:=.*:=20:' \
+		configure.ac.footer || die
+	# Rebuild autotools since release doesn't include them.
+	# Should be fixed with the next release though.
+	# https://github.com/telmich/gpm/pull/15
+	sed -i -e '/ACLOCAL/,$d' autogen.sh || die
+	./autogen.sh
 }
+
 build() {
-	cd "${srcdir}/${pkgname}-${pkgver}"
-	./configure --prefix=/usr --sysconfdir=/etc --sbindir=/usr/bin
-	 make ${MAKEFLAGS}
+  cd "${srcdir}/${pkgname}"
+  
+  ./configure \
+    --prefix=/usr \
+    --sysconfdir=/etc \
+    --sbindir=/usr/bin
+  make
 }
 
 package() {
-	cd "${srcdir}/${pkgname}-${pkgver}"
-	make DESTDIR="${pkgdir}" install
+  cd "${srcdir}/${pkgname}"
 
+  make DESTDIR="${pkgdir}" install
+  install -D -m0644 ../gpm.sh "${pkgdir}/etc/profile.d/gpm.sh"
+  install -D -m0644 ../gpm.path "${pkgdir}/usr/lib/systemd/system/gpm.path"
+  install -D -m0644 ../gpm.service "${pkgdir}/usr/lib/systemd/system/gpm.service"
 
-	install -D -m755 ../gpm.sh "${pkgdir}/etc/profile.d/gpm.sh"
-	install -D -m644 ../gpm.service "${pkgdir}/usr/lib/systemd/system/gpm.service"
-
-	# library fixes
-	cd "${pkgdir}/usr/lib/"
-	ln -s libgpm.so.2.* libgpm.so
-	chmod 755 "${pkgdir}"/usr/lib/libgpm.so.*
+# library fixes
+  cd "${pkgdir}/usr/lib/"
+  ln -s libgpm.so.2.* libgpm.so
+  chmod 0755 "${pkgdir}"/usr/lib/libgpm.so.*
 }
-

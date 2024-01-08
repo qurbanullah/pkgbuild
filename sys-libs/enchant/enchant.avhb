@@ -1,10 +1,10 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=enchant
-pkgver=2.2.8
+pkgver=2.6.2
 pkgrel=1
 pkgdesc="A wrapper library for generic spell checking"
 arch=('x86_64')

@@ -1,10 +1,10 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=grantlee
-pkgver=5.2.0
+pkgver=5.3.1
 pkgrel=1
 pkgdesc="A string template engine based on the Django template system and written in Qt5"
 arch=('x86_64')

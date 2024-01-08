@@ -3,7 +3,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=ark
-pkgver=22.04.0
+pkgver=23.08.1
 pkgrel=1
 pkgdesc='Archiving Tool'
 arch=('x86_64')

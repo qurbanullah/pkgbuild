@@ -1,10 +1,11 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2024 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname="sbsigntools"
-pkgver=0.9.4
+pkgver=0.9.5
+_commit=8445b18f64e60137408a4867fbcbb9ba112c583a  # refs/tags/v0.9.5
 pkgrel=1
 pkgdesc="Tools to add signatures to EFI binaries and Drivers"
 arch=('x86_64')
@@ -16,36 +17,54 @@ depends=('libutil-linux' 'openssl')
 source=("git+https://git.kernel.org/pub/scm/linux/kernel/git/jejb/sbsigntools.git#tag=v${pkgver}"
 	"git://git.ozlabs.org/~ccan/ccan")
 
-getsrc() {
-	cd "${srcdir}"
-	# git clone https://git.kernel.org/pub/scm/linux/kernel/git/jejb/sbsigntools.git
-	# git clone https://git.ozlabs.org/ccan
-}
+url="https://git.kernel.org/pub/scm/linux/kernel/git/jejb/sbsigntools.git/about"
+license=(GPL3)
+depends=(
+  glibc
+  openssl
+)
+makedepends=(
+  git
+  gnu-efi
+  help2man
+  util-linux
+)
+source=(
+  git+https://git.kernel.org/pub/scm/linux/kernel/git/jejb/sbsigntools.git#tag=$_commit?signed
+  git+https://git.ozlabs.org/ccan
+)
+sha256sums=('SKIP'
+            'SKIP')
+validpgpkeys=('D5606E73C8B46271BEAD9ADF814AE47C214854D6') # James Bottomley <jejb@kernel.org>
 
 prepare() {
-  bsdtar -xf $srcarchivedir/ccan.tar.xz
-  cd ${pkgname}
+  cd $pkgname
   git submodule init
-  git config submodule."lib/ccan.git".url "${srcdir}/ccan"
-  git submodule update
+  git config submodule."lib/ccan.git".url "$srcdir/ccan"
+  git -c protocol.file.allow=always submodule update
   ./autogen.sh
 }
 
 build() {
-  cd "${pkgname}"
-  ./configure --prefix="/usr" \
-              --bindir="/usr/bin" \
-              --sbindir="/usr/bin" \
-              --libexecdir="/usr/lib" \
-              --mandir="/usr/share/man" \
-              --sysconfdir="/etc"
+  local configure_options=(
+    --prefix=/usr
+    --bindir=/usr/bin
+    --sbindir=/usr/bin
+    --libexecdir=/usr/lib
+    --mandir=/usr/share/man
+    --sysconfdir=/etc
+  )
+
+  cd $pkgname
+  ./configure "${configure_options[@]}"
   make
 }
 
 package() {
-  depends+=('libuuid.so')
-  cd "${pkgname}"
-  make DESTDIR="${pkgdir}" install
-  install -vDm 644 {AUTHORS,ChangeLog,NEWS,README} \
-    -t "${pkgdir}/usr/share/doc/${pkgname}"
+  depends+=(
+    util-linux-libs libuuid.so
+  )
+
+  make DESTDIR="$pkgdir" install -C $pkgname
+  install -vDm 644 $pkgname/{AUTHORS,ChangeLog,NEWS,README} -t "$pkgdir/usr/share/doc/$pkgname/"
 }

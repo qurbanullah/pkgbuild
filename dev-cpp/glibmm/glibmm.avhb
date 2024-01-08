@@ -1,13 +1,11 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgbase=glibmm
 pkgname=(glibmm glibmm-docs)
-# pkgver=2.70.0
-# pkgver=2.68.0
-pkgver=2.66.2
+pkgver=2.78.0
 pkgrel=1
 pkgdesc="C++ bindings for GLib"
 url="http://www.gtkmm.org/"

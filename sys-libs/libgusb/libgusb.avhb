@@ -1,18 +1,31 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=libgusb
-pkgver=0.3.4
+pkgver=0.4.8
 pkgrel=1
 pkgdesc='GObject wrapper for libusb1'
 arch=('x86_64')
 groups=('sys-libs')
 url='https://github.com/hughsie/libgusb'
 license=('LGPL2.1')
-depends=('glib2' 'libusb')
-makedepends=('git' 'gobject-introspection' 'gtk-doc' 'meson' 'python2' 'vala')
+depends=(
+  glib2
+  libjson-glib-1.0.so
+  libusb-1.0.so
+)
+makedepends=(
+  gi-docgen
+  git
+  gobject-introspection
+  gtk-doc
+  meson
+  python-setuptools
+  umockdev
+  vala
+)
 source=("https://github.com/hughsie/libgusb/archive/$pkgver.tar.gz")
 
 build() {

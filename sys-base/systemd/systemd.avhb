@@ -1,11 +1,17 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
-pkgname=systemd
+pkgbase=systemd
+pkgname=('systemd'
+         'systemd-libs'
+         'systemd-resolvconf'
+         'systemd-sysvcompat'
+         'systemd-ukify')
+
 _realname=$pkgname-stable
-pkgver=250.4
+pkgver=255.2
 pkgrel=1
 pkgdesc="system and service manager"
 arch=('x86_64')
@@ -39,15 +45,14 @@ optdepends=('libmicrohttpd: remote journald capabilities'
           etc/udev/udev.conf)
   install="systemd.install"
 options=('strip')
-source=("git://github.com/systemd/systemd.git#tag=v$pkgver
-https://github.com/systemd/systemd-stable/archive/v$pkgver.tar.gz"
+source=("https://github.com/systemd/systemd-stable/archive/refs/tags/v$pkgver.tar.gz"
         'avouch.conf'
         'loader.conf'
         'splash-avouch.bmp')
 validpgpkeys=('63CDA1E5D3FC22B998D20DD6327F26951A015CC4'  # Lennart Poettering <lennart@poettering.net>
               '5C251B5FC54EB2F80F407AAAC54CA336CFEB557E') # Zbigniew Jędrzejewski-Szmek <zbyszek@in.waw.pl>
 
-# _gitbranch=246
+# _gitbranch=255
 #_comit=7a6d834c0104304f506852eddc25b22e1ce65e3b
 
 if [ -n "${_gitbranch}" ]; then	
@@ -57,15 +62,7 @@ else
   _basedir=systemd-stable-$pkgver
 fi
 
-
-getsrc() {
-	cd ${srcdir}	
-	#git clone --depth 1 --branch v$pkgver git://github.com/systemd/systemd.git
-}
-
 pkgver() {
-	#cd "${srcdir}/${_basedir}"
-	#cd "${srcdir}/${pkgbase}-${pkgver}"
   cd ${_basedir}
 	echo "$(git describe --tags)" | sed -e 's|v||g'
 }
@@ -75,15 +72,15 @@ prepare() {
     cd ${_basedir}
 
     # Replace cdrom/dialout/tape groups with optical/uucp/storage
-    patch -Np1 -i ../0001-Use-Avouch-Linux-device-access-groups.patch
+    patch -Np1 -i ../0001-Use-Arch-Linux-device-access-groups.patch
     # Make homed/userdbd/repart services installable (to allow uninstalling)
     #patch -Np1 -i ../0002-make-homed-userdbd-repart-services-installable.patch
     # It causes flooding of dmesg and syslog, suppressing actually important messages.
-    patch -Np1 -i ../gentoo-journald-audit.patch
+    # patch -Np1 -i ../gentoo-journald-audit.patch
 }
 
 build() {
-    disable_ld_gold
+    use_linker "ld"
 
     cd "${srcdir}"
     local _timeservers=({0..3}.avouch.pool.ntp.org)
@@ -105,20 +102,27 @@ build() {
     -Dversion-tag="${pkgver}-${pkgrel}-avouch"
     -Dmode=release
 
-    -Dgnu-efi=true
-    -Dima=true
+    -Dapparmor=false
+    -Dbootloader=true
+    -Dxenctrl=false
+    -Dbpf-framework=true
+    -Dima=false
     -Dlibidn2=true
     -Dlz4=true
     -Dman=true
+    -Dnscd=false
+
+
 
     # We disable DNSSEC by default, it still causes trouble:
     # https://github.com/systemd/systemd/issues/10579
 
     -Ddbuspolicydir=/usr/share/dbus-1/system.d
-    -Ddefault-dnssec=no
+    # -Ddefault-dnssec=no
     -Ddefault-hierarchy=unified
     -Ddefault-kill-user-processes=false
-    -Ddefault-locale=C
+    -Ddefault-locale='C.UTF-8'
+    -Dlocalegen-path=/usr/bin/locale-gen
     -Ddns-over-tls=openssl
     -Dfallback-hostname='avouch'
     -Dnologin-path=/usr/bin/nologin
@@ -128,54 +132,132 @@ build() {
     -Dsysvinit-path=
     -Dsysvrcnd-path=
 
-    -Dsbat-distro='avouch'
+    -Dsbat-distro='arch'
     -Dsbat-distro-summary='Avouch Linux'
     -Dsbat-distro-pkgname="${pkgname}"
     -Dsbat-distro-version="${pkgver}"
+
     -Dsbat-distro-url="https://avouch.org/packages/${pkgname}/"
   )
+
+  # this uses malloc_usable_size, which is incompatible with fortification level 3
+  export CFLAGS="${CFLAGS/_FORTIFY_SOURCE=3/_FORTIFY_SOURCE=2}"
+  export CXXFLAGS="${CXXFLAGS/_FORTIFY_SOURCE=3/_FORTIFY_SOURCE=2}"
+
+  export LDFLAGS=""
 
     avouch-meson ${_basedir} build "${meson_options[@]}"
 
     meson compile -C build
 }
 
-package() {
+# check() {
+#   meson test -C build
+# }
 
-	DESTDIR="$pkgdir" meson install -C build
+package_systemd() {
+  pkgdesc='system and service manager'
+  license=('GPL2' 'LGPL2.1')
+  depends=('acl' 'libacl.so' 'bash' 'cryptsetup' 'libcryptsetup.so' 'dbus'
+           'kbd' 'kmod' 'libkmod.so' 'hwdata' 'libcap' 'libcap.so'
+           'libgcrypt' 'libxcrypt' 'libcrypt.so' 'systemd-libs' 'libidn2' 'lz4' 'pam'
+           'libelf' 'libseccomp' 'libseccomp.so' 'util-linux' 'libblkid.so'
+           'libmount.so' 'xz' 'pcre2' 'audit' 'libaudit.so'
+           'openssl' 'libcrypto.so' 'libssl.so')
+  provides=('nss-myhostname' "systemd-tools=$pkgver" "udev=$pkgver")
+  replaces=('nss-myhostname' 'systemd-tools' 'udev')
+  conflicts=('nss-myhostname' 'systemd-tools' 'udev')
+  optdepends=('libmicrohttpd: systemd-journal-gatewayd and systemd-journal-remote'
+              'quota-tools: kernel-level quota management'
+              'systemd-sysvcompat: symlink package to provide sysvinit binaries'
+              'systemd-ukify: combine kernel and initrd into a signed Unified Kernel Image'
+              'polkit: allow administration as unprivileged user'
+              'curl: systemd-journal-upload, machinectl pull-tar and pull-raw'
+              'gnutls: systemd-journal-gatewayd and systemd-journal-remote'
+              'qrencode: show QR codes'
+              'iptables: firewall features'
+              'libbpf: support BPF programs'
+              'libpwquality: check password quality'
+              'libfido2: unlocking LUKS2 volumes with FIDO2 token'
+              'libp11-kit: support PKCS#11'
+              'tpm2-tss: unlocking LUKS2 volumes with TPM2')
+  backup=(etc/pam.d/systemd-user
+          etc/systemd/coredump.conf
+          etc/systemd/homed.conf
+          etc/systemd/journald.conf
+          etc/systemd/journal-remote.conf
+          etc/systemd/journal-upload.conf
+          etc/systemd/logind.conf
+          etc/systemd/networkd.conf
+          etc/systemd/oomd.conf
+          etc/systemd/pstore.conf
+          etc/systemd/resolved.conf
+          etc/systemd/sleep.conf
+          etc/systemd/system.conf
+          etc/systemd/timesyncd.conf
+          etc/systemd/user.conf
+          etc/udev/iocost.conf
+          etc/udev/udev.conf)
+  install=systemd.install
+
+  meson install -C build --destdir "$pkgdir"
+
+  # we'll create this on installation
+  rmdir "$pkgdir"/var/log/journal/remote
+
+  # runtime libraries shipped with systemd-libs
+  install -d -m0755 systemd-libs/lib/
+  mv "$pkgdir"/usr/lib/lib{nss,systemd,udev}*.so* systemd-libs/lib/
+  mv "$pkgdir"/usr/lib/pkgconfig systemd-libs/lib/pkgconfig
+  mv "$pkgdir"/usr/include systemd-libs/include
+  mv "$pkgdir"/usr/share/man/man3 systemd-libs/man3
+
+  # ukify shipped in separate package
+  install -d -m0755 systemd-ukify/{bin,systemd,man1,install.d}
+  mv "$pkgdir"/usr/bin/ukify systemd-ukify/bin/
+  mv "$pkgdir"/usr/lib/systemd/ukify systemd-ukify/systemd/
+  mv "$pkgdir"/usr/share/man/man1/ukify.1 systemd-ukify/man1/
+  # we move the ukify hook itself, but keep 90-uki-copy.install in place,
+  # because there are other ways to generate UKIs w/o ukify, e.g. w/ mkinitcpio
+  mv "$pkgdir"/usr/lib/kernel/install.d/60-ukify.install systemd-ukify/install.d
+
+  # manpages shipped with systemd-sysvcompat
+  rm "$pkgdir"/usr/share/man/man8/{halt,poweroff,reboot,shutdown}.8
+
+  # executable (symlinks) shipped with systemd-sysvcompat
+  rm "$pkgdir"/usr/bin/{halt,init,poweroff,reboot,shutdown}
+
+  # files shipped with systemd-resolvconf
+  rm "$pkgdir"/usr/{bin/resolvconf,share/man/man1/resolvconf.1}
 
   # avoid a potential conflict with [core]/filesystem
   rm "$pkgdir"/usr/share/factory/etc/{issue,nsswitch.conf}
   sed -i -e '/^C \/etc\/nsswitch\.conf/d' \
     -e '/^C \/etc\/issue/d' "$pkgdir"/usr/lib/tmpfiles.d/etc.conf
 
-  # install avouch provided nsswitch.conf
-  install -D -m0644 nsswitch.conf "$pkgdir"/usr/share/factory/etc/nsswitch.conf
+  # ship default policy to leave services disabled
+  echo 'disable *' >"$pkgdir"/usr/lib/systemd/system-preset/99-default.preset
 
   # The group 'systemd-journal' is allocated dynamically and may have varying
   # gid on different systems. Let's install with gid 0 (root), systemd-tmpfiles
   # will fix the permissions for us. (see /usr/lib/tmpfiles.d/systemd.conf)
-	chown root:systemd-journal "$pkgdir/var/log/journal"
-	chmod 2755 "$pkgdir/var/log/journal"
+  install -d -o root -g root -m 2755 "$pkgdir"/var/log/journal
 
-	# match directory owner/group and mode from extra/polkit
-	chown root:70 "$pkgdir"/usr/share/polkit-1/rules.d
-	chmod 0750     "$pkgdir"/usr/share/polkit-1/rules.d
+  # match directory owner/group and mode from [extra]/polkit
+  install -d -o root -g 70 -m 0750 "$pkgdir"/usr/share/polkit-1/rules.d
 
-	# overwrite the systemd-user PAM configuration with our own
-	install -Dm644 $srcdir/systemd-user.pam "$pkgdir/etc/pam.d/systemd-user"
-	
-	# add example bootctl configuration
-	install -Dm644 "$srcdir/avouch.conf" "$pkgdir"/usr/share/systemd/bootctl/avouch.conf
-	install -Dm644 "$srcdir/loader.conf" "$pkgdir"/usr/share/systemd/bootctl/loader.conf
-	install -Dm644 "$srcdir/splash-avouch.bmp" "$pkgdir"/usr/share/systemd/bootctl/splash-avouch.bmp
+  # add example bootctl configuration
+  install -D -m0644 avouch.conf "$pkgdir"/usr/share/systemd/bootctl/avouch.conf
+  install -D -m0644 loader.conf "$pkgdir"/usr/share/systemd/bootctl/loader.conf
+  install -D -m0644 splash-avouch.bmp "$pkgdir"/usr/share/systemd/bootctl/splash-avouch.bmp
 
-	#sed -i 's/L+/#/' $pkgdir/usr/lib/tmpfiles.d/etc.conf
+  # overwrite the systemd-user PAM configuration with our own
+  install -D -m0644 systemd-user.pam "$pkgdir"/etc/pam.d/systemd-user
 
-	install -m 0644 "$srcdir"/sysctl.conf.README $pkgdir/etc/sysctl.conf
+  install -m 0644 "$srcdir"/sysctl.conf.README $pkgdir/etc/sysctl.conf
 	ln -s ../sysctl.conf $pkgdir/etc/sysctl.d/99-sysctl.conf
 
-	mkdir -vp $pkgdir/usr/lib/firewalld/services/
+  	mkdir -vp $pkgdir/usr/lib/firewalld/services/
 	install -Dm0644 $srcdir/systemd-journal-remote.xml $pkgdir/usr/lib/firewalld/services/
 	install -Dm0644 $srcdir/systemd-journal-gatewayd.xml $pkgdir/usr/lib/firewalld/services/
 
@@ -193,5 +275,63 @@ package() {
 	# include MIT license, since it's technically custom
 	install -Dm644 "${_basedir}/LICENSE.LGPL2.1" \
 	"$pkgdir/usr/share/licenses/systemd/LICENSE"
+}
 
+package_systemd-libs() {
+  pkgdesc='systemd client libraries'
+  depends=('glibc' 'gcc-libs' 'libcap' 'libgcrypt' 'lz4' 'xz' 'zstd')
+  license=('LGPL2.1')
+  provides=('libsystemd' 'libsystemd.so' 'libudev.so')
+  conflicts=('libsystemd')
+  replaces=('libsystemd')
+
+  install -d -m0755 "$pkgdir"/usr/share/man
+  mv systemd-libs/lib "$pkgdir"/usr/lib
+  mv systemd-libs/include "$pkgdir"/usr/include
+  mv systemd-libs/man3 "$pkgdir"/usr/share/man/man3
+}
+
+package_systemd-resolvconf() {
+  pkgdesc='systemd resolvconf replacement (for use with systemd-resolved)'
+  license=('LGPL2.1')
+  depends=('systemd')
+  provides=('openresolv' 'resolvconf')
+  conflicts=('resolvconf')
+
+  install -d -m0755 "$pkgdir"/usr/bin
+  ln -s resolvectl "$pkgdir"/usr/bin/resolvconf
+
+  install -d -m0755 "$pkgdir"/usr/share/man/man1
+  ln -s resolvectl.1.gz "$pkgdir"/usr/share/man/man1/resolvconf.1.gz
+}
+
+package_systemd-sysvcompat() {
+  pkgdesc='sysvinit compat for systemd'
+  license=('GPL2')
+  conflicts=('sysvinit')
+  depends=('systemd')
+
+  install -D -m0644 -t "$pkgdir"/usr/share/man/man8 \
+    build/man/{halt,poweroff,reboot,shutdown}.8
+
+  install -d -m0755 "$pkgdir"/usr/bin
+  ln -s ../lib/systemd/systemd "$pkgdir"/usr/bin/init
+  for tool in halt poweroff reboot shutdown; do
+    ln -s systemctl "$pkgdir"/usr/bin/$tool
+  done
+}
+
+package_systemd-ukify() {
+  pkgdesc='Combine kernel and initrd into a signed Unified Kernel Image'
+  license=('GPL2')
+  provides=('ukify')
+  depends=('binutils' 'python-cryptography' 'python-pefile' 'systemd')
+  optdepends=('python-pillow: Show the size of splash image'
+              'sbsigntools: Sign the embedded kernel')
+
+  install -d -m0755 "$pkgdir"/usr/{lib/kernel,share/man}
+  mv systemd-ukify/bin "$pkgdir"/usr/bin
+  mv systemd-ukify/systemd "$pkgdir"/usr/lib/systemd
+  mv systemd-ukify/man1 "$pkgdir"/usr/share/man/man1
+  mv systemd-ukify/install.d "$pkgdir"/usr/lib/kernel/install.d
 }

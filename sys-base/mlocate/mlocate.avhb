@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -22,8 +23,12 @@ sha1sums=('c6e6d81b25359c51c545f4b8ba0f3b469227fcbc'
           '0150379149bf9d714bc81332d775fc273e7e3535'
           '8301e6277d27db539af6cf4bc243e8e247bffc2e')
 
+getsrc() {
+	git clone https://pagure.io/mlocate.git
+	git clone https://git.savannah.gnu.org/git/gnulib.git
+}
+
 prepare() {
-	bsdtar -xf $srcarchivedir/gnulib-git20200319.tar.xz
 	cd gnulib
 	git checkout 5861339993f3014cfad1b94fc7fe366fc2573598
 

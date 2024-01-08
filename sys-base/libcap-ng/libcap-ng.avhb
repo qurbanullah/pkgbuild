@@ -1,9 +1,11 @@
-# $Id$
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
-pkgname=libcap-ng
-pkgver=0.7.10
+pkgbase=libcap-ng
+pkgname=(libcap-ng python-capng)
+pkgver=0.8.3
 pkgrel=1
 pkgdesc="A library making programming with POSIX capabilities easier than traditional libcap"
 arch=('x86_64')
@@ -14,23 +16,51 @@ depends=('glibc')
 source=(${pkgname}-${pkgver}.tar.gz::https://github.com/stevegrubb/libcap-ng/archive/v${pkgver}.tar.gz)
 sha512sums=('eae256b57af37c1170ee372ab9a6af927826a7b7b92f00c68010afbb32893fc265414ecf28f52e912a41609b4ca5e1295363db88dac9c60ea04bd20a1dfeef83')
 
+_pick() {
+  local p="$1" f d; shift
+  for f; do
+    d="$srcdir/$p/${f#$pkgdir/}"
+    mkdir -p "$(dirname "$d")"
+    mv "$f" "$d"
+    rmdir -p --ignore-fail-on-non-empty "$(dirname "$f")"
+  done
+}
+
 prepare() {
-	cd ${pkgname}-${pkgver}
-	autoreconf -fiv
+  cd $pkgbase-$pkgver
+  autoreconf -fiv
 }
 
 build() {
-	cd "${srcdir}/${pkgname}-${pkgver}"
-	./configure --prefix=/usr --enable-static=no --with-python=no
-	make ${MAKEFLAGS}
+  cd $pkgbase-$pkgver
+  ./configure \
+    --prefix=/usr \
+    --enable-static=no \
+    --without-python \
+    --with-python3
+  make
 }
 
 check() {
-	cd ${pkgname}-${pkgver}
-	make ${MAKEFLAGS} check
+  make check -C $pkgbase-$pkgver
 }
 
-package() {
-	cd "${srcdir}/${pkgname}-${pkgver}"
-	make DESTDIR="${pkgdir}" install
+package_libcap-ng() {
+  provides=(libcap-ng.so libdrop_ambient.so)
+
+  make DESTDIR="$pkgdir" install -C $pkgbase-$pkgver
+
+  (
+    cd "$pkgdir"
+    _pick python-capng usr/lib/python*
+  )
 }
+
+package_python-capng() {
+  pkgdesc+=' (Python bindings)'
+  depends+=(libcap-ng.so python)
+  provides=(python-libcap-ng)
+
+  mv -v python-capng/* "$pkgdir"
+}
+

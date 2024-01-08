@@ -1,25 +1,46 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=gnome-screenshot
-pkgver=41.0
+pkgver=41.0+r25+g45f08f0
 pkgrel=1
 pkgdesc="Take pictures of your screen"
 url="https://gitlab.gnome.org/GNOME/gnome-screenshot"
 arch=('x86_64')
 groups=('gnome-base')
 license=(GPL2)
-depends=(dconf gtk3 libcanberra)
+depends=(gtk3 libhandy)
 makedepends=(git meson appstream-glib)
-source=(https://gitlab.gnome.org/GNOME/$pkgname/-/archive/$pkgver/$pkgname-$pkgver.tar.bz2)
+_commit=45f08f0b91a7b2aa589c9b3add671e144207e37a  # master
+source=("https://gitlab.gnome.org/GNOME/gnome-screenshot.git")
+sha256sums=('SKIP')
+
+getsrc() {
+    git clone ${source[0]}
+    cd $pkgname
+    git checkout $_commit
+}
+
+pkgver() {
+  cd $pkgname
+  git describe --tags | sed 's/[^-]*-g/r&/;s/-/+/g'
+}
+
+prepare() {
+  cd $pkgname
+}
 
 build() {
-    avouch-meson ${pkgname}-${pkgver} build
-    meson compile -C build
+  avouch-meson $pkgname build
+  meson compile -C build
+}
+
+check() {
+  meson test -C build --print-errorlogs
 }
 
 package() {
-    DESTDIR="$pkgdir" ninja -C build install
+  meson install -C build --destdir "$pkgdir"
 }

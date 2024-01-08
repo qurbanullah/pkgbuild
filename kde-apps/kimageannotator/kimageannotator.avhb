@@ -1,0 +1,30 @@
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=kimageannotator
+_tarname=kImageAnnotator
+pkgver=0.6.1
+pkgrel=1
+pkgdesc='Tool for annotating images'
+arch=('x86_64')
+groups=('kde-apps')
+url='https://github.com/ksnip/kImageAnnotator'
+license=(GPL)
+depends=(qt5-svg kcolorpicker)
+makedepends=(cmake qt5-tools)
+source=(https://github.com/ksnip/kImageAnnotator/archive/v$pkgver/$_tarname-$pkgver.tar.gz)
+sha256sums=('8d32f0722dbb59a387d5d07c83a483e1b32f5014183eb67f2a9c5340da73d369')
+
+build() {
+  cmake -B build -S kImageAnnotator-$pkgver \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DBUILD_SHARED_LIBS=ON
+  cmake --build build
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+}
+

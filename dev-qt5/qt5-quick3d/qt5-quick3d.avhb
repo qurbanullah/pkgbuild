@@ -1,14 +1,14 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=qt5-quick3d
 _realname=${pkgname/5-/}
-_basever=5.15.3
-pkgver=5.15.3+kde+r2
+_basever=5.15.10
+pkgver=5.15.10+kde+r1
 pkgrel=1
-_commit=1ede2ac20170357b3e8d7d9810e5474e08170827
+_commit=353f50a9851518eb637181c00302cd354e0ae98b
 arch=('x86_64')
 groups=('dev-qt')
 url='https://www.qt.io'
@@ -20,8 +20,8 @@ optdepends=('assimp: assimp import plugin')
 _pkgfqn=${pkgname/5-/}
 source=(https://invent.kde.org/qt/qt/$_realname.git
         qt5-quick3d-assimp-5.1.patch)
-sha256sums=('SKIP'
-            '57a3ac54c46f86d1f99ce20653bb34215cbd65fbd36f7ee802360336e88f268e')
+patches=(qt5-quick3d-assimp-5.1.patch)
+sha256sums=('SKIP')
 options=(debug)
 
 getsrc(){
@@ -31,7 +31,7 @@ getsrc(){
 pkgver() {
   cd $_realname
   git checkout $_commit
-  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit`
+  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit` | sed -e 's|+kde+r0||'
 }
 
 prepare() {

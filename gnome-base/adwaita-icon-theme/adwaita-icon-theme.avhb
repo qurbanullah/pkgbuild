@@ -1,10 +1,10 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=adwaita-icon-theme
-pkgver=42.0
+pkgver=45.0
 pkgrel=1
 pkgdesc="GNOME standard icons"
 url="https://gitlab.gnome.org/GNOME/adwaita-icon-theme"
@@ -15,19 +15,15 @@ depends=(hicolor-icon-theme gtk-update-icon-cache librsvg)
 makedepends=(git gtk3)
 source=("https://gitlab.gnome.org/GNOME/$pkgname/-/archive/$pkgver/$pkgname-$pkgver.tar.bz2")
 
-prepare() {
-    cd ${srcdir}/${pkgname}-${pkgver}
-    # NOGONFIGURE=1 ./autogen.sh
+build() {
+    avouch-meson ${pkgname}-${pkgver} build
+    ninja -C build
 }
 
-build() {
-    cd ${srcdir}/${pkgname}-${pkgver}
-    ./configure --prefix=/usr
-    make ${MAKEFLAGS}
+check() {
+    meson test -C build
 }
 
 package() {
-    cd ${srcdir}/${pkgname}-${pkgver}
-    make DESTDIR="$pkgdir" install
-    rm -f  "${pkgdir}/usr/share/icons/gnome/icon-theme.cache"
+    DESTDIR="$pkgdir" meson install -C build
 }

@@ -1,9 +1,10 @@
-# $Id$
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=fontconfig
-pkgver=2.13.1
+pkgver=2.15.0
 pkgrel=1
 pkgdesc="A library for configuring and customizing font access"
 arch=('x86_64')
@@ -11,8 +12,18 @@ groups=('sys-base')
 url="https://www.freedesktop.org/wiki/Software/fontconfig/"
 license=('custom')
 depends=('expat' 'freetype2')
-makedepends=(git autoconf-archive gperf python-lxml python-six docbook-utils docbook-sgml
-             perl-sgmls 'texlive-formatsextra>=2017' lynx)
+depends=(
+  expat
+  freetype2
+)
+makedepends=(
+  docbook-sgml
+  docbook-utils
+  git
+  gperf
+  meson
+  perl-sgmls
+)
 install=fontconfig.install
 source=(https://www.freedesktop.org/software/$pkgname/release/$pkgname-$pkgver.tar.bz2)
 sha256sums=('b449a3e10c47e1d1c7a6ec6e2016cca73d3bd68fbbd4f0ae5cc6b573f7d6c7f3')
@@ -22,31 +33,37 @@ sha256sums=('b449a3e10c47e1d1c7a6ec6e2016cca73d3bd68fbbd4f0ae5cc6b573f7d6c7f3')
 # http://getemoji.com/
 
 build() {
-	cd ${srcdir}/${pkgname}-${pkgver}
-	./configure --prefix=/usr \
-		--sysconfdir=/etc \
-		--with-templatedir=/etc/fonts/conf.avail \
-		--with-xmldir=/etc/fonts \
-		--localstatedir=/var \
-		--disable-static \
-		--with-default-fonts=/usr/share/fonts \
-		--with-add-fonts=/usr/local/share/fonts \
-		--disable-docs
-	make ${MAKEFLAGS}
+  local meson_options=(
+    -D default-hinting=slight
+    -D default-sub-pixel-rendering=rgb
+	-D doc=disabled
+    # -D doc-html=enabled
+    # -D doc-pdf=disabled
+    # -D doc-txt=disabled
+  )
+  avouch-meson fontconfig-$pkgver build "${meson_options[@]}"
+  meson compile -C build
 }
 
 check() {
-	cd ${srcdir}/${pkgname}-${pkgver}
-	make ${MAKEFLAGS} -k check
-}
-
-_install_conf() {
-	install -m644 "$1" "$pkgdir/etc/fonts/conf.avail"
-	ln -s "../conf.avail/${1##*/}" "$pkgdir/etc/fonts/conf.d"
+  meson test -C build --print-errorlogs
 }
 
 package() {
-	cd ${srcdir}/${pkgname}-${pkgver}
-	make DESTDIR="$pkgdir" install
-}
+  depends+=(
+    libexpat.so
+    libfreetype.so
+  )
+  provides+=(libfontconfig.so)
 
+  meson install -C build --destdir "$pkgdir"
+
+  # Handle conf.d using the hook to avoid overwriting the symlinks on upgrade
+  mkdir -p "$pkgdir/usr/share/fontconfig/conf.default"
+  for _f in "$pkgdir"/etc/fonts/conf.d/*.conf; do
+    ln -sr "$pkgdir"/usr/share/fontconfig/conf.{avail,default}/"${_f##*/}"
+    rm "$_f"
+  done
+
+  install -Dm644 fontconfig-$pkgver/COPYING -t "$pkgdir/usr/share/licenses/$pkgname"
+}

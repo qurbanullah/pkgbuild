@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=ksshaskpass
-pkgver=5.24.4
+pkgver=5.27.8
 pkgrel=1
 pkgdesc='ssh-add helper that uses kwallet and kpassworddialog'
 url='https://projects.kde.org/projects/kde/workspace/ksshaskpass'

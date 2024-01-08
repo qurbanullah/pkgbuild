@@ -1,10 +1,10 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=less
-pkgver=551
+pkgver=643
 pkgrel=1
 pkgdesc="A terminal based program for viewing text files"
 license=('GPL3')
@@ -18,14 +18,26 @@ source=("http://www.greenwoodsoftware.com/$pkgname/$pkgname-$pkgver.tar.gz"
 md5sums=('8caff88e34afff512b663d7c690bd2cf'
          '8caff88e34afff512b663d7c690bd2cf')
 
+prepare() {
+  cd $pkgname-$pkgver
+  # apply patch from the source array
+  local src
+  for src in "${source[@]}"; do
+    src="${src%%::*}"
+    src="${src##*/}"
+    [[ $src = *.patch ]] || continue
+    echo "Applying patch $src..."
+    patch -Np1 < "../$src"
+  done
+}
+
 build() {
-	cd "${srcdir}/${pkgname}-${pkgver}"
-	./configure --prefix=/usr --sysconfdir=/etc --with-regex=pcre
-	make ${MAKEFLAGS}
+  cd $pkgname-$pkgver
+  sh configure --prefix=/usr --sysconfdir=/etc --with-regex=pcre2
+  make
 }
 
 package() {
-	cd "${srcdir}/${pkgname}-${pkgver}"
-	make DESTDIR="${pkgdir}" install
+  cd $pkgname-$pkgver
+  make DESTDIR="$pkgdir" install
 }
-

@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -7,13 +7,13 @@
 # NOTE: libtool requires rebuilt with each new gcc version
 
 pkgbase=gcc
-pkgname=(gcc gcc-libs lib32-gcc-libs gcc-fortran gcc-objc gcc-ada gcc-go gcc-d libgccjit)
-_pkgver=11
-pkgver=11.3.0
+pkgname=(gcc gcc-libs lib32-gcc-libs gcc-ada gcc-d gcc-fortran gcc-go gcc-objc lto-dump libgccjit)
+_pkgver=13
+pkgver=13.2.1
 #_majorver=${pkgver:0:2}
 _majorver=${pkgver%%.*}
 pkgrel=1
-_islver=0.24
+_islver=0.26
 #_snapshot=20210328
 pkgdesc='The GNU Compiler Collection'
 arch=('x86_64')
@@ -24,12 +24,12 @@ makedepends=(
   binutils
   doxygen
   gcc-ada
+  gcc-d
   git
   lib32-glibc
   lib32-gcc-libs
   libisl
   libmpc
-  libxcrypt
   python
   zstd
 )
@@ -40,7 +40,9 @@ checkdepends=(
   python-pytest
   tcl
 )
-options=(!emptydirs !lto debug)
+options=(!emptydirs !lto)
+
+
 source=(https://ftp.gnu.org/gnu/gcc/gcc-$pkgver/gcc-$pkgver.tar.xz
         http://isl.gforge.inria.fr/isl-${_islver}.tar.xz
         c89 c99)
@@ -57,11 +59,10 @@ if [ -n "${_snapshot}" ]; then
 fi
 
 CHOST="x86_64-pc-linux-gnu"
-_libdir="usr/lib/gcc/${CHOST}/${_majorver}"
-# _libdir=usr/lib/gcc/$CHOST/${pkgver%%+*}
+_libdir=usr/lib/gcc/$CHOST/${pkgver%%+*}
 
 prepare() {	
-  [[ ! -d gcc ]] && ln -s gcc-${pkgver/+/-} gcc
+  [[ ! -d gcc ]] && ln -s gcc-${pkgver/+/-}-20231113 gcc
   cd gcc
 
 	# Do not run fixincludes
@@ -73,14 +74,8 @@ prepare() {
 	# hack! - some configure tests for header files using "$CPP $CPPFLAGS"
 	sed -i "/ac_cpp=/s/\$CPPFLAGS/\$CPPFLAGS -O2/" {libiberty,gcc}/configure
 	
-  # D hacks
-  patch -p1 -i "$srcdir/gdc_phobos_path.patch"
-
   # Reproducible gcc-ada
   patch -Np0 < "$srcdir/gcc-ada-repro.patch"
-
-  # configure.ac: When adding -Wno-format, also add -Wno-format-security
-  patch -Np0 < "$srcdir/gcc11-Wno-format-security.patch"
 
   mkdir -p "$srcdir/gcc-build"
   mkdir -p "$srcdir/libgccjit-build"
@@ -99,35 +94,37 @@ build() {
 	export GCC=gcc
 	export GXX=g++
 
-	local _confflags="--prefix=/usr \
-      --libdir=/usr/lib \
-      --libexecdir=/usr/lib \
-      --mandir=/usr/share/man \
-      --infodir=/usr/share/info \
-      --with-bugurl=https://avouch.org/bugs \
-      --with-linker-hash-style=gnu \
-      --with-gcc-major-version-only \
-      --with-system-zlib \
-      --enable-__cxa_atexit \
-      --enable-cet=auto \
-      --enable-checking=release \
-      --enable-clocale=gnu \
-      --enable-default-pie \
-      --enable-default-ssp \
-      --enable-gnu-indirect-function \
-      --enable-gnu-unique-object \
-      --enable-linker-build-id \
-      --enable-lto \
-      --enable-multilib \
-      --enable-plugin \
-      --enable-shared \
-      --enable-threads=posix \
-      --disable-libssp \
-      --disable-libstdcxx-pch \
-      --disable-werror \
-      --with-build-config=bootstrap-lto \
-      --enable-link-serialization=1 \
-      gdc_include_dir=/usr/include/dlang/gdc"
+  local _confflags=(
+      --prefix=/usr
+      --libdir=/usr/lib
+      --libexecdir=/usr/lib
+      --mandir=/usr/share/man
+      --infodir=/usr/share/info
+      --with-bugurl=https://bugs.archlinux.org/
+      --with-build-config=bootstrap-lto
+      --with-linker-hash-style=gnu
+      --with-system-zlib
+      --enable-__cxa_atexit
+      --enable-cet=auto
+      --enable-checking=release
+      --enable-clocale=gnu
+      --enable-default-pie
+      --enable-default-ssp
+      --enable-gnu-indirect-function
+      --enable-gnu-unique-object
+      --enable-libstdcxx-backtrace
+      --enable-link-serialization=1
+      --enable-linker-build-id
+      --enable-lto
+      --enable-multilib
+      --enable-plugin
+      --enable-shared
+      --enable-threads=posix
+      --disable-libssp
+      --disable-libstdcxx-pch
+      --disable-werror
+  )
+
 
   cd gcc-build
 
@@ -137,18 +134,19 @@ build() {
   export CFLAGS=${CFLAGS/-Werror=format-security/}
   export CXXFLAGS=${CXXFLAGS/-Werror=format-security/}
 
-  "$srcdir/gcc/configure" \
-    CC="$GCC" CXX="$GXX" \
-    --enable-languages=c,c++,ada,fortran,go,lto,objc,obj-c++,d \
+"$srcdir/gcc/configure" \
+    --enable-languages=ada,c,c++,d,fortran,go,lto,objc,obj-c++ \
     --enable-bootstrap \
-    $_confflags
+    "${_confflags[@]:?_confflags unset}"
+
 
   # see https://bugs.archlinux.org/task/71777 for rationale re *FLAGS handling
   make ${MAKEFLAGS} -O STAGE1_CFLAGS="-O2" \
           BOOT_CFLAGS="$CFLAGS" \
           BOOT_LDFLAGS="$LDFLAGS" \
           LDFLAGS_FOR_TARGET="$LDFLAGS" \
-          profiledbootstrap
+          bootstrap
+
   
   # make documentation
   make ${MAKEFLAGS} -O -C $CHOST/libstdc++-v3/doc doc-man-doxygen
@@ -157,12 +155,12 @@ build() {
   # which brings a performance penalty
   cd "${srcdir}"/libgccjit-build
 
-  "$srcdir/gcc/configure" \
-    CC="$GCC" CXX="$GXX" \
+   "$srcdir/gcc/configure" \
     --enable-languages=jit \
     --disable-bootstrap \
     --enable-host-shared \
-    $_confflags
+    "${_confflags[@]:?_confflags unset}"
+
 
   # see https://bugs.archlinux.org/task/71777 for rationale re *FLAGS handling
   make ${MAKEFLAGS} -O STAGE1_CFLAGS="-O2" \
@@ -172,6 +170,7 @@ build() {
           all-gcc
 
   cp -a gcc/libgccjit.so* ../gcc-build/gcc/
+
 
 }
 
@@ -241,13 +240,13 @@ package_gcc() {
   optdepends=('lib32-gcc-libs: for generating code for 32-bit ABI')
   provides=($pkgname-multilib)
   replaces=($pkgname-multilib)
-  options=(!emptydirs staticlibs debug)
+  options=(!emptydirs staticlibs)
 
   cd gcc-build
 
   make -C gcc DESTDIR="$pkgdir" install-driver install-cpp install-gcc-ar \
     c++.install-common install-headers install-plugin install-lto-wrapper
-  
+
   install -m755 -t "$pkgdir/usr/bin/" gcc/gcov{,-tool}
   install -m755 -t "$pkgdir/${_libdir}/" gcc/{cc1,cc1plus,collect2,lto1}
 
@@ -290,7 +289,7 @@ package_gcc() {
   make -C $CHOST/32/libsanitizer/asan DESTDIR="$pkgdir" install-nodist_toolexeclibHEADERS
 
   make -C gcc DESTDIR="$pkgdir" install-man install-info
-  rm "$pkgdir"/usr/share/man/man1/{gccgo,gfortran,gdc}.1
+  rm "$pkgdir"/usr/share/man/man1/{gccgo,gfortran,lto-dump,gdc}.1
   rm "$pkgdir"/usr/share/info/{gccgo,gfortran,gnat-style,gnat_rm,gnat_ugn,gdc}.info
 
   make -C libcpp DESTDIR="$pkgdir" install
@@ -298,6 +297,12 @@ package_gcc() {
 
   # many packages expect this symlink
   ln -s gcc "$pkgdir"/usr/bin/cc
+
+  # create cc-rs compatible symlinks
+  # https://github.com/rust-lang/cc-rs/blob/1.0.73/src/lib.rs#L2578-L2581
+  for binary in {c++,g++,gcc,gcc-ar,gcc-nm,gcc-ranlib}; do
+    ln -s /usr/bin/${binary} "${pkgdir}"/usr/bin/x86_64-linux-gnu-${binary}
+  done
 
   # POSIX conformance launcher scripts for c89 and c99
   install -Dm755 "$srcdir/c89" "$pkgdir/usr/bin/c89"
@@ -314,9 +319,8 @@ package_gcc() {
   python -O -m compileall "$pkgdir/usr/share/gcc-${pkgver%%+*}/"
 
   # Install Runtime Library Exception
-  install -d "$pkgdir/usr/share/licenses/$pkgname/"
-  ln -s /usr/share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION \
-    "$pkgdir/usr/share/licenses/$pkgname/"
+  install -Dm644 "$srcdir/gcc/COPYING.RUNTIME" \
+    "$pkgdir/usr/share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION"
 }
 
 package_gcc-fortran() {
@@ -337,9 +341,8 @@ package_gcc-fortran() {
   ln -s gfortran "$pkgdir/usr/bin/f95"
 
   # Install Runtime Library Exception
-  install -d "$pkgdir/usr/share/licenses/$pkgname/"
-  ln -s /usr/share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION \
-    "$pkgdir/usr/share/licenses/$pkgname/"
+  install -Dm644 "$srcdir/gcc/COPYING.RUNTIME" \
+    "$pkgdir/usr/share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION"
 }
 
 package_gcc-objc() {
@@ -354,9 +357,8 @@ package_gcc-objc() {
   install -m755 gcc/cc1obj{,plus} "$pkgdir/${_libdir}/"
 
   # Install Runtime Library Exception
-  install -d "$pkgdir/usr/share/licenses/$pkgname/"
-  ln -s /usr/share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION \
-    "$pkgdir/usr/share/licenses/$pkgname/"
+  install -Dm644 "$srcdir/gcc/COPYING.RUNTIME" \
+    "$pkgdir/usr/share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION"
 }
 
 package_gcc-ada() {
@@ -364,7 +366,7 @@ package_gcc-ada() {
   depends=("gcc=$pkgver-$pkgrel" libisl.so)
   provides=($pkgname-multilib)
   replaces=($pkgname-multilib)
-  options=(!emptydirs staticlibs debug)
+  options=(!emptydirs staticlibs)
 
   cd gcc-build/gcc
   make DESTDIR="$pkgdir" ada.install-{common,info}
@@ -393,15 +395,14 @@ package_gcc-ada() {
   rm -f "$pkgdir"/${_libdir}/32/adalib/libgna{rl,t}.so
 
   # Install Runtime Library Exception
-  install -d "$pkgdir/usr/share/licenses/$pkgname/"
-  ln -s /usr/share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION \
-    "$pkgdir/usr/share/licenses/$pkgname/"
+  install -Dm644 "$srcdir/gcc/COPYING.RUNTIME" \
+    "$pkgdir/usr/share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION"
 }
 
 package_gcc-go() {
   pkgdesc='Go front-end for GCC'
   depends=("gcc=$pkgver-$pkgrel" libisl.so)
-  provides=("go=1.12.2" $pkgname-multilib)
+  provides=("go=1.17" $pkgname-multilib)
   replaces=($pkgname-multilib)
   conflicts=(go)
 
@@ -415,9 +416,8 @@ package_gcc-go() {
   install -Dm755 gcc/go1 "$pkgdir/${_libdir}/go1"
 
   # Install Runtime Library Exception
-  install -d "$pkgdir/usr/share/licenses/$pkgname/"
-  ln -s /usr/share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION \
-    "$pkgdir/usr/share/licenses/$pkgname/"
+  install -Dm644 "$srcdir/gcc/COPYING.RUNTIME" \
+    "$pkgdir/usr/share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION"
 }
 
 package_lib32-gcc-libs() {
@@ -461,7 +461,7 @@ package_gcc-d() {
   depends=("gcc=$pkgver-$pkgrel" libisl.so)
   provides=(gdc)
   replaces=(gdc)
-  options=(staticlibs debug)
+  options=(staticlibs)
 
   cd gcc-build
   make -C gcc DESTDIR="$pkgdir" d.install-{common,man,info}
@@ -473,13 +473,38 @@ package_gcc-d() {
   rm -f "$pkgdir/usr/lib/"lib{gphobos,gdruntime}.so*
   rm -f "$pkgdir/usr/lib32/"lib{gphobos,gdruntime}.so*
 
-  install -d "$pkgdir"/usr/include/dlang
-  ln -s /"${_libdir}"/include/d "$pkgdir"/usr/include/dlang/gdc
+  # Install Runtime Library Exception
+  install -Dm644 "$srcdir/gcc/COPYING.RUNTIME" \
+    "$pkgdir/usr/share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION"
+}
+
+#package_gcc-rust() {
+#  pkgdesc="Rust frontend for GCC"
+#  depends=("gcc=$pkgver-$pkgrel" libisl.so)
+#  replaces=(gcc-rust-git)
+#
+#  cd gcc-build
+#  make -C gcc DESTDIR="$pkgdir" rust.install-{common,man,info}
+#
+#  install -Dm755 gcc/gccrs "$pkgdir"/usr/bin/gccrs
+#  install -Dm755 gcc/rust1 "$pkgdir"/"$_libdir"/rust1
+#
+#  # Install Runtime Library Exception
+#  install -d "$pkgdir/usr/share/licenses/$pkgname/"
+#  ln -s /usr/share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION \
+#    "$pkgdir/usr/share/licenses/$pkgname/"
+#}
+
+package_lto-dump() {
+  pkgdesc="Dump link time optimization object files"
+  depends=("gcc=$pkgver-$pkgrel" libisl.so)
+
+  cd gcc-build
+  make -C gcc DESTDIR="$pkgdir" lto.install-{common,man,info}
 
   # Install Runtime Library Exception
-  install -d "$pkgdir/usr/share/licenses/$pkgname/"
-  ln -s /usr/share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION \
-    "$pkgdir/usr/share/licenses/$pkgname/"
+  install -Dm644 "$srcdir/gcc/COPYING.RUNTIME" \
+    "$pkgdir/usr/share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION"
 }
 
 package_libgccjit() {
@@ -490,7 +515,6 @@ package_libgccjit() {
   make -C gcc DESTDIR="$pkgdir" jit.install-common jit.install-info
 
   # Install Runtime Library Exception
-  install -d "$pkgdir/usr/share/licenses/$pkgname/"
-  ln -s /usr/share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION \
-    "$pkgdir/usr/share/licenses/$pkgname/"
+  install -Dm644 "$srcdir/gcc/COPYING.RUNTIME" \
+    "$pkgdir/usr/share/licenses/gcc-libs/RUNTIME.LIBRARY.EXCEPTION"
 }

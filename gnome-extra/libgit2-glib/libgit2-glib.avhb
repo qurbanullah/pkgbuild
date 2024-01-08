@@ -1,10 +1,10 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=libgit2-glib
-pkgver=1.0.0.1
+pkgver=1.2.0
 pkgrel=1
 pkgdesc="GLib wrapper for libgit2"
 url="http://wiki.gnome.org/Projects/Libgit2-glib"

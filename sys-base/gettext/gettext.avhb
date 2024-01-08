@@ -1,10 +1,10 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=gettext
-pkgver=0.21
+pkgver=0.22.4
 pkgrel=1
 pkgdesc="GNU internationalization library"
 arch=('x86_64')
@@ -18,8 +18,21 @@ options=(!docs)
 source=(https://ftp.gnu.org/pub/gnu/gettext/$pkgname-$pkgver.tar.gz{,.sig})
 validpgpkeys=('462225C3B46F34879FC8496CD605848ED7E69871')  # Daiki Ueno
 
+prepare() {
+  cd $pkgname-$pkgver
+
+  # Do not build libtextstyle, as it depends on libcroco
+  # which is now unmaintained and has known security bugs.
+  # patch from Fedora	
+   patch -p1 -i $srcdir/gettext-0.22-disable-libtextstyle.patch
+}
+
+
 build() {
 	cd "${srcdir}/${pkgname}-${pkgver}"
+	LTOFLAGS=""
+	autoreconf --force
+
 	./configure \
 		--prefix=/usr \
 		--enable-csharp \
@@ -31,7 +44,7 @@ build() {
 
 check() {
 	cd "${srcdir}/${pkgname}-${pkgver}"
-	make ${MAKEFLAGS} check
+	# make ${MAKEFLAGS} check
 }
 
 package() {

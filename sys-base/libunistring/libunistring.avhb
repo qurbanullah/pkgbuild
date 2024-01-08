@@ -1,10 +1,10 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=libunistring
-pkgver=0.9.10
+pkgver=1.1
 pkgrel=1
 pkgdesc="Library for manipulating Unicode strings and C strings."
 url="http://www.gnu.org/software/libunistring/"

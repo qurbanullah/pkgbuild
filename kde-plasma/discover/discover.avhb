@@ -6,7 +6,7 @@
 ### we build without packagekit support
 
 pkgname=discover
-pkgver=5.24.4
+pkgver=5.27.8
 pkgrel=1
 pkgdesc='KDE and Plasma resources management GUI'
 arch=('x86_64')

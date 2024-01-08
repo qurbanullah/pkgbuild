@@ -3,7 +3,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=signon-kwallet-extension
-pkgver=22.04.0
+pkgver=23.08.1
 pkgrel=1
 pkgdesc="KWallet signon extension"
 arch=('x86_64')

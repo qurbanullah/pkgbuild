@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -13,7 +14,7 @@ depends=(glib2 libxml2)
 makedepends=(intltool git gtk-doc)
 license=(LGPL)
 _commit=7e15ca6c2c29a4b78367e6efa6195b331a92b2a7  # tags/0.6.13^0
-source=("git+https://gitlab.gnome.org/GNOME/libcroco.git#commit=$_commit")
+source=("https://gitlab.gnome.org/Archive/libcroco/-/archive/0.6.13/libcroco-0.6.13.tar.bz2")
 sha256sums=('SKIP')
 
 prepare() {

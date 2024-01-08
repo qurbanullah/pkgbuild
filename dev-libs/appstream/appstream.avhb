@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -6,7 +6,7 @@
 pkgbase=appstream
 pkgname=(appstream appstream-qt)
 _realname=AppStream
-pkgver=0.15.1
+pkgver=0.16.3
 pkgrel=1
 pkgdesc="Provides a standard for creating app stores across distributions"
 arch=('x86_64')
@@ -20,9 +20,6 @@ validpgpkeys=(D33A3F0CA16B0ACC51A60738494C8A5FBF4DECEB) # Matthias Klumpp <matth
 
 prepare() {
   cd AppStream-$pkgver
-
-  # https://github.com/ximion/appstream/pull/376
-  patch -Np1 -i ../0001-compose-Fix-SVG-scaling-with-librsvg-2.52.patch
 }
 
 build() {

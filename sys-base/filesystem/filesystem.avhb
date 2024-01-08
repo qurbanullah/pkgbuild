@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=filesystem
-pkgver=2022.03
+pkgver=2023.11
 pkgrel=1
 pkgdesc='Avouch Linux base files'
 arch=('x86_64')
@@ -19,7 +19,7 @@ backup=('etc/crypttab' 'etc/fstab' 'etc/group' 'etc/gshadow' 'etc/host.conf'
 source=('crypttab' 'env-generator' 'fstab' 'group' 'gshadow' 'host.conf' 'hosts'
         'issue' 'ld.so.conf' 'locale.sh' 'motd' 'nsswitch.conf' 'os-release'
         'passwd' 'profile' 'resolv.conf' 'securetty' 'shadow' 'shells'
-        'sysusers' 'tmpfiles')
+        'sysusers' 'tmpfiles' 'subuid' 'subgid')
 
 package() {
   cd "$pkgdir"
@@ -38,7 +38,7 @@ package() {
   # setup /etc and /usr/share/factory/etc
   install -d etc/{ld.so.conf.d,skel,profile.d} usr/share/factory/etc
   for f in fstab group host.conf hosts issue ld.so.conf motd nsswitch.conf \
-  passwd resolv.conf securetty shells profile; do
+  passwd resolv.conf securetty shells profile subuid subgid; do
     install -m644 "$srcdir"/$f etc/
     install -m644 "$srcdir"/$f usr/share/factory/etc/
   done

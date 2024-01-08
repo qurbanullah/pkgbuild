@@ -1,18 +1,18 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=icu
 _realname=icu4c
-pkgver=70.1
+pkgver=74.1
 pkgrel=1
 pkgdesc="International Components for Unicode library"
 arch=('x86_64')
 groups=('sys-libs')
 url="http://www.icu-project.org/"
 license=('custom:icu')
-depends=('gcc-libs' 'sh')
+depends=('gcc-libs' 'glibc' 'sh')
 makedepends=('python')
 provides=(libicu{data,i18n,io,test,tu,uc}.so)
 source=(https://github.com/unicode-org/icu/releases/download/release-${pkgver/./-}/icu4c-${pkgver/./_}-src.tgz)
@@ -21,6 +21,11 @@ validpgpkeys=('BA90283A60D67BA0DD910A893932080F4FB419E3') #  "Steven R. Loomis (
 validpgpkeys+=('9731166CD8E23A83BEE7C6D3ACA5DBE1FD8FABF1') #  "Steven R. Loomis (ICU Project) <srl@icu-project.org>" 
 validpgpkeys+=('FFA9129A180D765B7A5BEA1C9B432B27D1BA20D7') # "Fredrik Roubert <fredrik@roubert.name>"
 validpgpkeys+=('E4098B78AFC94394F3F49AA903996C7C83F12F11') # "keybase.io/srl295 <srl295@keybase.io>"
+
+prepare() {
+  cd icu/source
+  patch -Np1 < "../../ICU-22132.patch"
+}
 
 build() {
   cd icu/source

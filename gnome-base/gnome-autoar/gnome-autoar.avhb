@@ -1,10 +1,10 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=gnome-autoar
-pkgver=0.4.3
+pkgver=0.4.4
 pkgrel=1
 pkgdesc="Automatic archives creating and extracting library"
 url="https://wiki.gnome.org/TingweiLan/GSoC2013Final"

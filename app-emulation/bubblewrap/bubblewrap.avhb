@@ -1,56 +1,53 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgbase=bubblewrap
 pkgname=(bubblewrap bubblewrap-suid)
-pkgver=0.6.1
+pkgver=0.8.0
 pkgrel=1
 pkgdesc='Unprivileged sandboxing tool'
 url='https://github.com/projectatomic/bubblewrap'
 arch=('x86_64')
 groups=('app-emulation')
 license=(GPL)
-depends=(glibc libcap)
-makedepends=(libxslt docbook-xsl git)
+depends=(
+  glibc
+  libcap
+)
+makedepends=(
+  bash-completion
+  docbook-xsl
+  git
+  libxslt
+  meson
+)
 source=(https://github.com/projectatomic/bubblewrap/archive/v$pkgver.tar.gz)
 sha256sums=('SKIP')
 
 prepare() {
   cd $pkgbase-$pkgver
-  NOCONFIGURE=1 ./autogen.sh
-
-  cd "$srcdir"
-  cp -r ${pkgbase}-$pkgver{,-none}
-  cp -r ${pkgbase}-$pkgver{,-setuid}
-}
-
-_build() {
-  pushd $srcdir/${pkgbase}-$pkgver-$1
-  ./configure --prefix=/usr \
-    --with-priv-mode=$1
-  make ${MAKEFLAGS}
-  popd
-}
-
-_install() {
-  make -C "$srcdir/${pkgbase}-$pkgver-$1" DESTDIR="$pkgdir" install
 }
 
 build() {
-  _build none
-  _build setuid
+  avouch-meson $pkgbase-$pkgver build
+  meson compile -C build
+}
+
+check() {
+  meson test -C build --print-errorlogs
 }
 
 package_bubblewrap() {
-  _install none
+  meson install -C build --destdir "$pkgdir"
 }
 
 package_bubblewrap-suid() {
   pkgdesc+=" (setuid variant)"
-  provides=(bubblewrap)
+  provides=("bubblewrap=$pkgver-$pkgrel")
   conflicts=(bubblewrap)
 
-  _install setuid
+  meson install -C build --destdir "$pkgdir"
+  chmod u+s "$pkgdir/usr/bin/bwrap"
 }

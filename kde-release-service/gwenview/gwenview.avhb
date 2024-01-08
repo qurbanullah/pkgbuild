@@ -1,20 +1,21 @@
-# $Id$
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=gwenview
-pkgver=22.04.0
+pkgver=23.08.1
 pkgrel=1
 pkgdesc="A fast and easy to use image viewer for KDE"
 url='http://kde.org/applications/graphics/gwenview/'
 arch=('x86_64')
-groups=('kde-apps')
+groups=('kde-release-service')
 license=('GPL' 'LGPL' 'FDL')
-depends=('kactivities' 'baloo' 'kdelibs4support' 'libkipi' 'libkdcraw')
+depends=(kactivities baloo libkdcraw kparts kitemmodels cfitsio phonon-qt5 purpose perl kimageannotator)
 optdepends=('qt5-imageformats: support for tiff, webp, and more image formats'
             'kimageformats: support for dds, xcf, exr, psd, and more image formats'
-            'kipi-plugins: export to various online services')
-makedepends=('extra-cmake-modules' 'kdoctools' 'python' 'kdesignerplugin')
+            'kamera: import pictures from gphoto2 cameras')
+makedepends=(extra-cmake-modules kdoctools wayland-protocols)
 source=("http://download.kde.org/stable/applications/$pkgver/src/$pkgname-$pkgver.tar.xz")
 sha1sums=('eee5fa46c25775c72de2e6ab496f81fa27ac1a6c')
 

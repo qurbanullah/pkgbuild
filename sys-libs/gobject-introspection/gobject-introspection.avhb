@@ -5,7 +5,7 @@
 
 pkgbase=gobject-introspection
 pkgname=('gobject-introspection' 'gobject-introspection-runtime')
-pkgver=1.72.0
+pkgver=1.78.1
 pkgrel=1
 arch=('x86_64')
 groups=('sys-libs')
@@ -19,7 +19,7 @@ _commit=4502dd33da995e5e9e6d73aa996cf42e92c9e217  # tags/1.70.0^0
 source=("https://gitlab.gnome.org/GNOME/$realname/-/archive/$pkgver/$realname-$pkgver.tar.bz2"
         "https://gitlab.gnome.org/GNOME/glib/-/archive/$_glibver/glib-$_glibver.tar.bz2")
 
-_glibver=2.72.0
+_glibver=2.78.0
 
 # getsrc() {
 #   git clone https://gitlab.gnome.org/GNOME/gobject-introspection.git

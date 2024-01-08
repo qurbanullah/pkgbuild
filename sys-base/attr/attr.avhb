@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -29,8 +30,14 @@ build() {
 	# ATTR_1.0 not defined in file libattr.so.1 with link time reference
 	# Force to use ld.bdf instead of default ld.gold 
 	# as upstream does not come up with a solution yet.
-	export LD=ld.bfd
-	export LDFLAGS="$LDFLAGS -fuse-ld=bfd"
+	# export LD=ld.bfd
+	# export LDFLAGS="$LDFLAGS -fuse-ld=bfd"
+	use_linker "ld"
+
+	# remove the nfs entries from /etc/xattr.conf
+	# http://lists.gnu.org/archive/html/bug-coreutils/2019-03/msg00008.html
+	sed -i '/nfs/d' $pkgname-$pkgver/xattr.conf
+
 	./configure --prefix=/usr --sysconfdir=/etc --libdir=/usr/lib --libexecdir=/usr/lib
 	make ${MAKEFLAGS}
 }

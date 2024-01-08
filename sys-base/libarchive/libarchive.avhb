@@ -1,10 +1,10 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=libarchive
-pkgver=3.6.0
+pkgver=3.7.2
 pkgrel=1
 pkgdesc="library that can create and read several streaming archive formats"
 arch=('x86_64')
@@ -13,7 +13,7 @@ url='https://libarchive.org/'
 license=(BSD)
 depends=('acl' 'libacl.so' 'bzip2' 'expat' 'lz4' 'openssl' 'xz' 'zlib' 'zstd')
 provides=(libarchive.so)
-source=("$pkgname-$pkgver.tar.gz::https://github.com/$pkgname/$pkgname/archive/v$pkgver.tar.gz")
+source=("https://github.com/$pkgname/$pkgname/archive/v$pkgver.tar.gz")
 
 build() {
 	cd "${srcdir}/${pkgname}-${pkgver}"

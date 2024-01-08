@@ -1,10 +1,10 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=libgepub
-pkgver=0.6.0
+pkgver=0.7.1
 pkgrel=1
 pkgdesc="Simple library to read epub files using glib"
 arch=('x86_64')

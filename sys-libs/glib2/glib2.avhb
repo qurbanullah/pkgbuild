@@ -1,4 +1,4 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -6,7 +6,7 @@
 pkgbase=glib2
 pkgname=('glib2' 'glib2-docs')
 _realname=glib
-pkgver=2.72.0
+pkgver=2.78.0
 pkgrel=1
 pkgdesc="Low level core library"
 arch=('x86_64')

@@ -1,14 +1,14 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=calls
-pkgver=42.0
+pkgver=45.0
 pkgrel=1
 pkgdesc='Phone dialer and call handler'
 arch=(x86_64)
-groups=('gnome-extra')
+groups=('gnome-base')
 url='https://gitlab.gnome.org/GNOME/calls'
 license=(GPL3)
 depends=(

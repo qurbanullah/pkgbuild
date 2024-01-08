@@ -1,10 +1,10 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=gnome-sound-recorder
-pkgver=42.0
+pkgver=43.beta
 pkgrel=1
 pkgdesc="A utility to make simple audio recording from your GNOME desktop"
 url="https://wiki.gnome.org/Apps/SoundRecorder"

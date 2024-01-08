@@ -1,14 +1,14 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=qt5-location
 _realname=${pkgname/5-/}
-_basever=5.15.3
-pkgver=5.15.3+kde+r2
+_basever=5.15.10
+pkgver=5.15.10+kde+r5
 pkgrel=1
-_commit=e07f35879536640ad784e71e5261c5a597d504f5
+_commit=3b946d0c5c8aaed3757bdcbbcd3b45cb79494471
 arch=('x86_64')
 groups=('dev-qt')
 url='https://www.qt.io'
@@ -16,18 +16,23 @@ license=('GPL3' 'LGPL3' 'FDL' 'custom')
 pkgdesc='Provides access to position, satellite and area monitoring classes'
 depends=('qt5-declarative')
 makedepends=('git')
-source=(https://invent.kde.org/qt/qt/$_realname.git)
+source=(https://invent.kde.org/qt/qt/$_realname.git
+      https://invent.kde.org/qt/qt/qtlocation-mapboxgl.git)
 sha256sums=('SKIP')
 options=(debug)
 
 getsrc(){
   git clone ${source[0]}
+   git clone ${source[1]}
 }
 
 pkgver() {
   cd $_realname
   git checkout $_commit
-  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit`
+  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit` | sed -e 's|+kde+r0||'
+  git submodule init
+  git submodule set-url src/3rdparty/mapbox-gl-native "$srcdir"/qtlocation-mapboxgl
+  git -c protocol.file.allow=always submodule update
 }
 
 prepare() {

@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=kexec-tools
-pkgver=2.0.23
+pkgver=2.0.27
 pkgrel=1
 pkgdesc="Load another kernel from the currently executing Linux kernel"
 arch=('x86_64')
@@ -17,7 +17,8 @@ license=('GPL2')
 
 build() {
 	cd "${srcdir}/${pkgname}-${pkgver}"
-	CFLAGS+=' -fcommon' # https://wiki.gentoo.org/wiki/Gcc_10_porting_notes/fno_common
+	./bootstrap
+	export CFLAGS+=' -fcommon' # https://wiki.gentoo.org/wiki/Gcc_10_porting_notes/fno_common
 	./configure --prefix=/usr --sbindir=/usr/bin --without-lzma
 	make
 }

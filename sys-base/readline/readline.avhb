@@ -1,11 +1,11 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=readline
-_basever=8.1
-_patchlevel=0
+_basever=8.2
+_patchlevel=007
 pkgver=${_basever}.${_patchlevel}
 pkgrel=1
 pkgdesc="GNU readline library"

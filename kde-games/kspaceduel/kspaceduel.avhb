@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=kspaceduel
-pkgver=22.04.0
+pkgver=23.08.1
 pkgrel=1
 pkgdesc="Each of two possible players controls a satellite spaceship orbiting the sun"
 url="http://kde.org/applications/games/kspaceduel/"

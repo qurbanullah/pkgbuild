@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=kreversi
-pkgver=22.04.0
+pkgver=23.08.1
 pkgrel=1
 pkgdesc="A simple one player strategy game played against the computer"
 url="http://kde.org/applications/games/kreversi/"

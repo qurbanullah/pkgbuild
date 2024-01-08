@@ -1,11 +1,12 @@
-# $Id$
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=tzdata
-pkgver=2019c
-_tzcode=2019c
-_tzdata=2019c
+pkgver=2023c
+_tzcode=2023c
+_tzdata=2023c
 pkgrel=1
 pkgdesc="Sources for time zone and daylight saving time data"
 arch=('x86_64')
@@ -33,22 +34,25 @@ prepare() {
 }
 
 build() {
-	make
+  make LFLAGS="${LDFLAGS} ${LTOFLAGS}"
 }
 
 package() {
-  cd ${srcdir}
+  cd "${srcdir}"
   # install tzcode stuff
   make DESTDIR="${pkgdir}" install
 
   # install tzdata stuff
-  ./zic -d ${pkgdir}/usr/share/zoneinfo ${timezones[@]}
-  ./zic -d ${pkgdir}/usr/share/zoneinfo/posix ${timezones[@]}
-  ./zic -d ${pkgdir}/usr/share/zoneinfo/right -L leapseconds ${timezones[@]}
-  
-  ./zic -d ${pkgdir}/usr/share/zoneinfo -p America/New_York
-  install -m444 -t ${pkgdir}/usr/share/zoneinfo iso3166.tab zone1970.tab zone.tab # zone.tab is depricated and will go soon
+  ./zic -b fat -d "${pkgdir}"/usr/share/zoneinfo ${_timezones[@]}
+  ./zic -b fat -d "${pkgdir}"/usr/share/zoneinfo/posix ${_timezones[@]}
+  ./zic -b fat -d "${pkgdir}"/usr/share/zoneinfo/right -L leapseconds ${_timezones[@]}
+  # This creates the posixrules file. We use New York because POSIX requires the daylight savings time rules to be in accordance with US rules.   
+  ./zic -b fat -d "${pkgdir}"/usr/share/zoneinfo -p America/New_York
+  install -m644 -t "${pkgdir}"/usr/share/zoneinfo iso3166.tab leap-seconds.list zone1970.tab zone.tab SECURITY # zone.tab is depricated and will go soon
   
   # cleanup
   rm "${pkgdir}/etc/localtime"
+
+  # install license
+  install -Dm644 LICENSE "${pkgdir}"/usr/share/licenses/${pkgname}/LICENSE
 }

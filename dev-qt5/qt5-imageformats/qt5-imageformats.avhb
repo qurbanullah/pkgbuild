@@ -5,10 +5,10 @@
 
 pkgname=qt5-imageformats
 _realname=${pkgname/5-/}
-_basever=5.15.3
-pkgver=5.15.3+kde+r0
-pkgrel=1
-_commit=90038c936763645610fe1e5f05cfc025e4d98631
+_basever=5.15.10
+pkgver=5.15.10+kde+r9
+pkgrel=2
+_commit=5aa33ec870977863c400103db94da452edbaf414
 arch=('x86_64')
 groups=('dev-qt')
 url='https://www.qt.io'
@@ -27,7 +27,7 @@ getsrc(){
 pkgver() {
   cd $_realname
   git checkout $_commit
-  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit`
+  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit` | sed -e 's|+kde+r0||'
 }
 
 prepare() {

@@ -1,0 +1,82 @@
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libei
+pkgver=1.1.0
+pkgrel=1
+pkgdesc="Library for Emulated Input"
+url="https://libinput.pages.freedesktop.org/libei/"
+arch=(x86_64)
+groups=('sys-libs')
+license=(custom:X11)
+depends=(
+  libevdev
+  systemd
+)
+makedepends=(
+  git
+  libxkbcommon
+  meson
+  python-attrs
+  python-dbusmock
+  python-jinja
+  python-pytest
+  python-structlog
+  python-yaml
+)
+checkdepends=(
+  python-pytest-xdist
+  valgrind
+)
+provides=(
+  lib{ei,eis,oeffis}.so
+)
+_commit=82cdbc9129a0e2c255fcee6bcaa7abed5578ae14  # tags/1.1.0^0
+_comit_munit=fbbdf1467eb0d04a6ee465def2e529e4c87f2118
+source=(
+  "https://gitlab.freedesktop.org/libinput/libei.git"
+  "https://github.com/nemequ/munit"
+)
+b2sums=('SKIP'
+        'SKIP')
+
+getsrc() {
+  git clone ${source[0]}
+  git clone ${source[1]}
+
+  cd libei
+  git chekcout $_commit
+
+  cd ../munit
+  git checkout $_comit_munit
+}
+
+pkgver() {
+  cd libei
+  git describe --tags | sed 's/[^-]*-g/r&/;s/-/+/g'
+}
+
+prepare() {
+  cd libei
+  ln -sr ../munit subprojects/munit
+}
+
+build() {
+local meson_options=(
+    -D tests=disabled
+  )
+
+  avouch-meson $pkgname build "${meson_options[@]}"
+  meson compile -C build
+}
+
+check() {
+  meson test -C build --print-errorlogs
+}
+
+package() {
+  meson install -C build --destdir "$pkgdir" --skip-subprojects
+  install -Dt "$pkgdir/usr/share/licenses/$pkgname" -m644 libei/COPYING
+}

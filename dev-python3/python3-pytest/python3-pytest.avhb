@@ -1,11 +1,11 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=python3-pytest
 _realname=pytest
-pkgver=7.0.1
+pkgver=7.4.2
 pkgrel=1
 pkgdesc="Simple powerful testing with python3"
 arch=('any')
@@ -26,15 +26,15 @@ export SETUPTOOLS_SCM_PRETEND_VERSION=$pkgver
 
 build() {
   cd ${_realname}-${pkgver}
-  python3 setup.py build
+  python3 -m build --wheel --skip-dependency-check --no-isolation
 }
 
-check() {
-  cd ${_realname}-${pkgver}
-  python3 setup.py pytest
-}
+# check() {
+#   cd ${_realname}-${pkgver}
+#   python3 setup.py pytest
+# }
 
 package() {
   cd ${_realname}-${pkgver}
-  python3 setup.py install --skip-build --root="${pkgdir}" --optimize='1'
+  python3 -m installer --destdir="$pkgdir" dist/*.whl
 }

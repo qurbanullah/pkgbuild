@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=khotkeys
-pkgver=5.24.4
+pkgver=5.27.8
 pkgrel=1
 pkgdesc='KHotKeys'
 arch=('x86_64')

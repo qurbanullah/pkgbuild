@@ -1,60 +1,75 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgbase=brotli
 pkgname=('brotli' 'python3-brotli' 'brotli-testdata')
-pkgver=1.0.9
+pkgver=1.1.0
 pkgrel=1
-pkgdesc='Brotli compression library'
+pkgdesc='Generic-purpose lossless compression algorithm'
+url='https://github.com/google/brotli'
 arch=('x86_64')
 groups=('app-archive')
 license=('MIT')
-url='https://github.com/google/brotli'
-depends=('gcc-libs')
-makedepends=('cmake' 'python3-setuptools')
-source=("https://github.com/google/$pkgbase/archive/v$pkgver.tar.gz")
+makedepends=(
+  cmake
+  python-setuptools
+  python-build
+  python-installer
+  python-wheel
+)
+source=(https://github.com/google/$pkgbase/archive/refs/tags/v$pkgver.tar.gz)
+sha512sums=('SKIP')
 
-prepare() {
-  mkdir -p build
-}
 
 build() {
-  cd "$srcdir"/brotli-$pkgver
-  python setup.py build
-
-  cd "$srcdir"/build
-  cmake ../brotli-$pkgver -DCMAKE_INSTALL_PREFIX="/usr" -DCMAKE_INSTALL_LIBDIR="/usr/lib"
-  make ${MAKEFLAGS}
+  cd ${pkgbase}-${pkgver}
+  python -m build --wheel --no-isolation
+  cmake -S . -B build \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DBUILD_SHARED_LIBS=True \
+    -DCMAKE_C_FLAGS="$CFLAGS -ffat-lto-objects"
+  cmake --build build -v
 }
 
 check() {
-  cd brotli-$pkgver
-  # make test
-  # python setup.py test
+  cd ${pkgbase}-${pkgver}
+  local python_version=$(python -c 'import sys; print("".join(map(str, sys.version_info[:2])))')
+  PYTHONPATH="$PWD/bin/lib.linux-$CARCH-cpython-${python_version}" python -m unittest discover python "*_test.py"
+  cd build
+  ctest --output-on-failure --stop-on-failure -j$(nproc)
 }
 
 package_brotli() {
-  cd build
-  make DESTDIR="$pkgdir" install
-  install -D -m644 "$srcdir"/brotli-$pkgver/LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+  depends=('glibc')
+  provides=(libbrotlicommon.so libbrotlidec.so libbrotlienc.so)
+
+  cd ${pkgbase}-${pkgver}
+  DESTDIR="$pkgdir" cmake --install build
+  local man
+  for man in docs/*.?; do
+    install -Dm 644 "$man" "$pkgdir/usr/share/man/man${man##*.}/${man##*/}"
+  done
+  install -Dm 644 LICENSE -t "$pkgdir/usr/share/licenses/$pkgname"
 }
 
 package_python3-brotli() {
-  depends=('python3')
+  pkgdesc+=' - python library'
+  depends=('python')
 
-  cd brotli-$pkgver
-
-  python setup.py install --skip-build -O1 --root="$pkgdir"
-  install -D -m644 "$srcdir"/brotli-$pkgver/LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+  cd ${pkgbase}-${pkgver}
+  python -m installer --destdir="$pkgdir" dist/*.whl
+  install -Dm 644 LICENSE -t "$pkgdir/usr/share/licenses/$pkgname"
 }
 
 package_brotli-testdata() {
+  pkgdesc+=' - test data'
   depends=()
 
-  cd brotli-$pkgver
+  cd ${pkgbase}-${pkgver}
   install -dm755 "$pkgdir"/usr/share/brotli
   cp -a tests/testdata "$pkgdir"/usr/share/brotli/
-  install -D -m644 "$srcdir"/brotli-$pkgver/LICENSE "$pkgdir"/usr/share/licenses/$pkgname/LICENSE
+  install -Dm 644 LICENSE -t "$pkgdir/usr/share/licenses/$pkgname"
 }
