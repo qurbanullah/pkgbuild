@@ -1,14 +1,14 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=qt5-quicktimeline
 _realname=${pkgname/5-/}
-_basever=5.15.3
-pkgver=5.15.3+kde+r0
+_basever=5.15.10
+pkgver=5.15.10
 pkgrel=1
-_commit=98b1ff53458887061b4bcc183efcce899f432394
+_commit=4956b556ccb021e4691f314ab907ea2ebb1ca8a6
 arch=('x86_64')
 groups=('dev-qt')
 url='https://www.qt.io'
@@ -27,7 +27,7 @@ getsrc(){
 pkgver() {
   cd $_realname
   git checkout $_commit
-  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit`
+  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit` | sed -e 's|+kde+r0||'
 }
 
 prepare() {

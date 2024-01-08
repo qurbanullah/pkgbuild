@@ -1,18 +1,17 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=kmod
-pkgver=29
+pkgver=31
 pkgrel=1
-pkgdesc="Linux kernel module handling"
+pkgdesc="Linux kernel module management tools and library"
 arch=('x86_64')
 groups=('sys-base')
 url='https://git.kernel.org/?p=utils/kernel/kmod/kmod.git;a=summary'
 license=('GPL2')
-depends=('glibc' 'zlib' 'openssl' 'xz')
-makedepends=('gtk-doc')
+depends=('glibc' 'zlib' 'openssl' 'xz' 'zstd')
 checkdepends=('linux-headers' 'libelf')
 options=('strip' 'debug')
 provides=('module-init-tools=3.16' 'libkmod.so')

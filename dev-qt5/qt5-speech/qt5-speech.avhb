@@ -1,14 +1,14 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=qt5-speech
 _realname=${pkgname/5-/}
-_basever=5.15.3
-pkgver=5.15.3+kde+r1
+_basever=5.15.10
+pkgver=5.15.10+kde+r1
 pkgrel=1
-_commit=08b27c29aadc0cc0303cca97c9a3baa2a690dfe4
+_commit=75142c77cda8ef3a5c1cae69863e963797c667b5
 arch=(x86_64)
 groups=('dev-qt')
 url='https://www.qt.io'
@@ -28,7 +28,7 @@ getsrc(){
 pkgver() {
   cd $_realname
   git checkout $_commit
-  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit`
+  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit` | sed -e 's|+kde+r0||'
 }
 
 prepare() {

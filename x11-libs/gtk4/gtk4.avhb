@@ -1,26 +1,83 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgbase=gtk4
-pkgname=(gtk4 gtk-update-icon-cache gtk4-docs gtk4-demos)
+pkgname=(
+  gtk4
+  gtk4-demos
+  gtk4-docs
+  gtk-update-icon-cache
+)
 _realname=gtk
-pkgver=4.6.2
+pkgver=4.12.3
 pkgrel=1
 pkgdesc="GObject-based multi-platform GUI toolkit"
 arch=(x86_64)
 groups=('x11-libs')
 url="https://www.gtk.org/"
-depends=(glib2 cairo pango fribidi gdk-pixbuf2 libepoxy libgl libegl harfbuzz
-         libxkbcommon graphene iso-codes tracker3 colord wayland libxrandr
-         libx11 libxrender libxi libxext libxcursor libxdamage libxfixes
-         libxcomposite fontconfig libxinerama vulkan-icd-loader vulkan-headers
-         libcloudproviders libcups rest json-glib ffmpeg gst-plugins-bad-libs
-         librsvg dconf shared-mime-info desktop-file-utils adwaita-icon-theme
-         cantarell-fonts)
-makedepends=(git meson gtk-doc glib2-docs wayland-protocols sysprof python
-             shaderc sassc gobject-introspection pandoc)
+depends=(
+  adwaita-icon-theme
+  cairo
+  cantarell-fonts
+  dconf
+  desktop-file-utils
+  fontconfig
+  fribidi
+  gdk-pixbuf2
+  glib2
+  graphene
+  gst-plugins-bad-libs
+  harfbuzz
+  iso-codes
+  libcloudproviders
+  libcolord
+  libcups
+  libegl
+  libepoxy
+  libgl
+  libjpeg
+  libpng
+  librsvg
+  libtiff
+  libx11
+  libxcursor
+  libxdamage
+  libxext
+  libxfixes
+  libxi
+  libxinerama
+  libxkbcommon
+  libxrandr
+  libxrender
+  pango
+  shared-mime-info
+  tracker3
+  wayland
+)
+makedepends=(
+  docbook-xsl
+  gi-docgen
+  git
+  gobject-introspection
+  meson
+  python-docutils
+  python-gobject
+  sassc
+  shaderc
+  wayland-protocols
+)
+checkdepends=(
+  gst-plugin-pipewire
+  gst-plugins-base
+  mutter
+  noto-fonts
+  pipewire
+  python-pydbus
+  weston
+  wireplumber
+)
 license=(LGPL)
 source=(http://ftp.gnome.org/pub/gnome/sources/gtk+/${pkgver%.*}/gtk+-$pkgver.tar.xz
         settings.ini)
@@ -30,15 +87,29 @@ build() {
   local meson_options=(
     -D broadway-backend=true
     -D cloudproviders=enabled
-    -D tracker=enabled
     -D colord=enabled
-    -D gtk_doc=true
+    -D documentation=true
     -D man-pages=true
+    -D tracker=enabled
   )
+
 
   avouch-meson gtk-$pkgver build "${meson_options[@]}"
   meson compile -C build
 }
+
+# check() (
+#   export XDG_RUNTIME_DIR="$PWD/runtime-dir" WAYLAND_DISPLAY=wayland-5
+
+#   mkdir -p -m 700 "$XDG_RUNTIME_DIR"
+#   weston --backend=headless-backend.so --socket=$WAYLAND_DISPLAY --idle-time=0 &
+#   _w=$!
+
+#   trap "kill $_w; wait" EXIT
+
+#   meson test -C build --print-errorlogs
+# )
+
 
 _pick() {
   local p="$1" f d; shift
@@ -80,15 +151,10 @@ END
   _pick demo usr/share/metainfo/org.gtk.{Demo,IconBrowser,PrintEditor,WidgetFactory}4.appdata.xml
 }
 
-package_gtk-update-icon-cache() {
-  pkgdesc="GTK icon cache updater"
-  depends=(gdk-pixbuf2 librsvg hicolor-icon-theme)
-
-  mv guic/* "$pkgdir"
-  ln -s gtk4-update-icon-cache "$pkgdir/usr/bin/gtk-update-icon-cache"
-  ln -s gtk4-update-icon-cache.1 "$pkgdir/usr/share/man/man1/gtk-update-icon-cache.1"
-
-  install -D gtk-update-icon-cache.script "$pkgdir/usr/share/libalpm/scripts/gtk-update-icon-cache"
+package_gtk4-demos() {
+  pkgdesc+=" (demo applications)"
+  depends=(gtk4)
+  mv demo/* "$pkgdir"
 }
 
 package_gtk4-docs() {
@@ -97,8 +163,14 @@ package_gtk4-docs() {
   mv docs/* "$pkgdir"
 }
 
-package_gtk4-demos() {
-  pkgdesc+=" (demo applications)"
-  depends=(gtk4)
-  mv demo/* "$pkgdir"
+package_gtk-update-icon-cache() {
+  pkgdesc="GTK icon cache updater"
+  depends=(gdk-pixbuf2 librsvg hicolor-icon-theme)
+
+  mv guic/* "$pkgdir"
+  ln -s gtk4-update-icon-cache "$pkgdir/usr/bin/gtk-update-icon-cache"
+  ln -s gtk4-update-icon-cache.1 "$pkgdir/usr/share/man/man1/gtk-update-icon-cache.1"
+
+  install -Dt "$pkgdir/usr/share/libalpm/hooks" -m644 gtk-update-icon-cache.hook
+  install -D gtk-update-icon-cache.script "$pkgdir/usr/share/libalpm/scripts/gtk-update-icon-cache"
 }

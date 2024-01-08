@@ -1,66 +1,115 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
-pkgname=flatpak
-pkgver=1.13.2
+pkgbase=flatpak
+pkgname=(flatpak flatpak-docs)
+pkgver=1.15.6
 pkgrel=1
 pkgdesc="Linux application sandboxing and distribution framework (formerly xdg-app)"
 url="http://flatpak.org"
 arch=('x86_64')
-groups=('dev-utils')
+groups=('app-emultion')
 license=(LGPL2.1)
-depends=(dbus systemd glib2 libsoup polkit libxau ostree json-glib libseccomp libarchive
-         python bubblewrap appstream-glib xdg-dbus-proxy)
-makedepends=(intltool gobject-introspection gtk-doc git docbook-xsl xmlto)
-checkdepends=(valgrind socat)
+depends=(
+  appstream
+  bubblewrap
+  curl
+  dbus
+  fuse3
+  glib2
+  json-glib
+  libarchive
+  libmalcontent
+  libseccomp
+  libxau
+  ostree
+  polkit
+  python
+  systemd
+  xdg-dbus-proxy
+  xdg-utils
+)
+makedepends=(
+  docbook-xsl
+  git
+  gobject-introspection
+  gtk-doc
+  meson
+  python-pyparsing
+  xmlto
+)
+checkdepends=(
+  socat
+  valgrind
+)
 source=("https://github.com/flatpak/flatpak/releases/download/$pkgver/flatpak-$pkgver.tar.xz"
         flatpak-bindir.sh)
 
 prepare() {
   cd $pkgname-$pkgver
+
+  # Fix tests
+  patch -Np1 -i ../0002-tests-Don-t-use-g_test_message-before-g_test_init.patch
+
+  # Support fuse3
+  # https://bugs.archlinux.org/task/75623
+  patch -Np1 -i ../fusermount3.diff
+
   # https://github.com/flatpak/flatpak/issues/267
   sed -i '/locale\/C\./d' tests/make-test-runtime.sh
 }
 
 build() {
-  cd $pkgname-$pkgver
-  # export SOUP_CFLAGS="-I/usr/include/libsoup-3.0"
-  # export SOUP_LIBS="-L/usr/lib -lsoup-3.0"
-  ./configure \
-    --prefix=/usr \
-    --sysconfdir=/etc \
-    --localstatedir=/var \
-    --sbindir=/usr/bin \
-    --libexecdir=/usr/lib \
-    --disable-static \
-    --with-system-bubblewrap \
-    --with-system-dbus-proxy \
-    --with-dbus-config-dir=/usr/share/dbus-1/system.d
+    # export LANG='en_US'
+  local meson_options=(
+    -D dbus_config_dir=/usr/share/dbus-1/system.d
+    -D selinux_module=disabled
+    -D system_bubblewrap=bwrap
+    -D system_dbus_proxy=xdg-dbus-proxy
+    -D docbook_docs=disabled
+    -D gtkdoc=disabled
+  )
 
-  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
-
-  make ${MAKEFLAGS}
+  avouch-meson flatpak-$pkgver build "${meson_options[@]}"
+  meson compile -C build
 }
 
-check() {
-  cd $pkgname-$pkgver
-  # Xattr tests fail on tmpfs
-  # make ${MAKEFLAGS} -k check
+# check() {
+#   meson test -C build --print-errorlogs
+# }
+
+_pick() {
+  local p="$1" f d; shift
+  for f; do
+    d="$srcdir/$p/${f#$pkgdir/}"
+    mkdir -p "$(dirname "$d")"
+    mv "$f" "$d"
+    rmdir -p --ignore-fail-on-non-empty "$(dirname "$f")"
+  done
 }
 
-package() {
-  cd $pkgname-$pkgver
-  make DESTDIR="$pkgdir" install
-  # rm -rf "$pkgdir/usr/share/selinux"
+package_flatpak() {
+  depends+=(
+    libostree-1.so
+    xdg-desktop-portal
+  )
+  provides=(libflatpak.so)
 
-  install -Dm644 "$srcdir/flatpak-bindir.sh" "$pkgdir/etc/profile.d/flatpak-bindir.sh"
-  install -Dm644 "$srcdir/flathub.flatpakrepo" "$pkgdir/etc/flatpak/remotes.d/flathub.flatpakrepo"
+  meson install -C build --destdir "$pkgdir"
 
-  echo 'u flatpak - "Flatpak system helper"' |
-    install -Dm644 /dev/stdin "$pkgdir/usr/lib/sysusers.d/flatpak.conf"
+  install -Dt "$pkgdir/etc/profile.d" -m644 flatpak-bindir.sh
+  install -Dt "$pkgdir/etc/flatpak/remotes.d" flathub.flatpakrepo
 
   # Fixup mode to match polkit
   install -d -o root -g 70 -m 750 "$pkgdir/usr/share/polkit-1/rules.d"
+
+  _pick docs "$pkgdir"/usr/share/{doc,gtk-doc}
+}
+
+package_flatpak-docs() {
+  pkgdesc+=" (documentation)"
+  depends=()
+  mv docs/* "$pkgdir"
 }

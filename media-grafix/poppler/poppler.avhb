@@ -1,11 +1,11 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgbase=poppler
 pkgname=('poppler' 'poppler-glib' 'poppler-qt5' 'poppler-qt6')
-pkgver=22.03.0
+pkgver=23.10.0
 pkgrel=1
 arch=(x86_64)
 groups=('media-grafix')
@@ -23,9 +23,9 @@ sha256sums=('dafd537b680fad1215bc40fc53d1f38e8449d7c185bc60d5a89e1d26c90dbd8c'
             'SKIP')
 validpgpkeys=('CA262C6C83DE4D2FB28A332A3A6A4DB839EAA6D7') # "Albert Astals Cid <aacid@kde.org>"
 
-prepare() {
-  mkdir build
-}
+# prepare() {
+#   mkdir build
+# }
 
 build() {
   cd build
@@ -34,7 +34,8 @@ build() {
     -DCMAKE_INSTALL_PREFIX:PATH=/usr \
     -DCMAKE_INSTALL_LIBDIR=/usr/lib \
     -DENABLE_UNSTABLE_API_ABI_HEADERS=ON \
-    -DENABLE_GTK_DOC=ON
+    -DENABLE_GTK_DOC=ON \
+    -DENABLE_QT6=OFF
   make ${MAKEFLAGS}
 }
 

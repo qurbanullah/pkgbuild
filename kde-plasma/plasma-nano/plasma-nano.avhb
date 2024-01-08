@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=plasma-nano
-pkgver=5.24.4
+pkgver=5.27.8
 pkgrel=1
 pkgdesc='A minimal plasma shell package intended for embedded devices'
 arch=('x86_64')

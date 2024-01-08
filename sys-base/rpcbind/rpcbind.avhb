@@ -1,9 +1,10 @@
-# $Id$
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=rpcbind
-pkgver=1.2.5
+pkgver=1.2.6
 pkgrel=1
 pkgdesc="portmap replacement which supports RPC over various protocols"
 arch=('x86_64')

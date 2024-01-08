@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=kiriki
-pkgver=22.04.0
+pkgver=23.08.1
 pkgrel=1
 pkgdesc="An addictive and fun dice game"
 url="http://kde.org/applications/games/kiriki/"

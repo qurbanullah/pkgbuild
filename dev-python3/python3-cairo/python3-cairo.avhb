@@ -1,11 +1,11 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=python3-cairo
 _realname=pycairo
-pkgver=1.20.1
+pkgver=1.25.0
 pkgrel=1
 pkgdesc="python3 bindings for the cairo graphics library"
 arch=('x86_64')

@@ -1,14 +1,14 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=qt5-svg
 _realname=${pkgname/5-/}
-_basever=5.15.3
-pkgver=5.15.3+kde+r12
+_basever=5.15.10
+pkgver=5.15.10+kde+r8
 pkgrel=1
-_commit=2f42157cabbd1db6249ccb1d14e6eede80451e0c
+_commit=37b2c764fb599c96fc415049208e871c729217c8
 arch=('x86_64')
 groups=('dev-qt')
 url='https://www.qt.io'
@@ -27,7 +27,7 @@ getsrc(){
 pkgver() {
   cd $_realname
   git checkout $_commit
-  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit`
+  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit` | sed -e 's|+kde+r0||'
 }
 
 prepare() {

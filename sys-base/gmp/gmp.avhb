@@ -1,10 +1,10 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=gmp
-pkgver=6.2.1
+pkgver=6.3.0
 pkgrel=1
 pkgdesc="A free library for arbitrary precision arithmetic"
 arch=('x86_64')
@@ -27,7 +27,7 @@ check() {
 	cd "${srcdir}/${pkgname}-${pkgver}"
 	make ${MAKEFLAGS} check 2>&1 | tee gmp-check-log
 
-	# ensure that all 197 tests in the test suite passed
+	# ensure that all 199 tests in the test suite passed
 	awk '/# PASS:/{total+=$3} ; END{print total}' gmp-check-log
 
 }

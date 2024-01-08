@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=kajongg
-pkgver=22.04.0
+pkgver=23.08.1
 pkgrel=1
 pkgdesc="The ancient Chinese board game for 4 players"
 url="http://kde.org/applications/games/kajongg/"

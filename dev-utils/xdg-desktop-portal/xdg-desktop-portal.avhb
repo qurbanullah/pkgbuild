@@ -1,34 +1,57 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=xdg-desktop-portal
-pkgver=1.12.1
+pkgver=1.18.0
 pkgrel=1
 pkgdesc="Desktop integration portals for sandboxed apps"
 url="https://github.com/flatpak/xdg-desktop-portal"
 arch=('x86_64')
 groups=('dev-utils')
 license=(LGPL2.1)
-depends=(glib2 pipewire fuse2 geoclue2)
-makedepends=(python xmlto docbook-xsl git flatpak libportal)
-checkdepends=(epiphany gedit gvfs)
+depends=(
+  fuse3
+  gdk-pixbuf2
+  geoclue
+  glib2
+  pipewire
+  rtkit
+  systemd
+)
+makedepends=(
+  docbook-xsl
+  flatpak
+  git
+  libportal
+  meson
+  python3-dbus
+  python3-dbusmock
+  python3-docutils
+  python3-gobject
+  python-pytest
+  xmlto
+)
+optdepends=('xdg-desktop-portal-impl: Portal backends')
+
 source=("https://github.com/flatpak/xdg-desktop-portal/releases/download/$pkgver/$pkgname-$pkgver.tar.xz")
 
-build() {
-    cd $pkgname-$pkgver
-    ./autogen.sh --prefix=/usr --libexecdir=/usr/lib --disable-docbook-docs
-    make ${MAKEFLAGS}
+prepare() {
+  cd $pkgname-$pkgver
 }
 
-check() {
-    cd $pkgname-$pkgver
-    #make check
+build() {
+    # 'latin-1' codec can't encode character '\u201c' in position 15: ordinal not in range
+    export LANG=en_GB.UTF-8
+    avouch-meson $pkgname-$pkgver build
+    meson compile -C build
 }
+
+# check() {
+#   meson test -C build --print-errorlogs
+# }
 
 package() {
-    depends+=(xdg-desktop-portal-impl)
-    cd $pkgname-$pkgver
-    make DESTDIR="$pkgdir" install
+  meson install -C build --destdir "$pkgdir"
 }

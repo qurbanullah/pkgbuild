@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -13,6 +14,11 @@ license=(custom)
 depends=(tcl)
 source=(https://downloads.sourceforge.net/project/expect/Expect/$pkgver/expect${pkgver}.tar.gz)
 sha256sums=('49a7da83b0bdd9f46d04a04deec19c7767bb9a323e40c4781f89caf760b92c34')
+
+prepare() {
+  cd expect${pkgver}
+  patch -Np0 -i ${srcdir}/expect-5.45-format-security.patch
+}
 
 build() {
     cd expect${pkgver}
@@ -29,4 +35,9 @@ package() {
     cd expect${pkgver}
     make DESTDIR="$pkgdir" install
     install -Dm644 README "$pkgdir/usr/share/licenses/$pkgname/README"
+
+    # avoid file conflict with the more powerful mkpasswd from the whois package
+    mv -v "$pkgdir"/usr/bin/mkpasswd{,-expect}
+    mv -v "$pkgdir"/usr/share/man/man1/mkpasswd{,-expect}.1
+
 }

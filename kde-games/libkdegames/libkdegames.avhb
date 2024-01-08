@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=libkdegames
-pkgver=22.04.0
+pkgver=23.08.1
 pkgrel=1
 pkgdesc="Common code and data for many KDE games"
 url="https://www.kde.org/applications/games/"

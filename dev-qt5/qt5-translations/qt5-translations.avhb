@@ -1,14 +1,14 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=qt5-translations
 _realname=${pkgname/5-/}
-_basever=5.15.3
-pkgver=5.15.3+kde+r2
+_basever=5.15.10
+pkgver=5.15.10
 pkgrel=1
-_commit=a6d5e7f84a57394db4c8b069f81c56cfeb802e19
+_commit=a680686754d84b91d4cc4252a2fb8af0c58f5f49
 arch=('any')
 groups=('dev-qt')
 url='https://www.qt.io'
@@ -26,7 +26,7 @@ getsrc(){
 pkgver() {
   cd $_realname
   git checkout $_commit
-  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit`
+  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit` | sed -e 's|+kde+r0||'
 }
 
 prepare() {

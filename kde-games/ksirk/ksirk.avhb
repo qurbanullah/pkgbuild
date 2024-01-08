@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=ksirk
-pkgver=22.04.0
+pkgver=23.08.1
 pkgrel=1
 pkgdesc="A computerized version of a well known strategy game"
 url="https://kde.org/applications/games/ksirk/"

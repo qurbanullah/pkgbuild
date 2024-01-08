@@ -1,0 +1,46 @@
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=ktextaddons
+pkgver=1.5.2
+pkgrel=1
+pkgdesc='Various text handling addons'
+arch=('x86_64')
+groups=('kde-apps')
+license=(GPL)
+url='https://invent.kde.org/libraries/ktextaddons'
+depends=(gcc-libs
+         glibc
+         karchive
+         kconfig
+         kconfigwidgets
+         ki18n
+         kio
+         kwidgetsaddons
+         qt5-base
+         qt5-speech
+         qtkeychain-qt5
+         sonnet
+         syntax-highlighting)
+makedepends=(doxygen
+             extra-cmake-modules
+             qt5-tools)
+optdepends=('languagetool: Grammar checking'
+            'grammalecte: French grammar checking'
+            'libreoffice: Use autocorrection data from LibreOffice')
+source=(https://download.kde.org/stable/$pkgname/$pkgname-$pkgver.tar.xz)
+sha256sums=('288bbb1cefb1e8b570a383c792eba5fca291c46dd0155dbc2531f0a36684a7db')
+
+build() {
+  cmake -B build -S $pkgname-$pkgver \
+    -DBUILD_TESTING=OFF \
+    -DBUILD_DESIGNERPLUGIN=ON \
+    -DBUILD_QCH=ON
+  cmake --build build
+}
+
+package() {
+  DESTDIR="$pkgdir" cmake --install build
+}

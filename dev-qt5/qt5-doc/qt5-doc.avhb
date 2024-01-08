@@ -1,4 +1,4 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -6,7 +6,7 @@
 pkgbase=qt5-doc
 pkgname=(qt5-doc qt5-examples)
 _realname="qt-everywhere-opensource-src"
-pkgver=5.15.3
+pkgver=5.15.10
 pkgrel=1
 arch=('any')
 groups=('dev-qt')

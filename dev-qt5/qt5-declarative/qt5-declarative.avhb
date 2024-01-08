@@ -5,10 +5,10 @@
 
 pkgname=qt5-declarative
 _realname=${pkgname/5-/}
-_basever=5.15.3
-pkgver=5.15.3+kde+r20
+_basever=5.15.10
+pkgver=5.15.10+kde+r31
 pkgrel=1
-_commit=02105099301450c890e1caba977ef44efdc43da7
+_commit=f803fcd25c068cf0f78cc9f75c0e2f565f3fefde
 arch=('x86_64')
 groups=('dev-qt')
 url='https://www.qt.io'
@@ -28,7 +28,7 @@ getsrc(){
 pkgver() {
   cd $_realname
   git checkout $_commit
-  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit`
+  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit` | sed -e 's|+kde+r0||'
 }
 
 prepare() {

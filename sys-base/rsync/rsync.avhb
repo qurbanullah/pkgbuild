@@ -1,10 +1,10 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=rsync
-pkgver=3.2.3
+pkgver=3.2.7
 pkgrel=1
 pkgdesc="A file transfer program to keep remote files in sync"
 arch=('x86_64')
@@ -24,23 +24,37 @@ source=("https://github.com/WayneD/rsync/archive/v$pkgver.tar.gz"
 
 build() {
 	cd "${srcdir}/${pkgname}-${pkgver}"
-	./configure --prefix=/usr --with-included-popt=no --with-included-zlib=no
+	./configure \
+		--prefix=/usr \
+		--enable-ipv6 \
+		--disable-debug \
+		--with-rrsync \
+		--with-included-popt=no \
+		--with-included-zlib=no
+
 	make ${MAKEFLAGS}
 }
 
 check() {
 	cd "${srcdir}/${pkgname}-${pkgver}"
-	make ${MAKEFLAGS} test
+	# check for IPv6 support
+	# https://gitlab.archlinux.org/archlinux/packaging/packages/rsync/-/commit/8936e33b245da170e7b5488b4ca35727ac9c4b68
+	if rsync -V | grep -q 'no IPv6'; then
+		echo 'Built without IPv6 support!' >&2
+		exit 1
+	fi
+
+	make test
+
 }
 
 package() {
 	cd "${srcdir}/${pkgname}-${pkgver}"
 	make DESTDIR="$pkgdir" install
 	install -Dm0644 ../rsyncd.conf "$pkgdir/etc/rsyncd.conf"
-	install -Dm0644 packaging/lsb/rsync.xinetd "$pkgdir/etc/xinetd.d/rsync"
 	install -Dm0644 packaging/systemd/rsync.service "$pkgdir/usr/lib/systemd/system/rsyncd.service"
 	install -Dm0644 packaging/systemd/rsync.socket "$pkgdir/usr/lib/systemd/system/rsyncd.socket"
 	install -Dm0644 packaging/systemd/rsync@.service "$pkgdir/usr/lib/systemd/system/rsyncd@.service"
-	install -Dm0755 support/rrsync "$pkgdir/usr/lib/rsync/rrsync"
+
 }
 

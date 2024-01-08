@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=katomic
-pkgver=22.04.0
+pkgver=23.08.1
 pkgrel=1
 pkgdesc="A fun and educational game built around molecular geometry"
 url="http://kde.org/applications/games/katomic/"

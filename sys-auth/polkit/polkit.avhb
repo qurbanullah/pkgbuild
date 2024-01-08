@@ -1,10 +1,10 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=polkit
-pkgver=121
+pkgver=123
 pkgrel=1
 pkgdesc="Application development toolkit for controlling system-wide privileges"
 arch=('x86_64')

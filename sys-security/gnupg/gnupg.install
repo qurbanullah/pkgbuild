@@ -1,20 +1,17 @@
-info_dir=/usr/share/info
-info_files=(gnupg.info gnupg.info-1 gnupg.info-2)
-
 post_install() {
-  [ -x usr/bin/install-info ] || return 0
-  for f in ${info_files[@]}; do
-    usr/bin/install-info ${info_dir}/$f ${info_dir}/dir 2> /dev/null
-  done
+  # run dirmngr once to create /root/.gnupg
+  # https://bugs.archlinux.org/task/47371
+  # https://bugs.archlinux.org/task/42798
+  dirmngr </dev/null &>/dev/null
 }
 
 post_upgrade() {
-  post_install $1
-}
+  local unit
 
-pre_remove() {
-  [ -x usr/bin/install-info ] || return 0
-  for f in ${info_files[@]}; do
-    usr/bin/install-info --delete ${info_dir}/$f ${info_dir}/dir 2> /dev/null
-  done
+  if (( $(vercmp "$2" '2.2.37-1') < 0)); then
+    for unit in {dirmngr,gpg-agent{,-{browser,extra,ssh}}}.socket; do
+      rm -f "/etc/systemd/user/sockets.target.wants/$unit"
+    done
+    printf "NOTE: GnuPG's systemd sockets are now enabled in the vendor location /usr/lib/systemd/user/!\n"
+  fi
 }

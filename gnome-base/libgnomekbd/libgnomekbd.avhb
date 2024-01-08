@@ -1,10 +1,10 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=libgnomekbd
-pkgver=3.26.1
+pkgver=3.28.1
 pkgrel=1
 pkgdesc="Keyboard management library"
 url="https://gitlab.gnome.org/GNOME/libgnomekbd"
@@ -12,17 +12,26 @@ arch=('x86_64')
 groups=('gnome-base')
 license=(LGPL)
 depends=(libxklavier gtk3 dconf)
-makedepends=(intltool gobject-introspection git)
+makedepends=(gobject-introspection git meson)
 source=(http://ftp.gnome.org/pub/gnome/sources/${pkgname}/${pkgver:0:3}/$pkgname-$pkgver.tar.xz)
 
+prepare() {
+  cd $pkgname-$pkgver
+
+  # Fixes for meson build
+  patch -Np1 -i ../meson.diff
+}
+
 build() {
-	cd ${srcdir}/${pkgname}-${pkgver}
-	./configure --prefix=/usr --sysconfdir=/etc \
-	--disable-schemas-compile --disable-static
-	make ${MAKEFLAGS}
+  avouch-meson $pkgname-$pkgver build
+  meson compile -C build
+}
+
+check() {
+  meson test -C build --print-errorlogs
 }
 
 package() {
-	cd ${srcdir}/${pkgname}-${pkgver}
-	make DESTDIR="${pkgdir}" install
+  meson install -C build --destdir "$pkgdir"
 }
+

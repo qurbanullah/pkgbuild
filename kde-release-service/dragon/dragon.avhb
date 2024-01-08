@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=dragon
-pkgver=22.04.0
+pkgver=23.08.1
 pkgrel=1
 pkgdesc='A multimedia player where the focus is on simplicity, instead of features'
 arch=('x86_64')

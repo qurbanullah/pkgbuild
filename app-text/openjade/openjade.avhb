@@ -12,10 +12,11 @@ arch=('x86_64')
 groups=('app-text')
 license=('custom')
 depends=('gcc-libs')
-replaces=('openjade')
-options=('!makeflags')
-source=("ftp://ftp.jclark.com/pub/${pkgname}/${pkgname}-${pkgver}.tar.gz"
-        "http://ftp.debian.org/debian/pool/main/j/jade/jade_${pkgver}-${_debpatch}.diff.gz")
+conflicts=('jade')
+provides=('jade')
+source=(https://downloads.sourceforge.net/project/${pkgname}/${pkgname}/${pkgver}/${pkgname}-${pkgver}.tar.gz)
+sha256sums=('1d2d7996cc94f9b87d0c51cf0e028070ac177c4123ecbfd7ac1cb8d0b7d322d1'
+            '11d90e242eae60ce06bf27fd234adbd8efd7d4a9a4a2da058faa4e8336dc423a')
 
 prepare() {
     cd ${srcdir}/${pkgname}-${pkgver}
@@ -36,15 +37,17 @@ prepare() {
 }
 
 build() {
-
     cd ${srcdir}/${pkgname}-${pkgver}
+    export CXXFLAGS+=' -fno-lifetime-dse'
     ./configure --prefix=/usr \
         --mandir=/usr/share/man \
-        --enable-http \
         --disable-static  \
         --enable-default-catalog=/etc/sgml/catalog \
         --enable-default-search-path=/usr/share/sgml \
-        --datadir=/usr/share/sgml/${pkgname}-${pkgver}
+        --datadir=/usr/share/sgml/${pkgname}-${pkgver} \
+        --enable-html \
+        --enable-http \
+        --enable-mif
     make ${MAKEFLAGS}
 
 }

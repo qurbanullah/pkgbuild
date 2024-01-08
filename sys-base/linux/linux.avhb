@@ -4,17 +4,31 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgbase=linux
-pkgver=5.18.2
-_pkgver=5.18.2
+pkgver=6.6.4
+_pkgver=6.6.4
 pkgrel=1
 arch=('x86_64')
 groups=('sys-base')
 url="http://www.kernel.org/"
 license=('GPL2')
 makedepends=(
-  bc kmod libelf pahole cpio perl tar xz
-  xmlto python-sphinx python-sphinx_rtd_theme graphviz imagemagick
+  bc
+  cpio
+  gettext
+  libelf
+  pahole
+  perl
+  python
+  tar
+  xz
+
+  # htmldocs
+  graphviz
+  imagemagick
+  python-sphinx
+  texlive-latexextra
 )
+
 options=('!strip')
 _srcname=linux
 source=("https://cdn.kernel.org/pub/linux/kernel/v5.x/linux-$pkgver.tar.xz"
@@ -35,7 +49,7 @@ KARCH=x86
 
 prepare() {
     # disable gold linker
-    disable_ld_gold
+    use_linker 'ld'
     cd "${srcdir}/${pkgbase}-${_pkgver}"
     message "Setting version..."
     scripts/setlocalversion --save-scmversion
@@ -88,28 +102,41 @@ build() {
 }
 
 _package() {
-    pkgdesc="The $pkgdesc kernel and modules"
-    depends=(coreutils kmod initramfs)
-    optdepends=('crda: to set the correct wireless channels of your country'
-              'linux-firmware: firmware images needed for some devices')
+ pkgdesc="The $pkgdesc kernel and modules"
+  depends=(
+    coreutils
+    initramfs
+    kmod
+  )
+  optdepends=(
+    'wireless-regdb: to set the correct wireless channels of your country'
+    'linux-firmware: firmware images needed for some devices'
+  )
+  provides=(
+    KSMBD-MODULE
+    VIRTUALBOX-GUEST-MODULES
+    WIREGUARD-MODULE
+  )
     
-    cd "${srcdir}/${pkgbase}-${_pkgver}"
+  cd "${srcdir}/${pkgbase}-${_pkgver}"
     
-    local kernver="$(<version)"
-    local modulesdir="$pkgdir/usr/lib/modules/$kernver"
+  local modulesdir="$pkgdir/usr/lib/modules/$(<version)"
 
-    message "Installing boot image..."
-    # systemd expects to find the kernel here to allow hibernation
-    # https://github.com/systemd/systemd/commit/edda44605f06a41fb86b7ab8128dcf99161d2344
-    install -Dm644 "$(make -s image_name)" "$modulesdir/vmlinuz"
+  echo "Installing boot image..."
+  # systemd expects to find the kernel here to allow hibernation
+  # https://github.com/systemd/systemd/commit/edda44605f06a41fb86b7ab8128dcf99161d2344
+  install -Dm644 "$(make -s image_name)" "$modulesdir/vmlinuz"
 
-    # Used by mkinitcpio to name the kernel
-    # echo "$pkgbase" | install -Dm644 /dev/stdin "$modulesdir/pkgbase"
+  # Used by mkinitcpio to name the kernel
+  echo "$pkgbase" | install -Dm644 /dev/stdin "$modulesdir/pkgbase"
 
-    message "Installing modules..."
-    make INSTALL_MOD_PATH="$pkgdir/usr" INSTALL_MOD_STRIP=1 \
-      DEPMOD=/doesnt/exist modules_install  # Suppress depmod
-    # make INSTALL_MOD_PATH="$pkgdir/usr" INSTALL_MOD_STRIP=1 modules_install
+  echo "Installing modules..."
+  ZSTD_CLEVEL=19 make INSTALL_MOD_PATH="$pkgdir/usr" INSTALL_MOD_STRIP=1 \
+    DEPMOD=/doesnt/exist modules_install  # Suppress depmod
+
+  # remove build link
+  rm "$modulesdir"/build
+
 
 
 
@@ -135,18 +162,18 @@ _package-headers() {
     cd "${srcdir}/${pkgbase}-${_pkgver}"
     local builddir="$pkgdir/usr/lib/modules/$(<version)/build"
 
-    message "Installing build files..."
-    install -Dt "$builddir" -m644 .config Makefile Module.symvers System.map \
-        localversion.* version vmlinux
-    install -Dt "$builddir/kernel" -m644 kernel/Makefile
-    install -Dt "$builddir/arch/x86" -m644 arch/x86/Makefile
-    cp -t "$builddir" -a scripts
+  echo "Installing build files..."
+  install -Dt "$builddir" -m644 .config Makefile Module.symvers System.map \
+    localversion.* version vmlinux
+  install -Dt "$builddir/kernel" -m644 kernel/Makefile
+  install -Dt "$builddir/arch/x86" -m644 arch/x86/Makefile
+  cp -t "$builddir" -a scripts
 
-  # add objtool for external module building and enabled VALIDATION_STACK option
+  # required when STACK_VALIDATION is enabled
   install -Dt "$builddir/tools/objtool" tools/objtool/objtool
 
-  # add xfs and shmem for aufs building
-  mkdir -p "$builddir"/{fs/xfs,mm}
+  # required when DEBUG_INFO_BTF_MODULES is enabled
+  install -Dt "$builddir/tools/bpf/resolve_btfids" tools/bpf/resolve_btfids/resolve_btfids
 
   echo "Installing headers..."
   cp -t "$builddir" -a include
@@ -156,14 +183,15 @@ _package-headers() {
   install -Dt "$builddir/drivers/md" -m644 drivers/md/*.h
   install -Dt "$builddir/net/mac80211" -m644 net/mac80211/*.h
 
-  # http://bugs.archlinux.org/task/13146
+  # https://bugs.archlinux.org/task/13146
   install -Dt "$builddir/drivers/media/i2c" -m644 drivers/media/i2c/msp3400-driver.h
 
-  # http://bugs.archlinux.org/task/20402
+  # https://bugs.archlinux.org/task/20402
   install -Dt "$builddir/drivers/media/usb/dvb-usb" -m644 drivers/media/usb/dvb-usb/*.h
   install -Dt "$builddir/drivers/media/dvb-frontends" -m644 drivers/media/dvb-frontends/*.h
   install -Dt "$builddir/drivers/media/tuners" -m644 drivers/media/tuners/*.h
 
+  # https://bugs.archlinux.org/task/71392
   install -Dt "$builddir/drivers/iio/common/hid-sensors" -m644 drivers/iio/common/hid-sensors/*.h
 
   echo "Installing KConfig files..."
@@ -189,7 +217,7 @@ _package-headers() {
   echo "Stripping build tools..."
   local file
   while read -rd '' file; do
-    case "$(file -bi "$file")" in
+    case "$(file -Sib "$file")" in
       application/x-sharedlib\;*)      # Libraries (.so)
         strip -v $STRIP_SHARED "$file" ;;
       application/x-archive\;*)        # Libraries (.a)
@@ -207,37 +235,37 @@ _package-headers() {
   echo "Adding symlink..."
   mkdir -p "$pkgdir/usr/src"
   ln -sr "$builddir" "$pkgdir/usr/src/$pkgbase"
-
-  # echo "Fixing permissions..."
-  # chmod -Rc u=rwX,go=rX "$pkgdir"
 }
 
 _package-docs() {
-    pkgdesc="Kernel hackers manual - HTML documentation that comes with the ${pkgbase/linux/Linux} kernel"
+  pkgdesc="Documentation for the $pkgdesc kernel"
 
-    cd "${srcdir}/${pkgbase}-${_pkgver}"
-    local builddir="$pkgdir/usr/lib/modules/$(<version)/build"
+  cd "${srcdir}/${pkgbase}-${_pkgver}"
+  local builddir="$pkgdir/usr/lib/modules/$(<version)/build"
 
-    echo "Installing documentation..."
-    local src dst
-    while read -rd '' src; do
-        dst="${src#Documentation/}"
-        dst="$builddir/Documentation/${dst#output/}"
-        install -Dm644 "$src" "$dst"
-    done < <(find Documentation -name '.*' -prune -o ! -type d -print0)
+  echo "Installing documentation..."
+  local src dst
+  while read -rd '' src; do
+    dst="${src#Documentation/}"
+    dst="$builddir/Documentation/${dst#output/}"
+    install -Dm644 "$src" "$dst"
+  done < <(find Documentation -name '.*' -prune -o ! -type d -print0)
 
-    echo "Adding symlink..."
-    mkdir -p "$pkgdir/usr/share/doc"
-    ln -sr "$builddir/Documentation" "$pkgdir/usr/share/doc/$pkgbase"
+  echo "Adding symlink..."
+  mkdir -p "$pkgdir/usr/share/doc"
+  ln -sr "$builddir/Documentation" "$pkgdir/usr/share/doc/$pkgbase"
 
-    # echo "Fixing permissions..."
-    # chmod -Rc u=rwX,go=rX "$pkgdir"
 }
 
-pkgname=("${pkgbase}" "${pkgbase}-headers" "${pkgbase}-docs")
-for _p in ${pkgname[@]}; do
-  eval "package_${_p}() {
-    $(declare -f "_package${_p#${pkgbase}}")
-    _package${_p#${pkgbase}}
+pkgname=(
+  "$pkgbase"
+  "$pkgbase-headers"
+  "$pkgbase-docs"
+)
+for _p in "${pkgname[@]}"; do
+  eval "package_$_p() {
+    $(declare -f "_package${_p#$pkgbase}")
+    _package${_p#$pkgbase}
   }"
 done
+

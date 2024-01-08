@@ -1,10 +1,10 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=gnome-power-manager
-pkgver=3.32.0
+pkgver=43.0
 pkgrel=1
 pkgdesc="System power information and statistics"
 url="https://gitlab.gnome.org/GNOME/gnome-power-manager"

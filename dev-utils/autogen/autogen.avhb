@@ -1,4 +1,4 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -37,4 +37,12 @@ check() {
 package() {
   cd "${srcdir}/${pkgname}-${pkgver}"
   make DESTDIR="${pkgdir}" install
+
+   # Remove unrequired RPATH from binaries
+  for i in ${pkgdir}/usr/bin/*; do
+    if chrpath --list "$i"; then
+      chrpath --delete "$i";
+    fi
+  done
+
 }

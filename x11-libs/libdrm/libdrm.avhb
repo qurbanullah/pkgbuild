@@ -1,10 +1,10 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=libdrm
-pkgver=2.4.110
+pkgver=2.4.116
 pkgrel=1
 pkgdesc="Userspace interface to kernel DRM services"
 url="https://dri.freedesktop.org/"

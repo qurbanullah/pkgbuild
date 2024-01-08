@@ -1,4 +1,4 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -6,7 +6,7 @@
 pkgbase=networkmanager
 pkgname=(networkmanager libnm nm-cloud-setup)
 _realname=NetworkManager
-pkgver=1.38.4
+pkgver=1.45.4
 pkgrel=1
 _pppver=2.4.8
 pkgdesc="Network connection manager and user applications"

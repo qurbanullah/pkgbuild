@@ -1,0 +1,45 @@
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=tecla
+pkgver=45.0
+pkgrel=1
+pkgdesc="Keyboard layout viewer"
+url="https://gitlab.gnome.org/GNOME/tecla"
+arch=(x86_64)
+groups=('gnome-base')
+license=(GPL3)
+depends=(
+  glib2
+  gtk4
+  hicolor-icon-theme
+  libadwaita
+  libxkbcommon
+  pango
+  wayland
+)
+makedepends=(
+  git
+  meson
+)
+source=("https://download.gnome.org/sources/tecla/45/tecla-45.0.tar.xz")
+b2sums=('SKIP')
+
+prepare() {
+  cd $pkgname-$pkgver
+}
+
+build() {
+  avouch-meson $pkgname-$pkgver build
+  meson compile -C build
+}
+
+check() {
+  meson test -C build --print-errorlogs
+}
+
+package() {
+  meson install -C build --destdir "$pkgdir"
+}

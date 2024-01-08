@@ -1,4 +1,5 @@
-# $Id$
+# Copyright 2010-2024 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
@@ -26,24 +27,18 @@ pkgver() {
 
 prepare() {
 	cd "${pkgname}"
-	git clean -x -d -f
-	sed -i "s/-O2/${CFLAGS} -Wno-pointer-sign/" Make.rules
-	# spelings correction
-	sed -i "s|EFI_WARN_UNKOWN_GLYPH|EFI_WARN_UNKNOWN_GLYPH|g" lib/console.c
-
+	patch -Np1 -i "../${pkgname}-1.9.2-console_warning_typo.patch"
 }
 
 build() {
-	cd "${pkgname}"
-	# fix PreLoader.efi building on x86_64 #49314
-	export ARCH="${CARCH}"
-	make
+  # fix PreLoader.efi building on x86_64 #49314
+  export ARCH="${CARCH}"
+  # build with one job because the Makefile does not support parallel jobs ;_;
+  # https://bugs.archlinux.org/task/73600
+  make -j1 -C "${pkgname}"
 }
 
 package() {
-	# http://www.rodsbooks.com/efi-bootloaders/secureboot.html#prebootloader
-	# http://blog.hansenpartnership.com/uefi-secure-boot/
-	# http://blog.hansenpartnership.com/linux-foundation-secure-boot-system-released
-	cd "${pkgname}"
-	make DESTDIR="${pkgdir}" install
+  make DESTDIR="${pkgdir}" install -C "${pkgname}"
+  install -vDm 644 "${pkgname}/"README -t "${pkgdir}/usr/share/doc/${pkgname}"
 }

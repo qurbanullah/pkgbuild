@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=kolf
-pkgver=22.04.0
+pkgver=23.08.1
 pkgrel=1
 pkgdesc="A miniature golf game with 2d top-down view"
 url="https://kde.org/applications/games/kolf/"

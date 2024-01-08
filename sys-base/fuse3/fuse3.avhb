@@ -1,4 +1,4 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -6,7 +6,7 @@
 pkgbase=fuse3
 pkgname=(fuse-common fuse3)
 _realname=fuse
-pkgver=3.9.2
+pkgver=3.16.2
 pkgrel=1
 arch=('x86_64')
 groups=('sys-base')
@@ -41,9 +41,8 @@ package_fuse3() {
 
   DESTDIR=${pkgdir} ninja install
 
-  # rm -r ${pkgdir}/etc/init.d
-  # rm -r ${pkgdir}/etc/fuse.conf
-  rm -r ${pkgdir}/etc
+  rm -r ${pkgdir}/etc/init.d
+  rm -r ${pkgdir}/etc/fuse.conf
   
   # static device nodes are handled by udev
   rm -r ${pkgdir}/dev

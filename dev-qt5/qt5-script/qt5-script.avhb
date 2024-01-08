@@ -1,12 +1,12 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=qt5-script
 _realname=${pkgname/5-/}
-_basever=5.15.3
-pkgver=5.15.9
+_basever=5.15.10
+pkgver=5.15.15
 pkgrel=1
 arch=('x86_64')
 groups=('dev-qt')
@@ -17,7 +17,6 @@ depends=('qt5-base')
 makedepends=('git')
 _pkgfqn=${pkgname/5-/}
 source=(https://invent.kde.org/qt/qt/$_realname.git)
-# source=(git+https://code.qt.io/qt/$_pkgfqn.git#tag=v${pkgver}-lts)
 sha256sums=('SKIP')
 options=(!lto debug)
 

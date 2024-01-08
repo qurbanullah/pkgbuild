@@ -1,11 +1,11 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=libnghttp2
 _realname=nghttp2
-pkgver=1.42.0
+pkgver=1.58.0
 pkgrel=1
 pkgdesc='Framing layer of HTTP/2 is implemented as a reusable C library'
 arch=('x86_64')
@@ -24,12 +24,12 @@ build() {
     --disable-examples \
     --disable-python-bindings \
     --enable-lib-only
-  make ${MAKEFLAGS}
+  make
 }
 
 check() {
   cd nghttp2-$pkgver
-  make ${MAKEFLAGS} check
+  make check
 }
 
 package() {

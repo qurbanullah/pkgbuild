@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=kscreen
-pkgver=5.24.4
+pkgver=5.27.8
 pkgrel=1
 pkgdesc="KDE's screen management software"
 arch=('x86_64')

@@ -1,10 +1,10 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=appstream-glib
-pkgver=0.7.18
+pkgver=0.8.2
 pkgrel=1
 pkgdesc="Provides GObjects and helper methods to make it easy to read and write AppStream metadata."
 arch=('x86_64')

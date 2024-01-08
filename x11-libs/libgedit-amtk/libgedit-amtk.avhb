@@ -1,0 +1,47 @@
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=libgedit-amtk
+pkgver=5.8.0
+pkgrel=1
+pkgdesc="Actions, Menus and Toolbars Kit for GTK applications'"
+arch=("x86_64")
+groups=('x11-libs')
+url="https://gedit-technology.net/"
+license=('LGPL3')
+groups=()
+depends=(
+  glib2
+  glibc
+  gtk3
+)
+makedepends=(
+  git
+  gobject-introspection
+  gtk-doc
+  meson
+)
+provides=(libgedit-amtk-5.so)
+conflicts=(amtk)
+_commit=f6fbfd1c57de3d97cab2056a5c3088b0da49e8a4  # tags/5.8.0^0
+source=(https://github.com/gedit-technology/libgedit-amtk/archive/refs/tags/$pkgver.tar.gz)
+sha256sums=('SKIP')
+
+prepare() {
+  cd $pkgname-$pkgver
+}
+
+build() {
+  avouch-meson $pkgname-$pkgver build
+  meson compile -C build
+}
+
+check() {
+  meson test -C build --print-errorlogs
+}
+
+package() {
+  meson install -C build --destdir "$pkgdir"
+}

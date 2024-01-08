@@ -1,0 +1,50 @@
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
+# Maintainer: Qurban Ullah <qurbanullah@avouch.org>
+# Contributor: Qurban Ullah <qurbanullah@avouch.org>
+
+pkgname=passim
+pkgver=0.1.4
+pkgrel=1
+pkgdesc="A local caching server"
+arch=(x86_64)
+groups=('www-servers')
+url="https://github.com/hughsie/passim"
+license=(LGPL)
+depends=(
+  avahi
+  glib2 libgio-2.0.so
+  gnutls
+  hicolor-icon-theme
+  libsoup3 libsoup-3.0.so
+)
+makedepends=(
+  cmake
+  gobject-introspection
+  meson
+  systemd
+)
+provides=(libpassim.so)
+backup=(
+  etc/passim.conf
+)
+source=("https://github.com/hughsie/passim/releases/download/${pkgver}/${pkgname}-${pkgver}.tar.xz"{,.asc})
+sha512sums=('6e44b19974a7161ba791b32a947a96d684214da5111e37ff3f32b95092d0cca03111f89d6d83547d4d42b90fdfa25a4717188b27953ebfbf443552a050cbe624'
+            'SKIP')
+b2sums=('a932534ceb77bb60882d331b254bce45454f1b84162d0f4762c0e0916d999e01f6f246227775a5c16268a98592e796535f646f68f7da755ec318fd20038ccc9f'
+        'SKIP')
+validpgpkeys=(163EB50119225DB3DF8F49EA17ACBA8DFA970E17) # Richard Hughes <richard@hughsie.com>
+
+build() {
+  avouch-meson ${pkgname}-${pkgver} build
+  meson compile -C build
+}
+
+check() {
+  meson test -C build
+}
+
+package() {
+  DESTDIR="${pkgdir}" meson install -C build
+  rm "${pkgdir}"/var/lib/passim/data/*
+}

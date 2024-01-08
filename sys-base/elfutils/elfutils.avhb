@@ -1,54 +1,163 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgbase=elfutils
-pkgname=(elfutils libelf)
-pkgver=0.183
+pkgbase=elfutils
+pkgname=(
+  debuginfod
+  elfutils
+  libelf
+)
+pkgver=0.190
 pkgrel=1
 pkgdesc="Utilities to handle ELF object files and DWARF debugging information"
 arch=('x86_64')
 groups=('sys-base')
 url="https://sourceware.org/elfutils/"
-license=('LGPL3' 'GPL' 'GPL3')
-depends=('gcc-libs' 'zlib' 'bzip2' 'xz')
-options=('staticlibs')
-source=(https://sourceware.org/elfutils/ftp/${pkgver}/elfutils-${pkgver}.tar.bz2{,.sig})
-validpgpkeys=('47CC0331081B8BC6D0FD4DA08370665B57816A6A')  # Mark J. Wielaard <mark@klomp.org>
-validpgpkeys+=('EC3CFE88F6CA0788774F5C1D1AA44BE649DE760A') # Mark Wielaard <mjw@gnu.org>
+makedepends=(
+  bzip2
+  curl
+  gcc-libs
+  libarchive
+  libmicrohttpd
+  sqlite
+  xz
+  zlib
+  zstd
+)
+options=(staticlibs)
+source=(https://sourceware.org/$pkgbase/ftp/$pkgver/$pkgbase-$pkgver.tar.bz2{,.sig})
+sha512sums=('9c4f5328097e028286c42f29e39dc3d80914b656cdfbbe05b639e91bc787ae8ae64dd4d69a6e317ce30c01648ded10281b86a51e718295f4c589df1225a48102'
+            'SKIP')
+b2sums=('9934aff08f1898377708b28595fb52130ef9f80408132ac7d306845b10672ba45cf1ac69783da07b3eea9fd647741d44da45b8b2626c45a768cb2844c6186513'
+        'SKIP')
+validpgpkeys=(
+  '47CC0331081B8BC6D0FD4DA08370665B57816A6A'  # Mark J. Wielaard <mark@klomp.org>
+  'EC3CFE88F6CA0788774F5C1D1AA44BE649DE760A'  # Mark Wielaard <mjw@gnu.org>
+)
+
+_pick() {
+  local p="$1" f d; shift
+  for f; do
+    d="$srcdir/$p/${f#$pkgdir/}"
+    mkdir -p "$(dirname "$d")"
+    mv "$f" "$d"
+    rmdir -p --ignore-fail-on-non-empty "$(dirname "$f")"
+  done
+}
 
 prepare() {
-	cd "${srcdir}/${pkgname}-${pkgver}"
+  # remove failing test due to missing glibc debug package during test: https://bugs.archlinux.org/task/74875
+  sed -e 's/run-backtrace-native.sh//g' -i $pkgbase-$pkgver/tests/Makefile.am
+  (
+    cd $pkgbase-$pkgver
+    autoreconf -fiv
+  )
+
+  cp -av $pkgbase-$pkgver $pkgbase-test-$pkgver
 }
+
 
 build() {
-	cd "${srcdir}/${pkgbase}-${pkgver}"
+  local configure_options=(
+    --prefix=/usr
+    --sysconfdir=/etc
+    --program-prefix="eu-"
+    --enable-deterministic-archives
+  )
 
-	CFLAGS+=" -g"  # required for test-suite success
-	./configure --prefix=/usr --program-prefix="eu-" --enable-deterministic-archives
-    make ${MAKEFLAGS}
+  (
+    # fat-lto-objects is required for non-mangled .a files in libelf
+    CFLAGS+=" -ffat-lto-objects"
+    cd $pkgbase-$pkgver
+    ./configure "${configure_options[@]}"
+    make
+  )
+  (
+    cd $pkgbase-test-$pkgver
+    # debugging information is required for test-suite
+    CFLAGS+=" -g"
+    # fat-lto-objects is required for non-mangled .a files in libelf
+    CFLAGS+=" -ffat-lto-objects"
+    ./configure "${configure_options[@]}"
+    make
+  )
 }
 
+
 # check() {
-# 	cd "${srcdir}/${pkgbase}-${pkgver}"
-# 	make ${MAKEFLAGS} check
+#   make check -C $pkgbase-test-$pkgver
 # }
 
+package_debuginfod() {
+  pkgdesc+=" (debuginfod)"
+  license=(
+    GPL-3.0-or-later
+  )
+  depends=(
+    gcc-libs
+    glibc
+    libarchive libarchive.so
+    libelf=$pkgver
+    libmicrohttpd libmicrohttpd.so
+    sqlite libsqlite3.so
+  )
+  optdepends=("elfutils=$pkgver: for translations")
+
+  make DESTDIR="$pkgdir" install -C $pkgbase-$pkgver
+  install -vDm 644 $pkgbase-$pkgver/{AUTHORS,ChangeLog,NEWS,NOTES,README} -t "$pkgdir/usr/share/doc/$pkgname/"
+
+  # set the default DEBUGINFOD_URLS environment variable to the distribution's debuginfod URL
+  printf "https://debuginfod.archlinux.org\n" > "$pkgdir/etc/debuginfod/archlinux.urls"
+
+  (
+    cd "$pkgdir"
+
+    _pick libelf etc/debuginfod/*
+    _pick libelf etc/profile.d/*
+    _pick libelf usr/{include,lib}
+    _pick elfutils usr/bin/eu-*
+    _pick elfutils usr/share/locale
+    _pick elfutils usr/share/man/man1/eu-*
+    _pick elfutils usr/share/man/man3/elf_*
+  )
+
+}
+
 package_elfutils() {
-	depends=("libelf=$pkgver-$pkgrel")
+  pkgdesc+=" (utilities)"
+  license=(
+    GPL-3.0-or-later
+  )
+  depends=(
+    gcc-libs
+    glibc
+    libelf=$pkgver
+    sh
+  )
 
-	cd "${srcdir}/${pkgbase}-${pkgver}"
-
-	make DESTDIR="${pkgdir}" install
-
-	mkdir "${srcdir}"/libelf
-	mv "${pkgdir}"/usr/{lib,include} "${srcdir}/libelf"
+  mv -v elfutils/* "$pkgdir"
+  install -vDm 644 $pkgbase-$pkgver/{AUTHORS,ChangeLog,NEWS,NOTES,README} -t "$pkgdir/usr/share/doc/$pkgname/"
 }
 
 package_libelf() {
-	pkgdesc="Libraries to handle ELF object files and DWARF debugging information"
-	
-	cd "${srcdir}"
-	mv libelf "${pkgdir}/usr"
+  pkgdesc+=" (libraries)"
+  license=(
+    'GPL-2.0-or-later OR LGPL-3.0-or-later'
+  )
+  depends=(
+    bzip2 libbz2.so
+    curl libcurl.so
+    gcc-libs
+    glibc
+    xz liblzma.so
+    zlib
+    zstd libzstd.so
+  )
+  # NOTE: the shared objects can not be added to provides as they are not versioned
+
+  mv -v libelf/* "$pkgdir"
+  install -vDm 644 $pkgbase-$pkgver/{AUTHORS,ChangeLog,NEWS,NOTES,README} -t "$pkgdir/usr/share/doc/$pkgname/"
 }

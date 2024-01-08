@@ -1,15 +1,14 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=qt5-gamepad
 _realname=${pkgname/5-/}
-_qtver=5.15.2
-_basever=5.15.3
-pkgver=5.15.3+kde+r0
+_basever=5.15.10
+pkgver=5.15.10
 pkgrel=1
-_commit=6b7a6303439f83147680723f4d8142d676cdb928
+_commit=f90bd729eb70d4a0770efed3f9bb1b6dbe67d37c
 arch=('x86_64')
 groups=('dev-qt')
 url='https://www.qt.io'
@@ -29,7 +28,7 @@ getsrc(){
 pkgver() {
   cd $_realname
   git checkout $_commit
-  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit`
+  echo "$_basever+kde+r"`git rev-list --count v$_basever-lts-lgpl..$_commit` | sed -e 's|+kde+r0||'
 }
 
 prepare() {

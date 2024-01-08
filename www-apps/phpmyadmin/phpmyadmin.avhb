@@ -5,7 +5,7 @@
 
 pkgname=phpmyadmin
 _realname=phpMyAdmin
-pkgver=5.2.0
+pkgver=5.2.1
 pkgrel=1
 pkgdesc='PHP and hence web-based tool to administrate MySQL over the WWW'
 arch=('any')

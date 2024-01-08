@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=emacs
-pkgver=28.1
+pkgver=29.1
 pkgrel=1
 pkgdesc="The extensible, customizable, self-documenting real-time display editor"
 arch=('x86_64')

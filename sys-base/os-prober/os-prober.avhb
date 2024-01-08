@@ -1,9 +1,10 @@
-# $Id$
+# Copyright 2010-2023 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=os-prober
-pkgver=1.77
+pkgver=1.81
 pkgrel=1
 pkgdesc="Utility to detect other OSes on a set of drives"
 url="http://joey.kitenet.net/code/os-prober/"
@@ -29,7 +30,6 @@ prepare() {
 	# To be sent upstream
 	patch -p1 -i "$srcdir"/os-prober-factored-logger-efi-fix.patch
 	patch -p1 -i "$srcdir"/os-prober-umount-fix.patch
-    patch -p1 -i "$srcdir"/os-prober-gentoo-fix.patch
     patch -p1 -i "$srcdir"/os-prober-grub2-parsefix.patch
 
     # adjust lib dir to allow detection of 64-bit distros

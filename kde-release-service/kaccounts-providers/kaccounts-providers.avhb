@@ -3,7 +3,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=kaccounts-providers
-pkgver=22.04.0
+pkgver=23.08.1
 pkgrel=1
 pkgdesc='Small system to administer web accounts for the sites and services across the KDE desktop, including: Google, Facebook, Owncloud, IMAP, 
 Jabber and others'
