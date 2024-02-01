@@ -3,54 +3,95 @@
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
-pkgname=pahole
-pkgver=1.17
+pkgbase=pahole
+_realname=dwarves
+pkgname=(
+  pahole
+  ostra-cg
+)
+pkgver=1.25
 pkgrel=1
 pkgdesc="Pahole and other DWARF utils"
 url="https://git.kernel.org/pub/scm/devel/pahole/pahole.git"
 arch=(x86_64)
-groups=('dev-utils')
 license=(GPL2)
-depends=(libelf python)
-makedepends=(git cmake ninja)
-provides=(libdwarves{,_emit,_reorganize}.so)
-_commit=e709afe6a9907f4a5ae5a49ccc68192a295afe87  # tags/v1.17^0
-source=("git+https://git.kernel.org/pub/scm/devel/pahole/pahole.git#commit=$_commit"
-        "git+https://github.com/libbpf/libbpf")
-sha256sums=('SKIP'
-            'SKIP')
-
-getsrc(){
-  git clone https://git.kernel.org/pub/scm/devel/pahole/pahole.git
-  git clone https://github.com/libbpf/libbpf
-}
-
-pkgver() {
-  cd $pkgname
-  git describe --tags | sed 's/^v//;s/-/+/g'
-}
+makedepends=(
+  bash
+  cmake
+  libelf
+  ninja
+  python
+  python-matplotlib
+  zlib
+)
+source=(
+  https://fedorapeople.org/~acme/dwarves/dwarves-$pkgver.tar.{xz,sign}
+  python.diff
+)
+b2sums=('1926fa1fa123fc3ad0f7f063406260b1e1e2611c563fedebee4c837e491164571fdb40408421c0c4ea2fd24e89c54a7a1ea669313b6dd6d7dcfa4934e2c1336e'
+        'SKIP'
+        'e88fcda77c0a6aaea0d83949cabbaaaf24f6a4b2324a14e459efc202b210c31b58f7a90c75c34ffd08911514b3b6db4be4423e3f8e0fb50b6d914da5be002319')
+validpgpkeys=(
+  2DBF5BAA46FB4DED338A335BD65016F35352AA40  # Arnaldo Carvalho de Melo <acme@kernel.org>
+)
 
 prepare() {
-  cd $pkgname
+  cd dwarves-$pkgver
 
-  git submodule init
-  git submodule set-url lib/bpf "$srcdir/libbpf"
-  git submodule update
+  # https://bugs.archlinux.org/task/70013
+  patch -Np1 -i ../python.diff
 }
 
 build() {
-  CFLAGS+=" $CPPFLAGS"
-  cmake -S $pkgname -B build -G Ninja \
-    -DCMAKE_INSTALL_PREFIX=/usr \
-    -DCMAKE_BUILD_TYPE=None \
+  local cmake_options=(
+    -DCMAKE_INSTALL_PREFIX=/usr
+    -DCMAKE_BUILD_TYPE=None
     -D__LIB=lib
+  )
+
+  cmake -S dwarves-$pkgver -B build -G Ninja "${cmake_options[@]}"
   cmake --build build
 }
 
-package() {
-  DESTDIR="$pkgdir" cmake --build build --target install
+check() {
+  cd build
+  ctest --output-on-failure --stop-on-failure -j$(nproc)
+}
 
-  export PYTHONHASHSEED=0
-  python -m compileall -d / "$pkgdir"
-  python -O -m compileall -d / "$pkgdir"
+_pick() {
+  local p="$1" f d; shift
+  for f; do
+    d="$srcdir/$p/${f#$pkgdir/}"
+    mkdir -p "$(dirname "$d")"
+    mv "$f" "$d"
+    rmdir -p --ignore-fail-on-non-empty "$(dirname "$f")"
+  done
+}
+
+package_pahole() {
+  depends=(
+    bash
+    libelf
+    zlib
+  )
+  optdepends=('ostra-cg: Generate call graphs from encoded traces')
+  provides=(libdwarves{,_emit,_reorganize}.so)
+
+  DESTDIR="$pkgdir" cmake --install build
+
+  _pick ostra "$pkgdir"/usr/{bin/ostra-cg,lib/python*}
+}
+
+package_ostra-cg() {
+  pkgdesc="Generate call graphs from encoded traces"
+  depends=(
+    pahole
+    python
+    python-matplotlib
+  )
+
+  mv ostra/* "$pkgdir"
+
+  python -m compileall -d /usr/lib "$pkgdir/usr/lib"
+  python -O -m compileall -d /usr/lib "$pkgdir/usr/lib"
 }

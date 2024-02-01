@@ -1,4 +1,4 @@
-# Copyright 2010-2023 Avouch Authors
+# Copyright 2010-2024 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -28,14 +28,14 @@ else
 	_basedir=${pkgname}-${pkgver}
 fi
 
-getsrc() {
-	cd ${srcdir}
-	# TO LIST ALL THE BRANCHES AT REMOTE SITE
-	# git ls-remote --heads https://sourceware.org/git/binutils-gdb.git
+# getsrc() {
+# 	cd ${srcdir}
+# 	# TO LIST ALL THE BRANCHES AT REMOTE SITE
+# 	# git ls-remote --heads https://sourceware.org/git/binutils-gdb.git
 	
-	# Always clone the stable branch with latest patches	
-	#git clone https://sourceware.org/git/binutils-gdb.git --branch "binutils-${pkgver//./_}-branch" --single-branch "${pkgname}"
-}
+# 	# Always clone the stable branch with latest patches	
+# 	#git clone https://sourceware.org/git/binutils-gdb.git --branch "binutils-${pkgver//./_}-branch" --single-branch "${pkgname}"
+# }
 
 prepare() {
   mkdir -p binutils-build
@@ -53,11 +53,14 @@ prepare() {
   # Change the gold configuration script to only warn about
   # unsupported targets.  This allows the binutils to be built with
   # BPF support enabled.
-  patch -Np1 -i "${srcdir}"/gold-warn-unsupported.patch
+  patch -Np1 -i ${srcdir}/gold-warn-unsupported.patch
 
   # fix incorrect "undefined reference" errors
   # https://sourceware.org/bugzilla/show_bug.cgi?id=28879
-  patch -Np1 -i "${srcdir}"/fix-incorrect-undefined-symbol.patch
+  patch -Np1 -i ${srcdir}/fix-incorrect-undefined-symbol.patch
+
+# Stop libtool from inserting useless runpaths into binaries. from fedora
+patch -Np1 -i ${srcdir}/binutils-libtool-no-rpath.patch
 
 # remove one test that prevents the tests from running to completion
   sed -i '/@\tincremental_copy/d' gold/testsuite/Makefile.in
@@ -92,6 +95,7 @@ build() {
     --disable-readline \
     --disable-sim \
     --disable-werror \
+    --disable-rpath \
     --with-debuginfod \
     --with-pic \
     --with-system-zlib

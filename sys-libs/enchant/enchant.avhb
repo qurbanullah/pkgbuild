@@ -1,38 +1,48 @@
-# Copyright 2010-2023 Avouch Authors
+# Copyright 2010-2024 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=enchant
-pkgver=2.6.2
+pkgver=2.6.5
 pkgrel=1
 pkgdesc="A wrapper library for generic spell checking"
 arch=('x86_64')
 groups=('sys-libs')
 url="https://abiword.github.io/enchant/"
 license=('LGPL')
-depends=('aspell' 'hunspell' 'hspell' 'libvoikko' 'glib2')
-makedepends=('git')
-source=("https://github.com/AbiWord/enchant/archive/v$pkgver.tar.gz")
+depends=('glib2')
+makedepends=('aspell' 'hunspell' 'hspell' 'nuspell' 'libvoikko')
+checkdepends=('unittestpp')
+optdepends=('aspell: for aspell based spell checking support'
+            'hunspell: for hunspell based spell checking support'
+            'libvoikko: for libvoikko based spell checking support'
+            'hspell: for hspell based spell checking support'
+            'nuspell: for nuspell based spell checking support')
+provides=('libenchant-2.so') # enchant_voikko.so enchant_nuspell.so enchant_hunspell.so enchant_hspell.so enchant_aspell.so)
+source=("https://github.com/AbiWord/enchant/releases/download/v$pkgver/enchant-$pkgver.tar.gz")
+sha512sums=('46701497b38e3732d9cd9bab15dc35976a9255814eeb13e8686a9d7e8bdef7d21d45a2dfee0125904897f4d41f6508df9266dbe8d26a4548a8b37d87d2ecf817')
 
 prepare() {
-    cd $pkgname-$pkgver
-    bsdtar -xf $srcarchivedir/gnulib-git20200319.tar.xz
-    # ./bootstrap
-    autoreconf -fi
+  cd $pkgname-$pkgver
+  autoreconf -vfi
 }
 
 build() {
-    cd $pkgname-$pkgver
-    ./configure --prefix=/usr \
-        --disable-static \
-        --disable-ispell \
-        --with-myspell-dir=/usr/share/myspell
-    sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
-    make ${MAKEFLAGS}
+  cd $pkgname-$pkgver
+  ./configure --prefix=/usr \
+    --disable-static \
+    --enable-relocatable
+  sed -i -e 's/ -shared / -Wl,-O1,--as-needed\0/g' libtool
+  make
+}
+
+check() {
+  cd $pkgname-$pkgver
+  make check
 }
 
 package() {
-    cd $pkgname-$pkgver
-    make DESTDIR="$pkgdir" install
+  cd $pkgname-$pkgver
+  make DESTDIR="$pkgdir" install
 }

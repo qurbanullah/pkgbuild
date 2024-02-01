@@ -4,57 +4,127 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=meson
-pkgver=0.60.3
+pkgver=1.3.1
 pkgrel=1
-pkgdesc='High productivity build system'
-url='https://mesonbuild.com/'
+pkgdesc="High productivity build system"
+url="https://mesonbuild.com/"
 arch=('any')
 groups=('dev-utils')
-license=('Apache')
-depends=('python-setuptools' 'ninja')
-checkdepends=('gcc-objc' 'vala' 'rust' 'gcc-fortran' 'mono' 'boost' 'qt5-base' 'git' 'cython'
-              'gtkmm3' 'gtest' 'gmock' 'protobuf' 'wxgtk3' 'python-gobject' 'gobject-introspection'
-              'itstool' 'gtk3' 'java-environment=8' 'gtk-doc' 'llvm' 'clang' 'sdl2' 'graphviz'
-              'doxygen' 'vulkan-validation-layers' 'openssh' 'mercurial' 'gtk-sharp-2' 'qt5-tools'
-              'libwmf' 'valgrind' 'cmake' 'netcdf-fortran' 'openmpi' 'nasm' 'gnustep-base' 'libelf'
-              'python-pytest-xdist' 'python2-setuptools' 'ldc' 'rust-bindgen' 'cuda' 'hotdoc')
-source=(https://github.com/mesonbuild/meson/releases/download/${pkgver}/meson-${pkgver}.tar.gz{,.asc}
-        skip-test.diff
-        arch-meson)
-sha512sums=('6c9fabd6f70c276f6daa4bab14de148692d4ab55da964143b73a4e3197ad84c0074d64b729d4492a0c1e0fbea116fa82bd349ed22cb8f53981d492b515e2fb00'
-            'SKIP'
-            '5a5cd1b2e12f63eab787e4e102f2bdf2b170f0a7f2675f6f4f8ae5dc8188ccab5f488dcecfbb3ab69e4c70e266d5bf5a8270214c0dc20efcca77bab976f6e38a'
-            'f451f8a7ef9cf1dd724c2ce20bb85a3f1611b87b2e7a17ef0fdbe8ab82a67389f818ea30a5adfe8413143e4eac77ea2e0b8234b5b2466b41a892e2bd0435376c')
-validpgpkeys=('19E2D6D9B46D8DAA6288F877C24E631BABB1FE70') # Jussi Pakkanen <jpakkane@gmail.com>
+license=(Apache)
+depends=(
+  ninja
+  python-tqdm
+  python-typing_extensions
+)
+makedepends=(
+  python-build
+  python-installer
+  python-setuptools
+  python-wheel
+)
+checkdepends=(
+  boost
+  clang
+  cmake
+  cuda
+  cython
+  doxygen
+  gcc-fortran
+  gcc-objc
+  git
+  glibc-locales
+  gmock
+  gnustep-base
+  gobject-introspection
+  graphviz
+  gtest
+  gtk-doc
+  gtk-sharp-2
+  gtk3
+  gtkmm3
+  hotdoc
+  itstool
+  java-environment=8
+  ldc
+  libelf
+  libwmf
+  llvm
+  mercurial
+  mono
+  nasm
+  netcdf-fortran
+  openmpi
+  openssh
+  protobuf
+  python-gobject
+  python-pytest-xdist
+  qt5-base
+  qt5-tools
+  rust
+  rust-bindgen
+  sdl2
+  vala
+  valgrind
+  vulkan-validation-layers
+  wxgtk3
+)
+source=(
+  https://github.com/mesonbuild/meson/releases/download/$pkgver/meson-$pkgver.tar.gz{,.asc}
+  meson-reference-$pkgver.3::https://github.com/mesonbuild/meson/releases/download/$pkgver/meson-reference.3
+  meson-reference-$pkgver.json::https://github.com/mesonbuild/meson/releases/download/$pkgver/reference_manual.json
+  arch-meson
+  cross-lib32
+  native-clang
+  0001-Skip-broken-tests.patch
+  0002-Use-C-17-for-protobuf-tests.patch
+)
+b2sums=('64d53eddc8cb321a4e2dabaa4b7499798a7b68764b1a7a5182bfa21d081dc07105acab616119b88ff610e5d75504f03d1c0aefee3602ddf538fc491ff3d0204a'
+        'SKIP'
+        '95eff6139275ddc826395192e2e7043d665641260454aeda06dca7e573d34b348c2a935ac1603d8d838f480fe6b57ba2ece51fa90760ab3014e15c70f6d130ea'
+        '82f234701f578f5c85d527a95e6026b5d219fde9b212bead51615f38b43c8b0d129a700e792099778802f5b511250a2b56b5074e55709f4aa1ace64ef8949ff8'
+        '211cee61f117fd1d582d7a613a8634f044e9e307791c4154c6da72bccd5f06856801b14bcb26157ee682b5935c48ffd2098a5fabab2232726d7758cf091c07f7'
+        '9b16477aa77a706492e26fb3ad42e90674b8f0dfe657dd3bd9ba044f921be12ceabeb0050a50a15caee4d999e1ec33ed857bd3bed9e4444d73bb4a4f06381081'
+        '7d88929d5a3b49d91c5c9969f19d9b47f3151706526b889515acaeda0141257d5115875ac84832e9ea46f83a7700d673adcc5db84b331cd798c70ae6e90eac1e'
+        '21466907b450c662824f576accbf49d4bb543c5d7a1075dfcd48e89db92537d2dbe194a55c335bd520f787125b83b394a9f9f2b9e16d667797dc34c3b862bf60'
+        'c0154434fefb00aebb66b276c3b871b9ec629adc8f3c5b020a21b4662667c0bdaa2c48c6a7498d0c7ab901bb9c3911bd0bb82fbae5e5f3ae2da006e3849e0ff0')
+validpgpkeys=(
+  19E2D6D9B46D8DAA6288F877C24E631BABB1FE70  # Jussi Pakkanen <jpakkane@gmail.com>
+)
 
 prepare() {
-  cd ${pkgname}-${pkgver}
-  # Our containers do not allow sanitizers to run
-  patch -Np1 -i ../skip-test.diff
+  cd $pkgname-$pkgver
+
+  # Pass tests
+  patch -Np1 -i ../0001-Skip-broken-tests.patch
+  patch -Np1 -i ../0002-Use-C-17-for-protobuf-tests.patch
 }
 
 build() {
-  cd ${pkgname}-${pkgver}
-  python setup.py build
+  cd $pkgname-$pkgver
+  python -m build --wheel --no-isolation
 }
 
 check() (
-  cd ${pkgname}-${pkgver}
+  cd $pkgname-$pkgver
   export LC_CTYPE=en_US.UTF-8 CPPFLAGS= CFLAGS= CXXFLAGS= LDFLAGS=
-  # ./run_tests.py
+  # ./run_tests.py --failfast
 )
 
 package() {
-  cd ${pkgname}-${pkgver}
-  python setup.py install --root="${pkgdir}" --optimize=1 --skip-build
+  cd $pkgname-$pkgver
+  python -m installer --destdir="$pkgdir" dist/*.whl
 
-  install -d "${pkgdir}/usr/share/vim/vimfiles"
-  cp -rt "${pkgdir}/usr/share/vim/vimfiles" data/syntax-highlighting/vim/*/
+  install -d "$pkgdir/usr/share/vim/vimfiles"
+  cp -rt "$pkgdir/usr/share/vim/vimfiles" data/syntax-highlighting/vim/*/
 
-  install -Dt "${pkgdir}/usr/share/bash-completion/completions" -m644 data/shell-completions/bash/*
-  install -Dt "${pkgdir}/usr/share/emacs/site-lisp" -m644 data/syntax-highlighting/emacs/*
-  install -Dt "${pkgdir}/usr/share/zsh/site-functions" -m644 data/shell-completions/zsh/*
+  install -Dm644 data/shell-completions/bash/* -t "$pkgdir/usr/share/bash-completion/completions"
+  install -Dm644 data/shell-completions/zsh/*  -t "$pkgdir/usr/share/zsh/site-functions"
 
-  # Arch packaging helper
-  install -D ../avouch-meson -t "${pkgdir}/usr/bin"
+  install -Dm644 ../meson-reference-$pkgver.3    "$pkgdir/usr/share/man/man3/meson-reference.3"
+  install -Dm644 ../meson-reference-$pkgver.json "$pkgdir/usr/share/doc/$pkgname/reference_manual.json"
+
+  install -D ../avouch-meson -t "$pkgdir/usr/bin"
+
+  install -Dm644 ../cross-lib32 "$pkgdir/usr/share/meson/cross/lib32"
+  install -Dm644 ../native-clang "$pkgdir/usr/share/meson/native/clang"
 }

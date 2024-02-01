@@ -1,4 +1,4 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2024 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -10,7 +10,7 @@
 
 pkgbase=glibc
 pkgname=(glibc lib32-glibc glibc-locales)
-pkgver=2.38
+pkgver=2.39
 pkgrel=1
 pkgdesc="GNU C Library"
 arch=('x86_64')
@@ -19,12 +19,11 @@ url='https://www.gnu.org/software/libc'
 license=(GPL LGPL)
 makedepends=(git gd lib32-gcc-libs python)
 options=(staticlibs !lto)
-source=(git+https://sourceware.org/git/glibc.git#commit=${_commit}
+source=(https://ftp.gnu.org/gnu/glibc/glibc-$pkgver.tar.xz
         locale.gen.txt
         locale-gen
         lib32-glibc.conf
         sdt.h sdt-config.h
-        reenable_DT_HASH.patch
 )
 validpgpkeys=(7273542B39962DF7B299931416792B4EA25340F8 # Carlos O'Donell
               BC7C7372637EC10C57D7AA6579C43DFBF1CF2187) # Siddhesh Poyarekar
@@ -44,15 +43,6 @@ if [ -n "${_gitbranch}" ]; then
 else
 	_basedir=${pkgname}-${pkgver}
 fi
-
-getsrc() {
-	cd ${srcdir}
-	# TO LIST ALL THE BRANCHES AT REMOTE SITE
-	# git ls-remote --heads git://sourceware.org/git/glibc.git
-	
-	# Always clone the stable branch with latest patches	
-	# git clone git://sourceware.org/git/glibc.git --branch "release/${pkgver}/master" --single-branch "${pkgbase}"
-}
 
 prepare() {
   mkdir -p glibc-build lib32-glibc-build
@@ -103,7 +93,7 @@ build() {
         --libexecdir=/usr/lib \
         "${_configure_flags[@]}"
 
-    make ${MAKEFLAGS} -O
+    make -O
 
     # build info pages manually for reproducibility
     make info
@@ -125,7 +115,7 @@ build() {
         --libexecdir=/usr/lib32 \
         "${_configure_flags[@]}"
 
-    make ${MAKEFLAGS} -O
+    make -O
   )
 
   # pregenerate locales here instead of in package
@@ -163,7 +153,7 @@ check() (
   _skip_test tst-process_mrelease    sysdeps/unix/sysv/linux/Makefile
   _skip_test tst-adjtime             time/Makefile
 
-  make ${MAKEFLAGS} -O check
+  make -O check
 )
 
 package_glibc() {

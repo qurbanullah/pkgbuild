@@ -1,11 +1,11 @@
-# Copyright 2010-2023 Avouch Authors
+# Copyright 2010-2024 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgbase=curl
 pkgname=(curl libcurl-compat libcurl-gnutls)
-pkgver=8.4.0
+pkgver=8.5.0
 pkgrel=1
 pkgdesc="An URL retrieval utility and library"
 arch=('x86_64')

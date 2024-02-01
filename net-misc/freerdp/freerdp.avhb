@@ -1,19 +1,23 @@
-# Copyright 2010-2023 Avouch Authors
+# Copyright 2010-2024 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=freerdp
-_realname=FreeRDP
+pkgver=3.1.0
+_libver=${pkgver/.*/}
 epoch=1
-pkgver=2.11.2
+pkgver=3.1.0
 pkgrel=1
 pkgdesc="Free implementation of the Remote Desktop Protocol (RDP)"
 arch=('x86_64')
 groups=('net-misc')
 url="https://www.freerdp.com/"
-license=('Apache')
+license=(Apache-2.0)
 depends=(
+  cjson
+  fuse3
+  gcc-libs
   glibc
   libcups
   libx11
@@ -28,87 +32,108 @@ depends=(
   libxrandr
   libxrender
   libxtst
-  pcsclite
+  sdl2
+  sdl2_ttf
   wayland
 )
 makedepends=(
   alsa-lib
   cmake
   docbook-xsl
+  e2fsprogs
   ffmpeg
+  glib2
+  gtk3
   icu
   krb5
   libjpeg-turbo
+  libp11
   libpulse
   libusb
   openssl
   pam
-  systemd
+  pkcs11-helper
+  webkit2gtk
   xmlto
   xorgproto
+  zlib
 )
 provides=(
-  libfreerdp2.so
-  libfreerdp-client2.so
-  libfreerdp-server2
-  libfreerdp-shadow2.so
-  libfreerdp-shadow-subsystem2.so
-  libwinpr2.so
-  libwinpr-tools2.so
+  libfreerdp-client$_libver.so
+  libfreerdp-server-proxy$_libver.so
+  libfreerdp-server$_libver
+  libfreerdp-shadow-subsystem$_libver.so
+  libfreerdp-shadow$_libver.so
+  libfreerdp$_libver.so
   libuwac0.so
+  librdtk0.so
+  libwinpr-tools$_libver.so
+  libwinpr$_libver.so
 )
-
-source=(https://github.com/${pkgname}/${pkgname}/archive/${pkgver/_/-}.tar.gz)
-
-prepare() {
-  cd "${_realname}-${pkgver}"
-  # fix man page formatting:
-  patch -Np1 -i "../${pkgname}-2.0.0-manpage_formatting.patch"
-}
+source=(
+  https://github.com/$pkgname/$pkgname/archive/$pkgver/$pkgname-$pkgver.tar.gz
+)
+sha512sums=('0a463c241d09ea354fdd943c010a2ecca1ad20f6ba5ea037422884f3b668ac6c4c30f73d12077368cd54f74418ef65b267628934a050fcbb3ff1e96d84ae954e')
+b2sums=('39031026b2ff878b0e4a86907985704d0d64058bf9a2de6f3b8c4617cac3b8a5ee0d34d4e6e962e0e4388996c39d16b96a245525a51c33a533dad38e6b865a53')
 
 build() {
   local cmake_options=(
-    -DCMAKE_INSTALL_PREFIX=/usr
-    -DCMAKE_INSTALL_LIBDIR=lib
-    -DCMAKE_BUILD_TYPE=None
-    -DCMAKE_SKIP_INSTALL_RPATH=ON
-    -DPROXY_PLUGINDIR=/usr/lib/freerdp2/server/proxy/plugins
-    -DWITH_DSP_FFMPEG=ON
-    -DWITH_FFMPEG=ON
-    -DWITH_PULSE=ON
-    -DWITH_CUPS=ON
-    -DWITH_PCSC=ON
-    -DWITH_ICU=ON
-    -DWITH_JPEG=ON
-    -DWITH_SERVER=ON
-    -DWITH_SWSCALE=ON
-    -DWITH_CHANNELS=ON
-    -DWITH_CLIENT_CHANNELS=ON
-    -DWITH_SERVER_CHANNELS=ON
-    -DCHANNEL_URBDRC_CLIENT=ON
-    -Wno-dev
     -B build
-    -S $_realname-$pkgver
+    -D CHANNEL_URBDRC_CLIENT=ON
+    -D CMAKE_INSTALL_PREFIX=/usr
+    -D CMAKE_INSTALL_LIBDIR=lib
+    -D CMAKE_BUILD_TYPE=None
+    -D CMAKE_SKIP_INSTALL_RPATH=ON
+    -D PROXY_PLUGINDIR=/usr/lib/freerdp2/server/proxy/plugins
+    -D WITH_ALSA=ON
+    -D WITH_CHANNELS=ON
+    -D WITH_CLIENT_CHANNELS=ON
+    -D WITH_CUPS=ON
+    -D WITH_DSP_FFMPEG=ON
+    -D WITH_FFMPEG=ON
+    -D WITH_FUSE=ON
+    -D WITH_ICU=ON
+    -D WITH_JPEG=ON
+    -D WITH_PCSC=ON
+    -D WITH_PULSE=ON
+    -D WITH_SERVER=ON
+    -D WITH_SERVER_CHANNELS=ON
+    -D WITH_SYSTEMD=ON
+    -D WITH_SWSCALE=ON
+    -D WITH_WAYLAND=ON
+    -D WITH_WINPR_TOOLS=ON
+    -D WITH_X11=ON
+	-D WITH_MANPAGES=OFF
+    -S $pkgname-$pkgver
+    -W no-dev
   )
 
   cmake "${cmake_options[@]}"
   cmake --build build --verbose
+}
 
+check() {
+  ctest --test-dir build --output-on-failure
 }
 
 package() {
   depends+=(
     alsa-lib libasound.so
+    e2fsprogs libcom_err.so
     ffmpeg libavcodec.so libavutil.so libswresample.so libswscale.so
+    glib2 libglib-2.0.so libgobject-2.0.so
+    gtk3 libgtk-3.so
     icu libicuuc.so
+    krb5 libk5crypto.so libkrb5.so
     libjpeg-turbo libjpeg.so
     libpulse libpulse.so
     libusb libusb-1.0.so
     openssl libcrypto.so libssl.so
     pam libpam.so
-    systemd-libs libsystemd.so
+    webkit2gtk libjavascriptcoregtk-4.0.so libwebkit2gtk-4.0.so
+    zlib libz.so
   )
 
   DESTDIR="$pkgdir" cmake --install build
-  install -vDm 644 $_name-$pkgver/{ChangeLog,README.md} -t "$pkgdir/usr/share/doc/$pkgname/"
+  install -vDm 644 $pkgname-$pkgver/{ChangeLog,README.md} -t "$pkgdir/usr/share/doc/$pkgname/"
 }

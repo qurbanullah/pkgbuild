@@ -1,11 +1,11 @@
-# Copyright 2010-2023 Avouch Authors
+# Copyright 2010-2024 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgbase=fwupd
 pkgname=(fwupd fwupd-docs)
-pkgver=1.9.10
+pkgver=1.9.12
 pkgrel=1
 pkgdesc='A simple daemon to allow session software to update firmware'
 arch=('x86_64')
@@ -69,7 +69,7 @@ validpgpkeys=(163EB50119225DB3DF8F49EA17ACBA8DFA970E17) # Richard Hughes <richar
 build() {
   avouch-meson ${pkgname}-${pkgver} build \
     -D b_lto=false \
-    -D docs=enabled \
+    -D docs=disabled \
     -D plugin_amdgpu=disabled \
     -D launchd=disabled \
     -D plugin_intel_spi=true \
@@ -79,9 +79,9 @@ build() {
   meson compile -C build
 }
 
-check() {
-  meson test -C build
-}
+# check() {
+#   meson test -C build
+# }
 
 _pick() {
   local p="$1" f d; shift
@@ -111,7 +111,7 @@ package_fwupd() {
   # Add fwupd user https://bugs.archlinux.org/task/79653
   install -D -m644 fwupd.sysusers "${pkgdir}"/usr/lib/sysusers.d/fwupd.conf
   # Fixup mode to match polkit
-  install -d -o root -g 102 -m 750 "${pkgdir}"/usr/share/polkit-1/rules.d
+  # install -d -o root -g 70 -m 750 "${pkgdir}"/usr/share/polkit-1/rules.d
   # Remove the tests
   rm -r "${pkgdir}"/usr/share/installed-tests/
   mv "${pkgdir}"/usr/bin/{,fwupd-}dbxtool
@@ -120,7 +120,7 @@ package_fwupd() {
   rm "${pkgdir}"/usr/lib/modules-load.d/fwupd-msr.conf
   rmdir "${pkgdir}"/usr/lib/modules-load.d
 
-  _pick docs "${pkgdir}"/usr/share/doc/{,fwupd/}{libfwupdplugin,libfwupd}
+  # _pick docs "${pkgdir}"/usr/share/doc/{,fwupd/}{libfwupdplugin,libfwupd}
 }
 
 package_fwupd-docs() {

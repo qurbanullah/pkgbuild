@@ -1,4 +1,4 @@
-# Copyright 2010-2022 Avouch Authors
+# Copyright 2010-2023 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
@@ -12,27 +12,13 @@ groups=('sys-libs')
 pkgdesc="Introspection system for GObject-based libraries"
 url="https://wiki.gnome.org/Projects/GObjectIntrospection"
 license=(LGPL GPL)
-depends=(python3-mako python3-markdown)
-makedepends=(cairo gtk-doc python3-sphinx meson)
+depends=(python-mako python-markdown)
+makedepends=(cairo gtk-doc python-sphinx meson)
 options=(!emptydirs)
-_commit=4502dd33da995e5e9e6d73aa996cf42e92c9e217  # tags/1.70.0^0
 source=("https://gitlab.gnome.org/GNOME/$realname/-/archive/$pkgver/$realname-$pkgver.tar.bz2"
         "https://gitlab.gnome.org/GNOME/glib/-/archive/$_glibver/glib-$_glibver.tar.bz2")
 
-_glibver=2.78.0
-
-# getsrc() {
-#   git clone https://gitlab.gnome.org/GNOME/gobject-introspection.git
-# }
-
-
-# pkgver() {
-#   cd $pkgbase
-#   git checkout $_commit
-#   # Fix build with meson 0.61.0
-#   git cherry-pick -n 827494d6415b696a effb1e09dee263cd  
-#   git describe --tags | sed 's/-/+/g'
-# }
+_glibver=2.78.3
 
 prepare() {  
   bsdtar -xf $srcarchivedir/glib-$_glibver.tar.xz

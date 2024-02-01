@@ -1,9 +1,10 @@
-# $Id$
+# Copyright 2010-2024 Avouch Authors
+# Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=ell
-pkgver=0.30
+pkgver=0.61
 pkgrel=1
 arch=('x86_64')
 groups=('sys-libs')
@@ -11,19 +12,24 @@ pkgdesc="Embedded Linux library"
 url="https://01.org/ell"
 #url="https://git.kernel.org/pub/scm/libs/ell/ell.git/"
 license=('LGPL2.1')
-depends=('glibc')
+depends=('gcc-libs' 'glibc')
+checkdepends=('dbus' 'procps-ng')
+# https://mirrors.edge.kernel.org/pub/linux/libs/ell/sha256sums.asc
 source=(https://mirrors.edge.kernel.org/pub/linux/libs/$pkgname/$pkgname-$pkgver.tar.{xz,sign})
+sha256sums=('c21ba3530d530c736f9b3e6acc954d4404c1ce4abaf2a4694e46ecec17653fa0'
+            'SKIP')
 validpgpkeys=('E932D120BC2AEC444E558F0106CA9F5D1DCF2659') # "Marcel Holtmann <marcel@holtmann.org>"
+
 
 build() {
   cd "$pkgname-$pkgver"
   ./configure --prefix=/usr
-  make ${MAKEFLAGS}
+  make
 }
 
 check() {
   cd "$pkgname-$pkgver"
-  make ${MAKEFLAGS} -k check
+  make -k check
 }
 
 package() {

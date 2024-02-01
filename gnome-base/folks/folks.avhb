@@ -12,7 +12,7 @@ groups=('gnome-base')
 url="https://wiki.gnome.org/Projects/Folks"
 license=(LGPL2.1)
 depends=(telepathy-glib libgee libxml2 evolution-data-server)
-makedepends=(gobject-introspection gtk-doc vala git meson python2)
+makedepends=(gobject-introspection gtk-doc vala git meson python)
 checkdepends=(python-dbusmock)
 source=("https://gitlab.gnome.org/GNOME/$pkgname/-/archive/$pkgver/$pkgname-$pkgver.tar.bz2")
 

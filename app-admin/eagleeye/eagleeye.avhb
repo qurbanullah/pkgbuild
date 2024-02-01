@@ -4,14 +4,14 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=eagleeye
-pkgver=0.3.0
+pkgver=0.4.0
 pkgrel=1
 pkgdesc="Avouch Linux package installer"
 arch=('x86_64')
 groups=('sys-apps')
 url="http://www.avouch.org/projects/eagleeye/"
 license=('GPL')
-depends=('python3')
+depends=('python')
 install=eagleeye.install
 source=("https://github.com/qurbanullah/eagleeye.git")
 

@@ -6,7 +6,7 @@
 pkgbase=glib2
 pkgname=('glib2' 'glib2-docs')
 _realname=glib
-pkgver=2.78.0
+pkgver=2.78.3
 pkgrel=1
 pkgdesc="Low level core library"
 arch=('x86_64')

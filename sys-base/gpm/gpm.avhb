@@ -15,7 +15,7 @@ license=('GPL')
 depends=('bash')
 options=('!makeflags')
 install=gpm.install
-source=("https://github.com/telmich/gpm.git"
+source=("git+https://github.com/telmich/gpm.git"
         'gpm.sh'
         'gpm.path'
         'gpm.service')
@@ -41,17 +41,17 @@ prepare(){
 	sed -i \
 		-e '/^abi_lev=/s:=.*:=1:' \
 		-e '/^abi_age=/s:=.*:=20:' \
-		configure.ac.footer || die
+		configure.ac.footer
 	# Rebuild autotools since release doesn't include them.
 	# Should be fixed with the next release though.
 	# https://github.com/telmich/gpm/pull/15
-	sed -i -e '/ACLOCAL/,$d' autogen.sh || die
-	./autogen.sh
+	sed -i -e '/ACLOCAL/,$d' autogen.sh 
+	
 }
 
 build() {
   cd "${srcdir}/${pkgname}"
-  
+  ./autogen.sh
   ./configure \
     --prefix=/usr \
     --sysconfdir=/etc \

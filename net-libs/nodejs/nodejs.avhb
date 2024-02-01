@@ -1,11 +1,11 @@
-# Copyright 2010-2020 Avouch Authors
+# Copyright 2010-2024 Avouch Authors
 # Distributed under the terms of the GNU General Public License v2
 # Maintainer: Qurban Ullah <qurbanullah@avouch.org>
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=nodejs
 _realname=node
-pkgver=20.9.0
+pkgver=21.6.0
 pkgrel=1
 pkgdesc='Evented I/O for V8 javascript'
 arch=('x86_64')

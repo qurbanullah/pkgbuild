@@ -4,7 +4,7 @@
 # Contributor: Qurban Ullah <qurbanullah@avouch.org>
 
 pkgname=gtk-doc
-pkgver=1.33.1
+pkgver=1.33.2
 pkgrel=1
 pkgdesc="Documentation tool for public library API"
 arch=(any)
@@ -12,11 +12,11 @@ groups=('dev-utils')
 url="https://www.gtk.org/gtk-doc/"
 arch=(any)
 license=(GPL FDL)
-depends=(docbook-xsl docbook-xml glib2-docs python3-lxml python3-pygments python3-anytree)
+depends=(docbook-xsl docbook-xml glib2-docs python-lxml python-pygments python-anytree)
 makedepends=(dblatex git yelp-tools meson)
 checkdepends=(bc gtk3 python3-six python3-parameterized)
 optdepends=('dblatex: PDF support')
-source=("https://gitlab.gnome.org/GNOME/$realname/-/archive/$pkgver/$realname-$pkgver.tar.bz2"
+source=("https://gitlab.gnome.org/GNOME/$pkgname/-/archive/$pkgver/$realname-$pkgver.tar.bz2"
         fixperms.diff)
 
 # pkgver() {
